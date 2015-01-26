@@ -2,7 +2,7 @@
 
 #django
 #local
-from configs.common.settings import *
+from woot.settings.common import *
 
 #util
 from os import environ
