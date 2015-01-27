@@ -40,11 +40,11 @@ class Command(BaseCommand):
 
     #for each filename, generate dictionary of parameters
     for image_file_name in image_file_list:
-      self.stout.write(image_file_name + '... ', ending='')
+      self.stdout.write(image_file_name + '... ', ending='')
       match = re.match(img_settings.img_template, image_file_name)
       #need path, experiment_name, image_type, timepoint, level, and extension to make image object
       #1. check if experiment exists
-      experiment, = Experiment.objects.get_or_create(name=match.group('experiment_name'))
+      experiment, exp_created = Experiment.objects.get_or_create(name=match.group('experiment_name'))
 
       #2. create image object
       image, created = experiment.images.get_or_create(path=os.path.join(input_path, image_file_name))
@@ -54,6 +54,6 @@ class Command(BaseCommand):
         image.level = int(match.group('level'))
         image.save()
         experiment.save()
-        self.stout.write('created.', ending='\n')
+        self.stdout.write('created.', ending='\n')
       else:
-        self.stout.write('already exists.', ending='\n')
+        self.stdout.write('already exists.', ending='\n')
