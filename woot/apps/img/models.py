@@ -20,19 +20,23 @@ class Bulk(models.Model):
   #methods
 
 class SourceImage(models.Model):
-  ''' Stores original details about the source images from which pixel objects and chunk objects are derived. '''
+  '''
+  Stores original details about the source images from which pixel objects and chunk objects are derived.
+
+  An image can be uniquely identified by its full path. This must be checked before creating another image object.
+
+  '''
   #connections
   experiment = models.ForeignKey(Experiment, related_name='images')
-  bulk = models.ForeignKey(Bulk, related_name='images')
+  bulk = models.ForeignKey(Bulk, related_name='images', null=True)
 
   #properties
   path = models.CharField(max_length=255)
-  filename = models.CharField(max_length=255)
   array = None
 
   type = models.CharField(max_length=255) #gfp, bf, mask
-  level = models.IntegerField(default=0)
   timepoint = models.IntegerField(default=0)
+  level = models.IntegerField(default=0)
 
   #methods
   def load(self):
@@ -67,4 +71,3 @@ class Pixel(models.Model):
   ''' these paramters determine the location of the pixel in n-dimensional parameter space. '''
 
   #methods
-  
