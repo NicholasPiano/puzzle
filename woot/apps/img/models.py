@@ -11,13 +11,21 @@ import os
 from scipy.misc import imread, imsave
 
 ### Models
-class Bulk(models.Model):
+class Composite(models.Model):
   ''' A 3D collection of chunks. '''
   #connections
+  experiment = models.ForeignKey(Experiment, related_name='composites')
 
   #properties
 
   #methods
+  def pixelate(self):
+    #1. load all associated images and create pixel objects
+    pass
+
+  def chunkify(self, chunk_size=(5,5,5)):
+    #create chunk objects using dimensions of images
+    pass
 
 class SourceImage(models.Model):
   '''
@@ -28,7 +36,7 @@ class SourceImage(models.Model):
   '''
   #connections
   experiment = models.ForeignKey(Experiment, related_name='images')
-  bulk = models.ForeignKey(Bulk, related_name='images', null=True)
+  composite = models.ForeignKey(Composite, related_name='images', null=True)
 
   #properties
   path = models.CharField(max_length=255)
@@ -42,10 +50,11 @@ class SourceImage(models.Model):
   def load(self):
     self.array = imread(os.path.join(self.path, self.filename))
 
+### Units
 class Chunk(models.Model):
   ''' Subdivisions of an image of constant size, say 16x16x16. '''
   #connections
-  bulk = models.ForeignKey(Bulk, related_name='chunks')
+  composite = models.ForeignKey(Composite, related_name='chunks')
 
   #properties
   ''' n-dimension parameter space for chunks. '''
@@ -63,11 +72,44 @@ class Chunk(models.Model):
 class Pixel(models.Model):
   ''' Stores the n-dimensional parameters of a pixel at a set of spacial coordinates. '''
   #connections
-  bulk = models.ForeignKey(Bulk, related_name='pixels')
+  composite = models.ForeignKey(Composite, related_name='pixels')
   source_image = models.ForeignKey(SourceImage, related_name='pixels')
-  chunk = models.ForeignKey(Chunk, related_name='pixels')
+  chunk = models.ManyToManyField(Chunk, related_name='pixels')
 
   #properties
-  ''' these paramters determine the location of the pixel in n-dimensional parameter space. '''
+  row = models.IntegerField(default=0)
+  column = models.IntegerField(default=0)
+  level = models.IntegerField(default=0)
+  timepoint = models.IntegerField(default=0)
 
   #methods
+
+### Parameters
+class Parameter(models.Model):
+  ''' This mechanic is similar to the cell and cell_instance idea. '''
+  #connections
+  composite = models.ForeignKey(Composite, related_name='parameters')
+
+  #properties
+  name = models.CharField(max_length=255)
+
+class ChunkParameter(models.Model):
+  ''' Serves as one instance of a named parameter. '''
+  #connections
+  chunk = models.ForeignKey(Chunk, related_name='parameters')
+  parameter = models.ForeignKey(Parameter, related_name='chunk_instances')
+
+  #properties
+  value = models.IntegerField(default=0)
+  float_value = models.FloatField(default=0.0)
+  boolean_value = models.BooleanField(default=False)
+
+class PixelParameter(models.Model):
+  #connections
+  pixel = models.ForeignKey(Pixel, related_name='parameters')
+  parameter = models.ForeignKey(Parameter, related_name='pixel_instances')
+
+  #properties
+  value = models.IntegerField(default=0)
+  float_value = models.FloatField(default=0.0)
+  boolean_value = models.BooleanField(default=False)

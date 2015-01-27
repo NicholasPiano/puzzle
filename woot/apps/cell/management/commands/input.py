@@ -53,7 +53,13 @@ class Command(BaseCommand):
         image.timepoint = int(match.group('timepoint'))
         image.level = int(match.group('level'))
         image.save()
+        experiment.pending_Composite_creation = True
         experiment.save()
         self.stdout.write('created.', ending='\n')
       else:
         self.stdout.write('already exists.', ending='\n')
+
+    #create composites in each experiment
+    for experiment in Experiment.objects.all():
+      if experiment.pending_composite_creation:
+        experiment.create_composite()

@@ -15,4 +15,8 @@ class Experiment(models.Model):
   #properties
   name = models.CharField(max_length=255)
 
+  pending_composite_creation = models.BooleanField(default=False)
+
   #methods
+  def create_composite(self):
+    ''' Adds all current images to a new composite. '''
