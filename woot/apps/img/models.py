@@ -17,15 +17,33 @@ class Composite(models.Model):
   experiment = models.ForeignKey(Experiment, related_name='composites')
 
   #properties
+  rows =
 
   #methods
   def pixelate(self):
     #1. load all associated images and create pixel objects
-    pass
+    for image in self.images.all():
+      print('processing %s' % image.path)
+      image.load()
+
+      #loop over array
+      rows, columns = image.array.shape
+      for row in rows:
+        for column in columns:
+          #pixels are identified uniquely by spatial coordinates -> r,c,l,t
+          pixel, created = self.pixels.get_or_create(row=row, column=column, level=image.level, timepoint=image.timepoint)
+          if created:
+            
 
   def chunkify(self, chunk_size=(5,5,5)):
     #create chunk objects using dimensions of images
     pass
+
+class Channel(models.Model):
+  #connections
+
+
+  #properties
 
 class SourceImage(models.Model):
   '''
@@ -37,12 +55,12 @@ class SourceImage(models.Model):
   #connections
   experiment = models.ForeignKey(Experiment, related_name='images')
   composite = models.ForeignKey(Composite, related_name='images', null=True)
+  channel = models.ForeignKey(Channel, related_name='images')
 
   #properties
   path = models.CharField(max_length=255)
   array = None
 
-  type = models.CharField(max_length=255) #gfp, bf, mask
   timepoint = models.IntegerField(default=0)
   level = models.IntegerField(default=0)
 
@@ -63,9 +81,6 @@ class Chunk(models.Model):
   column = models.IntegerField(default=0)
   level = models.IntegerField(default=0)
   timepoint = models.IntegerField(default=0)
-
-  #2. values
-
 
   #methods
 
