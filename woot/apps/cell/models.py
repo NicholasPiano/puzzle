@@ -38,10 +38,6 @@ class Experiment(models.Model):
     composite.columns = columns
     composite.levels = levels
     composite.timepoints = timepoints
-
-    #make pixels
-    composite.pixelate()
-
     composite.save()
 
     self.pending_composite_creation = False
