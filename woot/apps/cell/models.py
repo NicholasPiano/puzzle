@@ -38,6 +38,10 @@ class Experiment(models.Model):
     composite.columns = columns
     composite.levels = levels
     composite.timepoints = timepoints
+
+    #make chunks
+    composite.chunkify()
+
     composite.save()
 
     self.pending_composite_creation = False
