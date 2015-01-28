@@ -47,13 +47,14 @@ class Command(BaseCommand):
       experiment, exp_created = Experiment.objects.get_or_create(name=match.group('experiment_name'))
 
       #2. create image object
-      image, created = experiment.images.get_or_create(path=os.path.join(input_path, image_file_name))
-      if created:
-        channel, channel_created = experiment.channels.get_or_create
-        image.type = img_settings.img_type(match.group('image_type'))
+      image, image_created = experiment.images.get_or_create(path=os.path.join(input_path, image_file_name))
+      if image_created:
+        channel, channel_created = experiment.channels.get_or_create(name=match.group('channel'))
+        image.channel = channel
         image.timepoint = int(match.group('timepoint'))
         image.level = int(match.group('level'))
         image.save()
+        channel.save()
         experiment.pending_composite_creation = True
         experiment.save()
         self.stdout.write('created.', ending='\n')
@@ -63,4 +64,5 @@ class Command(BaseCommand):
     #create composites in each experiment
     for experiment in Experiment.objects.all():
       if experiment.pending_composite_creation:
+        self.stdout.write('creating composite for experiment %s' % experiment.name, ending='\n')
         experiment.create_composite()

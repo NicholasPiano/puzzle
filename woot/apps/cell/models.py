@@ -27,7 +27,22 @@ class Experiment(models.Model):
       composite.images.add(image)
       image.save()
 
-    composite.save()
+    #get dimensions
+    first_image = self.images.all()[0]
+    first_image.load()
+    rows, columns = first_image.array.shape
+    levels = max([image.level for image in self.images.all()]) + 1
+    timepoints = max(image.timepoint for image in self.images.all()) + 1
+
+    composite.rows = rows
+    composite.columns = columns
+    composite.levels = levels
+    composite.timepoints = timepoints
 
     #make pixels
     composite.pixelate()
+
+    composite.save()
+
+    self.pending_composite_creation = False
+    self.save()

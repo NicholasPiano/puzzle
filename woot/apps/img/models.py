@@ -17,23 +17,31 @@ class Composite(models.Model):
   experiment = models.ForeignKey(Experiment, related_name='composites')
 
   #properties
-  rows =
+  rows = models.IntegerField(default=0)
+  columns = models.IntegerField(default=0)
+  levels = models.IntegerField(default=0)
+  timepoints = models.IntegerField(default=0)
 
   #methods
   def pixelate(self):
     #1. load all associated images and create pixel objects
     for image in self.images.all():
       print('processing %s' % image.path)
+      parameter, parameter_created = self.parameters.get_or_create(name=image.channel.name)
       image.load()
 
       #loop over array
       rows, columns = image.array.shape
-      for row in rows:
-        for column in columns:
+      for row in range(rows):
+        for column in range(columns):
           #pixels are identified uniquely by spatial coordinates -> r,c,l,t
-          pixel, created = self.pixels.get_or_create(row=row, column=column, level=image.level, timepoint=image.timepoint)
-          if created:
-            
+          pixel, created = self.pixels.get_or_create(source_image=image, row=row, column=column, level=image.level, timepoint=image.timepoint)
+
+          #parameters
+          pixel_parameter, pixel_parameter_created = pixel.parameters.get_or_create(parameter=parameter)
+          pixel_parameter.value = int(image.array[row,column])
+          pixel_parameter.save()
+          pixel.save()
 
   def chunkify(self, chunk_size=(5,5,5)):
     #create chunk objects using dimensions of images
@@ -41,9 +49,10 @@ class Composite(models.Model):
 
 class Channel(models.Model):
   #connections
-
+  experiment = models.ManyToManyField(Experiment, related_name='channels')
 
   #properties
+  name = models.CharField(max_length=255)
 
 class SourceImage(models.Model):
   '''
@@ -55,7 +64,7 @@ class SourceImage(models.Model):
   #connections
   experiment = models.ForeignKey(Experiment, related_name='images')
   composite = models.ForeignKey(Composite, related_name='images', null=True)
-  channel = models.ForeignKey(Channel, related_name='images')
+  channel = models.ForeignKey(Channel, related_name='images', null=True)
 
   #properties
   path = models.CharField(max_length=255)
@@ -66,7 +75,7 @@ class SourceImage(models.Model):
 
   #methods
   def load(self):
-    self.array = imread(os.path.join(self.path, self.filename))
+    self.array = imread(self.path)
 
 ### Units
 class Chunk(models.Model):

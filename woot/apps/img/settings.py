@@ -8,9 +8,12 @@ allowed_file_extensions = (
 )
 
 ### default image filename template
-img_template = r'(?P<experiment_name>.+)_ch(?P<image_type>[0-9]+)_t(?P<timepoint>[0-9]+)_z(?P<level>[0-9]+)\.(?P<extension>.+)$'
+img_template = r'(?P<experiment_name>.+)_ch(?P<channel>[0-9]+)_t(?P<timepoint>[0-9]+)_z(?P<level>[0-9]+)\.(?P<extension>.+)$'
 
 ### Image types
 channels = {'0':'gfp','1':'bf','2':'mask'}
 def channel(query):
-  return channels[query]
+  if query in channels.values():
+    return query
+  else:
+    return channels[query]
