@@ -1,5 +1,6 @@
 #woot.apps.img.models
 
+
 #django
 from django.db import models
 
@@ -18,56 +19,50 @@ class Bulk(models.Model):
   rows = models.IntegerField(default=0)
   columns = models.IntegerField(default=0)
   levels = models.IntegerField(default=0)
+  num_timepoints = models.IntegerField(default=0)
+  num_channels = models.IntegerField(default=0)
   array = None
 
   #methods
   def load(self):
     pass
 
-class Composite(Bulk):
-  ''' A 3D collection of chunks. '''
-  #connections
-  experiment = models.ForeignKey(Experiment, related_name='composites')
-
-  #properties
-  timepoints = models.IntegerField(default=0)
-
-  #methods
-  def chunkify(self, chunk_size=(4,4,5)):
+  def chunkify(self, chunk_size=(8,8,5)):
     #1. load entire n-D stack
     nd_stack = []
-    for channel in self.channels.all():
-      channel_stack = []
-      print(self.timepoints)
-      for timepoint in range(self.timepoints):
-        timepoint_stack = []
+    for timepoint in self.timepoints.all():
+      timepoint_stack = []
+      for channel in self.channels.all():
+        channel_stack = []
         for image in self.images.filter(channel=channel, timepoint=timepoint).order_by('level'):
           image.load()
           timepoint_stack.append(image.array)
-        timepoint_stack = np.array(timepoint_stack)
-        channel_stack.append(timepoint_stack)
-        print(timepoint_stack.shape)
+        channel_stack.append(np.array(timepoint_stack))
       nd_stack.append(np.array(channel_stack))
     nd_stack = np.array(nd_stack)
 
-    # print(nd_stack.shape)
-    # print(nd_stack)
+    # shape is now: (timepoints, channels, levels, rows, columns)
+    #2. iterate over stack by chunk size and channel
+    for timepoint in self.timepoints.all():
+      #different timepoint means different chunk
+      for channel in self.channels.all():
+        
 
-    #2. calculate appropriate chunk size
 
+    #3. create chunk at each instance and set parameters
 
-    #3. iterate over stack by chunk size and channel
-    #4. create chunk at each instance and set parameters
+class Composite(Bulk):
+  ''' A 3D collection of chunks all associated with one experiment. '''
+  #connections
+  experiment = models.ForeignKey(Experiment, related_name='composites')
 
 class Chunk(Bulk):
   ''' Subdivisions of an image of constant size, say 16x16x16. '''
   #connections
-  composite = models.ForeignKey(Composite, related_name='chunks')
-  timepoint = models.ForeignKey(Timepoint, related_name='chunks')
+  bulk = models.ForeignKey(Bulk, related_name='chunks')
 
   #properties
-  ''' n-dimension parameter space for chunks. '''
-  #1. coordinates of chunk origin
+  #1. coordinates of chunk origin relative to parent bulk
   row = models.IntegerField(default=0)
   column = models.IntegerField(default=0)
   level = models.IntegerField(default=0)
@@ -76,7 +71,7 @@ class Chunk(Bulk):
 class Channel(models.Model):
   #connections
   experiment = models.ForeignKey(Experiment, related_name='channels')
-  composite = models.ForeignKey(Composite, related_name='channels', null=True)
+  bulk = models.ForeignKey(Bulk, related_name='channels', null=True)
 
   #properties
   name = models.CharField(max_length='255')
@@ -87,10 +82,13 @@ class Channel(models.Model):
 
 class Timepoint(models.Model):
   #connections
-  composite = models.ForeignKey(Composite, related_name='timepoints')
+  experiment = models.ForeignKey(Experiment, related_name='timepoints')
+  bulk = models.ForeignKey(Bulk, related_name='timepoints', null=True)
 
   #properties
   index = models.IntegerField(default=0)
+  next = models.IntegerField(default=0)
+  previous = models.IntegerField(default=0)
 
 ### Image storage ###
 class Image(models.Model):
@@ -118,10 +116,9 @@ class SourceImage(Image):
   #connections
   experiment = models.ForeignKey(Experiment, related_name='images')
 
-class ChunkImage(Image):
+class BulkImage(Image):
   #connections
-  composite = models.ForeignKey(Composite, related_name='chunk_images', null=True)
-  chunk = models.ForeignKey(Chunk, related_name='images')
+  bulk = models.ForeignKey(Bulk, related_name='images')
 
 ### Extensible parameters ###
 class Parameter(models.Model):
@@ -130,6 +127,8 @@ class Parameter(models.Model):
 
   #properties
   name = models.CharField(max_length='255')
+  mean = models.FloatField(default=0.0)
+  max = models.FloatField(default=0.0)
 
 class ParameterInstance(models.Model):
   #connections

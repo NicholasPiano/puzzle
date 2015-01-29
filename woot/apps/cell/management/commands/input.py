@@ -17,7 +17,7 @@ class Command(BaseCommand):
     make_option('--path',
       action='store',
       dest='path',
-      default='',
+      default='icr-confocal-sample-stack',
       help='Path to scan for images'
     ),
     make_option('--base',
@@ -49,12 +49,22 @@ class Command(BaseCommand):
       #2. create image object
       image, image_created = experiment.images.get_or_create(path=os.path.join(input_path, image_file_name))
       if image_created:
+        #channel
         channel, channel_created = experiment.channels.get_or_create(name=img_settings.channel(match.group('channel')))
+        if channel_created:
+            channel.index = int(match.group('channel'))
         image.channel = channel
-        image.timepoint = int(match.group('timepoint'))
+        channel.save()
+
+        #timepoint
+        timepoint, timepoint_created = experiment.timepoints.get_or_create(index=int(match.group('timepoint')))
+        image.timepoint = timepoint
+        timepoint.save()
+
+        #level
         image.level = int(match.group('level'))
         image.save()
-        channel.save()
+
         experiment.pending_composite_creation = True
         experiment.save()
         self.stdout.write('created.', ending='\n')

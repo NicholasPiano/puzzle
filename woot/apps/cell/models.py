@@ -24,20 +24,31 @@ class Experiment(models.Model):
 
     #add all source images to composite
     for image in self.images.all():
-      composite.images.add(image)
-      image.save()
+      composite.images.create(
+        path=image.path,
+        channel=image.channel,
+        timepoint=image.timepoint,
+        level=image.level
+      )
+      image.channel.bulk = composite
+      image.channel.save()
+
+      image.timepoint.bulk = composite
+      image.timepoint.save()
 
     #get dimensions
     first_image = self.images.all()[0]
     first_image.load()
     rows, columns = first_image.array.shape
     levels = len(list(np.unique([image.level for image in self.images.all()])))
-    timepoints = len(list(np.unique([image.timepoint for image in self.images.all()])))
+    timepoints = len(list(np.unique([image.timepoint.index for image in self.images.all()])))
+    channels = len(list(np.unique([image.channel.index for image in self.images.all()])))
 
     composite.rows = rows
     composite.columns = columns
     composite.levels = levels
-    composite.timepoints = timepoints
+    composite.num_timepoints = timepoints
+    composite.num_channels = channels
 
     #make chunks
     composite.chunkify()
