@@ -11,23 +11,32 @@ import os
 from scipy.misc import imread, imsave
 import numpy as np
 
-### Models
-class Composite(models.Model):
+###### Models
+### Bulk pixel objects ###
+class Bulk(models.Model):
+  #properties
+  rows = models.IntegerField(default=0)
+  columns = models.IntegerField(default=0)
+  levels = models.IntegerField(default=0)
+  array = None
+
+  #methods
+  def load(self):
+    pass
+
+class Composite(Bulk):
   ''' A 3D collection of chunks. '''
   #connections
   experiment = models.ForeignKey(Experiment, related_name='composites')
 
   #properties
-  rows = models.IntegerField(default=0)
-  columns = models.IntegerField(default=0)
-  levels = models.IntegerField(default=0)
   timepoints = models.IntegerField(default=0)
 
   #methods
   def chunkify(self, chunk_size=(4,4,5)):
     #1. load entire n-D stack
     nd_stack = []
-    for channel in self.experiment.channels.all():
+    for channel in self.channels.all():
       channel_stack = []
       print(self.timepoints)
       for timepoint in range(self.timepoints):
@@ -50,9 +59,24 @@ class Composite(models.Model):
     #3. iterate over stack by chunk size and channel
     #4. create chunk at each instance and set parameters
 
+class Chunk(Bulk):
+  ''' Subdivisions of an image of constant size, say 16x16x16. '''
+  #connections
+  composite = models.ForeignKey(Composite, related_name='chunks')
+  timepoint = models.ForeignKey(Timepoint, related_name='chunks')
+
+  #properties
+  ''' n-dimension parameter space for chunks. '''
+  #1. coordinates of chunk origin
+  row = models.IntegerField(default=0)
+  column = models.IntegerField(default=0)
+  level = models.IntegerField(default=0)
+
+### Discontinuous coordinates ###
 class Channel(models.Model):
   #connections
   experiment = models.ForeignKey(Experiment, related_name='channels')
+  composite = models.ForeignKey(Composite, related_name='channels', null=True)
 
   #properties
   name = models.CharField(max_length='255')
@@ -68,71 +92,38 @@ class Timepoint(models.Model):
   #properties
   index = models.IntegerField(default=0)
 
-class SourceImage(models.Model):
+### Image storage ###
+class Image(models.Model):
   '''
-  Stores original details about the source images from which pixel objects and chunk objects are derived.
-
+  Stores original details about the images from which chunk objects are derived.
   An image can be uniquely identified by its full path. This must be checked before creating another image object.
 
   '''
   #connections
-  experiment = models.ForeignKey(Experiment, related_name='images')
-  composite = models.ForeignKey(Composite, related_name='images', null=True)
   channel = models.ForeignKey(Channel, related_name='images', null=True)
+  timepoint = models.ForeignKey(Timepoint, related_name='images', null=True)
 
   #properties
   array = None
   path = models.CharField(max_length=255)
   rows = models.IntegerField(default=0)
   columns = models.IntegerField(default=0)
-  timepoint = models.IntegerField(default=0)
   level = models.IntegerField(default=0)
 
   #methods
   def load(self):
     self.array = imread(self.path)
 
-class Chunk(models.Model):
-  ''' Subdivisions of an image of constant size, say 16x16x16. '''
+class SourceImage(Image):
   #connections
-  composite = models.ForeignKey(Composite, related_name='chunks')
+  experiment = models.ForeignKey(Experiment, related_name='images')
 
-  #properties
-  ''' n-dimension parameter space for chunks. '''
-  #1. coordinates of chunk origin
-  row = models.IntegerField(default=0)
-  column = models.IntegerField(default=0)
-  level = models.IntegerField(default=0)
-  timepoint = models.IntegerField(default=0)
-
-  #2. extent of the chunk boundaries
-  rows = models.IntegerField(default=0)
-  columns = models.IntegerField(default=0)
-  levels = models.IntegerField(default=0)
-
-  #3. data
-  array = None
-
-  #methods
-  def load(self): #will be quite expensive
-    pass
-
-class ChunkImage(models.Model):
+class ChunkImage(Image):
   #connections
-  composite = models.ForeignKey(Composite, related_name='chunk_images')
+  composite = models.ForeignKey(Composite, related_name='chunk_images', null=True)
   chunk = models.ForeignKey(Chunk, related_name='images')
-  channel = models.ForeignKey(Channel, related_name='chunk_images')
 
-  #properties
-  array = None
-  path = models.CharField(max_length=255)
-  rows = models.IntegerField(default=0)
-  columns = models.IntegerField(default=0)
-
-  #methods
-  def load(self):
-    self.array = imread(self.path)
-
+### Extensible parameters ###
 class Parameter(models.Model):
   #connections
   composite = models.ForeignKey(Composite, related_name='parameters')
