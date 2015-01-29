@@ -1,11 +1,11 @@
 #woot.apps.img.models
 
-
 #django
 from django.db import models
 
 #local
 from apps.cell.models import Experiment
+from apps.img.settings import generate_id_token
 
 #util
 import os
@@ -13,14 +13,38 @@ from scipy.misc import imread, imsave
 import numpy as np
 
 ###### Models
-### Bulk pixel objects ###
-class Bulk(models.Model):
+### Discontinuous coordinates ###
+class Channel(models.Model):
+  #connections
+  experiment = models.ForeignKey(Experiment, related_name='channels')
+
   #properties
+  name = models.CharField(max_length='255')
+  index = models.IntegerField(default=0)
+
+class Timepoint(models.Model):
+  #connections
+  experiment = models.ForeignKey(Experiment, related_name='timepoints')
+
+  #properties
+  index = models.IntegerField(default=0)
+  next = models.IntegerField(default=-1)
+  previous = models.IntegerField(default=-1)
+
+### Bulk pixel objects ###
+class Composite(models.Model):
+  #connections
+  experiment = models.ForeignKey(Experiment, related_name='composites')
+  channels = models.ManyToManyField(Channel, related_name='composites')
+  timepoint = models.ForeignKey(Timepoint, related_name='composites')
+  composite = models.ForeignKey(Composite, related_name='chunks')
+
+  #properties
+  id_token = models.CharField(max_length=255)
+  abnormal_sizing = models.BooleanField(default=False)
   rows = models.IntegerField(default=0)
   columns = models.IntegerField(default=0)
   levels = models.IntegerField(default=0)
-  num_timepoints = models.IntegerField(default=0)
-  num_channels = models.IntegerField(default=0)
   array = None
 
   #methods
@@ -28,67 +52,21 @@ class Bulk(models.Model):
     pass
 
   def chunkify(self, chunk_size=(8,8,5)):
-    #1. load entire n-D stack
-    nd_stack = []
+    #load entire n-D stack
     for timepoint in self.timepoints.all():
-      timepoint_stack = []
+      #get channel dictionary
+      channel_dictionary = {}
       for channel in self.channels.all():
-        channel_stack = []
+        image_stack = []
         for image in self.images.filter(channel=channel, timepoint=timepoint).order_by('level'):
           image.load()
-          timepoint_stack.append(image.array)
-        channel_stack.append(np.array(timepoint_stack))
-      nd_stack.append(np.array(channel_stack))
-    nd_stack = np.array(nd_stack)
+          image_stack.append(image.array)
+        channel_dictionary[channel.name] = np.array(image_stack)
 
-    # shape is now: (timepoints, channels, levels, rows, columns)
-    #2. iterate over stack by chunk size and channel
-    for timepoint in self.timepoints.all():
-      #different timepoint means different chunk
-      for channel in self.channels.all():
-        
+      #create chunks
+      chunk = self.chunks.create(id_token=generate_id_token(Bulk))
+      for channel in channel_dictionary.keys():
 
-
-    #3. create chunk at each instance and set parameters
-
-class Composite(Bulk):
-  ''' A 3D collection of chunks all associated with one experiment. '''
-  #connections
-  experiment = models.ForeignKey(Experiment, related_name='composites')
-
-class Chunk(Bulk):
-  ''' Subdivisions of an image of constant size, say 16x16x16. '''
-  #connections
-  bulk = models.ForeignKey(Bulk, related_name='chunks')
-
-  #properties
-  #1. coordinates of chunk origin relative to parent bulk
-  row = models.IntegerField(default=0)
-  column = models.IntegerField(default=0)
-  level = models.IntegerField(default=0)
-
-### Discontinuous coordinates ###
-class Channel(models.Model):
-  #connections
-  experiment = models.ForeignKey(Experiment, related_name='channels')
-  bulk = models.ForeignKey(Bulk, related_name='channels', null=True)
-
-  #properties
-  name = models.CharField(max_length='255')
-  index = models.IntegerField(default=0)
-  mean = models.FloatField(default=0.0)
-  max = models.FloatField(default=0.0)
-  background = models.FloatField(default=0.0)
-
-class Timepoint(models.Model):
-  #connections
-  experiment = models.ForeignKey(Experiment, related_name='timepoints')
-  bulk = models.ForeignKey(Bulk, related_name='timepoints', null=True)
-
-  #properties
-  index = models.IntegerField(default=0)
-  next = models.IntegerField(default=0)
-  previous = models.IntegerField(default=0)
 
 ### Image storage ###
 class Image(models.Model):
@@ -98,27 +76,27 @@ class Image(models.Model):
 
   '''
   #connections
+  experiment = models.ForeignKey(Experiment, related_name='images')
   channel = models.ForeignKey(Channel, related_name='images', null=True)
   timepoint = models.ForeignKey(Timepoint, related_name='images', null=True)
 
   #properties
-  array = None
   path = models.CharField(max_length=255)
   rows = models.IntegerField(default=0)
   columns = models.IntegerField(default=0)
   level = models.IntegerField(default=0)
+  array = None
 
   #methods
   def load(self):
     self.array = imread(self.path)
 
-class SourceImage(Image):
+class CompositeImage(Image):
   #connections
-  experiment = models.ForeignKey(Experiment, related_name='images')
+  composite = models.ForeignKey(Composite, related_name='images')
 
-class BulkImage(Image):
-  #connections
-  bulk = models.ForeignKey(Bulk, related_name='images')
+  #properties
+  abnormal_sizing = models.BooleanField(default=False)
 
 ### Extensible parameters ###
 class Parameter(models.Model):
