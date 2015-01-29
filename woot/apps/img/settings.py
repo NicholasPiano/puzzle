@@ -11,9 +11,9 @@ allowed_file_extensions = (
 img_template = r'(?P<experiment_name>.+)_ch(?P<channel>[0-9]+)_t(?P<timepoint>[0-9]+)_z(?P<level>[0-9]+)\.(?P<extension>.+)$'
 
 ### Image types
-channels = {'0':'gfp','1':'bf','2':'mask'}
+channels = {
+  '0':'gfp','1':'bf','2':'mask',
+  'gfp':'0','bf':'1','mask':'2',
+}
 def channel(query):
-  if query in channels.values():
-    return query
-  else:
-    return channels[query]
+  return channels[query]

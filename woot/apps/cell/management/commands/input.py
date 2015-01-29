@@ -49,7 +49,7 @@ class Command(BaseCommand):
       #2. create image object
       image, image_created = experiment.images.get_or_create(path=os.path.join(input_path, image_file_name))
       if image_created:
-        channel, channel_created = experiment.channels.get_or_create(name=match.group('channel'))
+        channel, channel_created = experiment.channels.get_or_create(name=img_settings.channel(match.group('channel')))
         image.channel = channel
         image.timepoint = int(match.group('timepoint'))
         image.level = int(match.group('level'))

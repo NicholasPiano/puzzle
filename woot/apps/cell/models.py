@@ -7,7 +7,7 @@ from django.db import models
 
 
 #util
-
+import numpy as np
 
 ### Models
 class Experiment(models.Model):
@@ -31,8 +31,8 @@ class Experiment(models.Model):
     first_image = self.images.all()[0]
     first_image.load()
     rows, columns = first_image.array.shape
-    levels = max([image.level for image in self.images.all()]) + 1
-    timepoints = max(image.timepoint for image in self.images.all()) + 1
+    levels = len(list(np.unique([image.level for image in self.images.all()])))
+    timepoints = len(list(np.unique([image.timepoint for image in self.images.all()])))
 
     composite.rows = rows
     composite.columns = columns

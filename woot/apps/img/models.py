@@ -9,6 +9,7 @@ from apps.cell.models import Experiment
 #util
 import os
 from scipy.misc import imread, imsave
+import numpy as np
 
 ### Models
 class Composite(models.Model):
@@ -23,12 +24,31 @@ class Composite(models.Model):
   timepoints = models.IntegerField(default=0)
 
   #methods
-  def chunkify(self, chunk_size=(6,6,5)):
+  def chunkify(self, chunk_size=(4,4,5)):
     #1. load entire n-D stack
+    nd_stack = []
+    for channel in self.experiment.channels.all():
+      channel_stack = []
+      print(self.timepoints)
+      for timepoint in range(self.timepoints):
+        timepoint_stack = []
+        for image in self.images.filter(channel=channel, timepoint=timepoint).order_by('level'):
+          image.load()
+          timepoint_stack.append(image.array)
+        timepoint_stack = np.array(timepoint_stack)
+        channel_stack.append(timepoint_stack)
+        print(timepoint_stack.shape)
+      nd_stack.append(np.array(channel_stack))
+    nd_stack = np.array(nd_stack)
+
+    # print(nd_stack.shape)
+    # print(nd_stack)
+
     #2. calculate appropriate chunk size
+
+
     #3. iterate over stack by chunk size and channel
     #4. create chunk at each instance and set parameters
-    pass
 
 class Channel(models.Model):
   #connections
@@ -36,6 +56,17 @@ class Channel(models.Model):
 
   #properties
   name = models.CharField(max_length='255')
+  index = models.IntegerField(default=0)
+  mean = models.FloatField(default=0.0)
+  max = models.FloatField(default=0.0)
+  background = models.FloatField(default=0.0)
+
+class Timepoint(models.Model):
+  #connections
+  composite = models.ForeignKey(Composite, related_name='timepoints')
+
+  #properties
+  index = models.IntegerField(default=0)
 
 class SourceImage(models.Model):
   '''
