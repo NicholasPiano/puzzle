@@ -17,7 +17,7 @@ class Command(BaseCommand):
     make_option('--path',
       action='store',
       dest='path',
-      default='',
+      default='icr-confocal-sample-stack',
       help='Path to scan for images'
     ),
     make_option('--base',
@@ -40,16 +40,39 @@ class Command(BaseCommand):
 
     #for each filename, generate dictionary of parameters
     for image_file_name in image_file_list:
+      self.stdout.write(image_file_name + '... ', ending='')
       match = re.match(img_settings.img_template, image_file_name)
       #need path, experiment_name, image_type, timepoint, level, and extension to make image object
       #1. check if experiment exists
-      experiment, = Experiment.objects.get_or_create(name=match.group('experiment_name'))
+      experiment, exp_created = Experiment.objects.get_or_create(name=match.group('experiment_name'))
 
       #2. create image object
-      image, created = experiment.images.get_or_create(path=os.path.join(input_path, image_file_name))
-      if created:
-        image.type = img_settings.img_type(match.group('image_type'))
-        image.timepoint = int(match.group('timepoint'))
+      image, image_created = experiment.images.get_or_create(path=os.path.join(input_path, image_file_name))
+      if image_created:
+        #channel
+        channel, channel_created = experiment.channels.get_or_create(name=img_settings.channel(match.group('channel')))
+        if channel_created:
+            channel.index = int(match.group('channel'))
+        image.channel = channel
+        channel.save()
+
+        #timepoint
+        timepoint, timepoint_created = experiment.timepoints.get_or_create(index=int(match.group('timepoint')))
+        image.timepoint = timepoint
+        timepoint.save()
+
+        #level
         image.level = int(match.group('level'))
         image.save()
+
+        experiment.pending_composite_creation = True
         experiment.save()
+        self.stdout.write('created.', ending='\n')
+      else:
+        self.stdout.write('already exists.', ending='\n')
+
+    #create composites in each experiment
+    for experiment in Experiment.objects.all():
+      if experiment.pending_composite_creation:
+        self.stdout.write('creating composite for experiment %s' % experiment.name, ending='\n')
+        experiment.create_composite()
