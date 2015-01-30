@@ -88,7 +88,7 @@ class Composite(models.Model):
 
   #methods
   def bulkify(self, timepoint_index=None, origin=(0,0,0), shape=(8,8,5)):
-    print('cutting %d,%d,%d at %d,%d,%d from composite of experiment %s' % tuple(shape + origin + tuple(self.experiment.name))
+    print('cutting %d,%d,%d at %d,%d,%d from composite of experiment %s' % tuple(shape + origin + tuple([self.experiment.name])))
     if timepoint_index is not None:
       #coords
       row0, row1 = (origin[0], origin[0]+shape[0])
@@ -97,18 +97,18 @@ class Composite(models.Model):
 
       #1. load great bulk
       great_bulk = self.bulks.get(great=True, timepoint=self.timepoints.get(index=timepoint_index))
-      sub_bulk = self.bulks.create(timepoint=self.timepoints.get(index=timepoint_index))
+      sub_bulk = self.bulks.create(experiment=self.experiment, timepoint=self.timepoints.get(index=timepoint_index))
 
       #2. load great gons for each channel
       for channel in great_bulk.channels.all():
-        print('cutting channel %s...' % channel.name, end='')
+        print('cutting channel %s...' % channel.name)
         #add channels
         sub_bulk.channels.add(channel)
         channel.bulks.add(sub_bulk)
         channel.save()
 
         #coords
-        sub_gon = sub_bulk.gons.create(experiment=self.experiment, composite=self, channel=channel, timepoint=great_gon.timepoint, id_token=generate_id_token(Gon))
+        sub_gon = sub_bulk.gons.create(experiment=self.experiment, composite=self, channel=channel, timepoint=great_bulk.timepoint, id_token=generate_id_token(Gon))
         sub_gon.row = origin[0]
         sub_gon.column = origin[1]
         sub_gon.level = origin[2]
@@ -124,12 +124,12 @@ class Composite(models.Model):
         #save images and create paths
         for level, image in enumerate(np.rollaxis(new_array, 2)): #down through levels
           path_url = self.experiment.path + '%s_%d.tiff' % (sub_gon.id_token, level)
-          sub_gon.paths.create(url=path_url, level=level)
+          sub_gon.paths.create(experiment=self.experiment, url=path_url, level=level)
           print('saving %s...' % path_url)
           imsave(path_url, image)
 
         sub_gon.save()
-        print('done.')
+        print('channel %s done.' % channel.name)
 
 ### Discontinuous coordinates ###
 class Channel(models.Model):
@@ -195,7 +195,7 @@ class Gon(models.Model):
       array = []
       for path in self.paths.order_by('level'):
         array.append(imread(path.url))
-      self.array = np.transpose(np.array(array), (2,0,1))
+      self.array = np.transpose(np.array(array), (1,2,0))
 
 ### Path objects
 class Path(models.Model):
