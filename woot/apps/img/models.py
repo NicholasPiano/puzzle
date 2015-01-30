@@ -1,11 +1,10 @@
 #woot.apps.img.models
 
-
 #django
 from django.db import models
 
 #local
-from apps.cell.models import Experiment
+from apps.img.settings import generate_id_token
 
 #util
 import os
@@ -13,130 +12,167 @@ from scipy.misc import imread, imsave
 import numpy as np
 
 ###### Models
-### Bulk pixel objects ###
-class Bulk(models.Model):
+### Top level structure ###
+class Experiment(models.Model):
   #properties
-  rows = models.IntegerField(default=0)
-  columns = models.IntegerField(default=0)
-  levels = models.IntegerField(default=0)
-  num_timepoints = models.IntegerField(default=0)
-  num_channels = models.IntegerField(default=0)
-  array = None
+  name = models.CharField(max_length=255)
+  pending_composite_creation = models.BooleanField(default=False)
+
+  #1. location
+  path = models.CharField(max_length=255)
+
+  #2. scaling
+  xmop = models.FloatField(default=0.0) #microns over pixel ratio
+  ymop = models.FloatField(default=0.0)
+  zmop = models.FloatField(default=0.0)
+  tpf = models.FloatField(default=0.0) #minutes in a timepoint
 
   #methods
-  def load(self):
-    pass
+  def compose(self):
+    ''' Make a new composite using all currently available images. Each call will generate a new composite. '''
+    #1. composite
+    composite = self.composites.create(id_token=generate_id_token(Composite))
 
-  def chunkify(self, chunk_size=(8,8,5)):
-    #1. load entire n-D stack
-    nd_stack = []
-    for timepoint in self.timepoints.all():
-      timepoint_stack = []
-      for channel in self.channels.all():
-        channel_stack = []
-        for image in self.images.filter(channel=channel, timepoint=timepoint).order_by('level'):
-          image.load()
-          timepoint_stack.append(image.array)
-        channel_stack.append(np.array(timepoint_stack))
-      nd_stack.append(np.array(channel_stack))
-    nd_stack = np.array(nd_stack)
+    #2. run through images
+    ## Three tasks:
+    ## 1. Create channels and timepoints
+    ## 2. Create single bulk with a gon per channel for whole set
+    ## 3. Create one bulk for each level slice with image gons.
+    for path in self.paths.all():
+      channel, channel_created = self.channels.get_or_create(composite=composite, name=path.channel)
+      if channel_created:
+        channel.index = path.channel_id
+        channel.save()
 
-    # shape is now: (timepoints, channels, levels, rows, columns)
-    #2. iterate over stack by chunk size and channel
-    for timepoint in self.timepoints.all():
-      #different timepoint means different chunk
-      for channel in self.channels.all():
-        
+      timepoint, timepoint_created = self.timepoints.get_or_create(composite=composite, index=path.timepoint)
 
+    # great bulk for each timepoint
+    for timepoint in composite.timepoints.all():
+      great_bulk = composite.bulks.create(experiment=self, timepoint=timepoint, name='great_bulk')
+      for channel in composite.channels.all():
+        great_bulk.channels.add(channel)
+        channel.bulks.add(great_bulk)
+        channel.save()
+        great_bulk.save()
 
-    #3. create chunk at each instance and set parameters
+        #create gons
+        print('creating great gon at t%d, ch-%s'%(timepoint.index, channel.name))
+        great_gon = great_bulk.gons.create(experiment=self, composite=composite, timepoint=timepoint, channel=channel, id_token=generate_id_token(Gon), name='great_bulk')
+        paths = self.paths.filter(timepoint=timepoint.index, channel=channel.name)
+        rows, columns = imread(paths[0].url).shape
+        great_gon.rows = rows
+        great_gon.columns = columns
+        great_gon.levels = paths.count()
 
-class Composite(Bulk):
-  ''' A 3D collection of chunks all associated with one experiment. '''
+        for path in paths:
+          print('creating gon: t%d, ch-%s, %s' % (timepoint.index, channel.name, path.url))
+          #create one gon for each image and add each path to the great gon
+          gon = great_bulk.gons.create(experiment=self, composite=composite, timepoint=timepoint, channel=channel, id_token=generate_id_token(Gon), level=path.level)
+          gon.rows = rows
+          gon.columns = columns
+
+          #paths
+          gon_path = gon.paths.create(experiment=self, url=path.url)
+          gon.save()
+          great_gon.paths.create(experiment=self, url=path.url, level=path.level)
+
+        great_gon.save()
+      great_bulk.save()
+
+class Composite(models.Model):
   #connections
   experiment = models.ForeignKey(Experiment, related_name='composites')
 
-class Chunk(Bulk):
-  ''' Subdivisions of an image of constant size, say 16x16x16. '''
-  #connections
-  bulk = models.ForeignKey(Bulk, related_name='chunks')
-
   #properties
-  #1. coordinates of chunk origin relative to parent bulk
-  row = models.IntegerField(default=0)
-  column = models.IntegerField(default=0)
-  level = models.IntegerField(default=0)
+  id_token = models.CharField(max_length=8)
 
 ### Discontinuous coordinates ###
 class Channel(models.Model):
   #connections
   experiment = models.ForeignKey(Experiment, related_name='channels')
-  bulk = models.ForeignKey(Bulk, related_name='channels', null=True)
+  composite = models.ForeignKey(Composite, related_name='channels')
 
   #properties
   name = models.CharField(max_length='255')
   index = models.IntegerField(default=0)
-  mean = models.FloatField(default=0.0)
-  max = models.FloatField(default=0.0)
-  background = models.FloatField(default=0.0)
 
 class Timepoint(models.Model):
   #connections
   experiment = models.ForeignKey(Experiment, related_name='timepoints')
-  bulk = models.ForeignKey(Bulk, related_name='timepoints', null=True)
+  composite = models.ForeignKey(Composite, related_name='timepoints')
 
   #properties
   index = models.IntegerField(default=0)
-  next = models.IntegerField(default=0)
-  previous = models.IntegerField(default=0)
+  next = models.IntegerField(default=-1)
+  previous = models.IntegerField(default=-1)
 
-### Image storage ###
-class Image(models.Model):
-  '''
-  Stores original details about the images from which chunk objects are derived.
-  An image can be uniquely identified by its full path. This must be checked before creating another image object.
-
-  '''
+### Bulk pixel objects ###
+class Bulk(models.Model):
   #connections
-  channel = models.ForeignKey(Channel, related_name='images', null=True)
-  timepoint = models.ForeignKey(Timepoint, related_name='images', null=True)
+  experiment = models.ForeignKey(Experiment, related_name='bulks')
+  composite = models.ForeignKey(Composite, related_name='bulks')
+  channels = models.ManyToManyField(Channel, related_name='bulks')
+  timepoint = models.ForeignKey(Timepoint, related_name='bulks')
 
   #properties
-  array = None
-  path = models.CharField(max_length=255)
-  rows = models.IntegerField(default=0)
-  columns = models.IntegerField(default=0)
+  name = models.CharField(max_length=255, default='bulk')
+
+class Gon(models.Model):
+  #connections
+  experiment = models.ForeignKey(Experiment, related_name='gons')
+  composite = models.ForeignKey(Composite, related_name='gons')
+  channel = models.ForeignKey(Channel, related_name='gons')
+  timepoint = models.ForeignKey(Timepoint, related_name='gons')
+  bulk = models.ForeignKey(Bulk, related_name='gons')
+
+  #properties
+  #1. identification
+  name = models.CharField(max_length=255, default='gon')
+  id_token = models.CharField(max_length=8)
+  abnormal_sizing = models.BooleanField(default=False)
+
+  #2. size
+  rows = models.IntegerField(default=1)
+  columns = models.IntegerField(default=1)
+  levels = models.IntegerField(default=1)
+
+  #3. origin
+  row = models.IntegerField(default=0)
+  column = models.IntegerField(default=0)
   level = models.IntegerField(default=0)
+
+  #4. data
+  array = None
 
   #methods
   def load(self):
-    self.array = imread(self.path)
+    array = []
+    for path in self.paths.order_by('level'):
+      array.append(imread(path.url))
+    self.array = np.transpose(np.array(array), (2,0,1))
 
-class SourceImage(Image):
+### Path objects
+class Path(models.Model):
   #connections
-  experiment = models.ForeignKey(Experiment, related_name='images')
+  experiment = models.ForeignKey(Experiment, related_name='paths')
+  gon = models.ForeignKey(Gon, related_name='paths', null=True)
 
-class BulkImage(Image):
-  #connections
-  bulk = models.ForeignKey(Bulk, related_name='images')
+  #properties
+  url = models.CharField(max_length=255)
+  channel = models.CharField(max_length=255)
+  channel_id = models.IntegerField(default=0)
+  timepoint = models.IntegerField(default=0)
+  level = models.IntegerField(default=0)
 
 ### Extensible parameters ###
 class Parameter(models.Model):
   #connections
-  composite = models.ForeignKey(Composite, related_name='parameters')
+  channel = models.ForeignKey(Channel, related_name='instances')
+  bulk = models.ForeignKey(Bulk, related_name='parameters', null=True)
+  gon = models.ForeignKey(Gon, related_name='parameters')
 
   #properties
   name = models.CharField(max_length='255')
-  mean = models.FloatField(default=0.0)
-  max = models.FloatField(default=0.0)
-
-class ParameterInstance(models.Model):
-  #connections
-  composite = models.ForeignKey(Composite, related_name='parameter_instances')
-  parameter = models.ForeignKey(Parameter, related_name='instances')
-  chunk = models.ForeignKey(Chunk, related_name='parameter_instances')
-
-  #properties
   value = models.IntegerField(default=0)
   float_value = models.FloatField(default=0.0)
   boolean_value = models.BooleanField(default=False)

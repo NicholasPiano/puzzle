@@ -2,9 +2,8 @@
 from django.core.management.base import BaseCommand, CommandError
 
 #local
-from apps.cell.models import Experiment
+from apps.img.models import Experiment
 from apps.img import settings as img_settings
-from apps.img.models import SourceImage
 
 #util
 import os
@@ -17,7 +16,7 @@ class Command(BaseCommand):
     make_option('--path',
       action='store',
       dest='path',
-      default='icr-confocal-sample-stack',
+      default='icr-confocal-sample-stack/base/',
       help='Path to scan for images'
     ),
     make_option('--base',
@@ -42,37 +41,32 @@ class Command(BaseCommand):
     for image_file_name in image_file_list:
       self.stdout.write(image_file_name + '... ', ending='')
       match = re.match(img_settings.img_template, image_file_name)
-      #need path, experiment_name, image_type, timepoint, level, and extension to make image object
+
       #1. check if experiment exists
-      experiment, exp_created = Experiment.objects.get_or_create(name=match.group('experiment_name'))
+      experiment, exp_created = Experiment.objects.get_or_create(name=str(match.group('experiment_name')))
+      if exp_created:
+        experiment.path = input_path
 
-      #2. create image object
-      image, image_created = experiment.images.get_or_create(path=os.path.join(input_path, image_file_name))
-      if image_created:
-        #channel
-        channel, channel_created = experiment.channels.get_or_create(name=img_settings.channel(match.group('channel')))
-        if channel_created:
-            channel.index = int(match.group('channel'))
-        image.channel = channel
-        channel.save()
-
-        #timepoint
-        timepoint, timepoint_created = experiment.timepoints.get_or_create(index=int(match.group('timepoint')))
-        image.timepoint = timepoint
-        timepoint.save()
-
-        #level
-        image.level = int(match.group('level'))
-        image.save()
-
-        experiment.pending_composite_creation = True
-        experiment.save()
+      #3. create path objects
+      path, path_created = experiment.paths.get_or_create(url=os.path.join(input_path, image_file_name))
+      if path_created:
         self.stdout.write('created.', ending='\n')
+        path.channel = img_settings.channel(match.group('channel'))
+        path.channel_id = int(match.group('channel'))
+        path.timepoint = int(match.group('timepoint'))
+        path.level = int(match.group('level'))
+        path.save()
       else:
         self.stdout.write('already exists.', ending='\n')
 
-    #create composites in each experiment
+      #pending composites
+      experiment.pending_composite_creation = True #images have just been added
+      experiment.save()
+
+    #create new composite
     for experiment in Experiment.objects.all():
       if experiment.pending_composite_creation:
-        self.stdout.write('creating composite for experiment %s' % experiment.name, ending='\n')
-        experiment.create_composite()
+        self.stdout.write('creating new composite for experiment %s...'%experiment.name, ending='\n')
+        experiment.compose()
+        experiment.pending_composite_creation = False
+        experiment.save()
