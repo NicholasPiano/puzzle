@@ -19,7 +19,6 @@ composite_img_template = {
 ### Image types
 channels = {
   '0':'gfp','1':'bf','2':'mask',
-  'gfp':'0','bf':'1','mask':'2',
 }
 def channel(query):
   return channels[query]

@@ -15,6 +15,8 @@ import numpy as np
 ### Top level structure ###
 class Experiment(models.Model):
   #properties
+  name = models.CharField(max_length=255)
+
   #1. location
   path = models.CharField(max_length=255)
 
@@ -29,7 +31,6 @@ class Composite(models.Model):
   experiment = models.ForeignKey(Experiment, related_name='composites')
 
   #properties
-  name = models.CharField(max_length=255, default='New composite')
   id_token = models.CharField(max_length=8)
 
 ### Discontinuous coordinates ###
@@ -45,6 +46,7 @@ class Channel(models.Model):
 class Timepoint(models.Model):
   #connections
   experiment = models.ForeignKey(Experiment, related_name='timepoints')
+  composite = models.ForeignKey(Composite, related_name='timepoints')
 
   #properties
   index = models.IntegerField(default=0)
@@ -66,7 +68,6 @@ class Gon(models.Model):
   channel = models.ForeignKey(Channel, related_name='gons')
   timepoint = models.ForeignKey(Timepoint, related_name='gons')
   bulk = models.ForeignKey(Bulk, related_name='gons')
-  gon = models.ForeignKey(Gon, related_name='gons')
 
   #properties
   #1. identification
@@ -101,6 +102,8 @@ class Path(models.Model):
 
   #properties
   url = models.CharField(max_length=255)
+  channel = models.Charfield(max_length=255)
+  timepoint = models.IntegerField(default=0)
   level = models.IntegerField(default=0)
 
 ### Extensible parameters ###
