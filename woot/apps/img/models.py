@@ -29,7 +29,8 @@ class Composite(models.Model):
   experiment = models.ForeignKey(Experiment, related_name='composites')
 
   #properties
-
+  name = models.CharField(max_length=255, default='New composite')
+  id_token = models.CharField(max_length=8)
 
 ### Discontinuous coordinates ###
 class Channel(models.Model):
@@ -50,26 +51,26 @@ class Timepoint(models.Model):
   next = models.IntegerField(default=-1)
   previous = models.IntegerField(default=-1)
 
-class Level(models.Model):
-  #connections
-  experiment = models.ForeignKey(Experiment, related_name='levels')
-  composite = models.ForeignKey(Composite, related_name='levels')
-
-  #properties
-  index = models.IntegerField(default=0)
-
 ### Bulk pixel objects ###
 class Bulk(models.Model):
-
+  #connections
+  experiment = models.ForeignKey(Experiment, related_name='bulks')
+  composite = models.ForeignKey(Composite, related_name='bulks')
+  channels = models.ManyToManyField(Channel, related_name='bulks')
+  timepoint = models.ForeignKey(Timepoint, related_name='bulks')
 
 class Gon(models.Model):
   #connections
   experiment = models.ForeignKey(Experiment, related_name='gons')
+  composite = models.ForeignKey(Composite, related_name='gons')
+  channel = models.ForeignKey(Channel, related_name='gons')
   timepoint = models.ForeignKey(Timepoint, related_name='gons')
+  bulk = models.ForeignKey(Bulk, related_name='gons')
+  gon = models.ForeignKey(Gon, related_name='gons')
 
   #properties
   #1. identification
-  id_token = models.CharField(max_length=255)
+  id_token = models.CharField(max_length=8)
   abnormal_sizing = models.BooleanField(default=False)
 
   #2. size
@@ -85,13 +86,28 @@ class Gon(models.Model):
   #4. data
   array = None
 
-### Path objects
+  #methods
+  def load(self):
+    array = []
+    for path in self.paths.order_by('level'):
+      array.append(imread(path))
+    self.array = np.array(array)
 
+### Path objects
+class Path(models.Model):
+  #connections
+  experiment = models.ForeignKey(Experiment, related_name='paths')
+  gon = models.ForeignKey(Gon, related_name='paths', null=True)
+
+  #properties
+  url = models.CharField(max_length=255)
+  level = models.IntegerField(default=0)
 
 ### Extensible parameters ###
 class Parameter(models.Model):
   #connections
   channel = models.ForeignKey(Channel, related_name='instances')
+  bulk = models.ForeignKey(Bulk, related_name='parameters', null=True)
   gon = models.ForeignKey(Gon, related_name='parameters')
 
   #properties
