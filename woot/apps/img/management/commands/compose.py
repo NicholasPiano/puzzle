@@ -2,13 +2,9 @@
 from django.core.management.base import BaseCommand, CommandError
 
 #local
-from apps.img.models import Experiment
-from apps.img import settings as img_settings
+from apps.img.models import Composite
 
 #util
-import os
-import re
-from optparse import make_option
 
 ### Command
 class Command(BaseCommand):
@@ -16,4 +12,5 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    pass
+    c = Composite.objects.get()
+    c.bulkify(timepoint_index=14)
