@@ -16,6 +16,7 @@ import numpy as np
 class Experiment(models.Model):
   #properties
   name = models.CharField(max_length=255)
+  pending_composite_creation = models.BooleanField(default=False)
 
   #1. location
   path = models.CharField(max_length=255)
@@ -25,6 +26,58 @@ class Experiment(models.Model):
   ymop = models.FloatField(default=0.0)
   zmop = models.FloatField(default=0.0)
   tpf = models.FloatField(default=0.0) #minutes in a timepoint
+
+  #methods
+  def compose(self):
+    ''' Make a new composite using all currently available images. Each call will generate a new composite. '''
+    #1. composite
+    composite = self.composites.create(id_token=generate_id_token(Composite))
+
+    #2. run through images
+    ## Three tasks:
+    ## 1. Create channels and timepoints
+    ## 2. Create single bulk with a gon per channel for whole set
+    ## 3. Create one bulk for each level slice with image gons.
+    for path in self.paths.all():
+      channel, channel_created = self.channels.get_or_create(composite=composite, name=path.channel)
+      if channel_created:
+        channel.index = path.channel_id
+        channel.save()
+
+      timepoint, timepoint_created = self.timepoints.get_or_create(composite=composite, index=path.timepoint)
+
+    # great bulk for each timepoint
+    for timepoint in composite.timepoints.all():
+      great_bulk = composite.bulks.create(experiment=self, timepoint=timepoint, name='great_bulk')
+      for channel in composite.channels.all():
+        great_bulk.channels.add(channel)
+        channel.bulks.add(great_bulk)
+        channel.save()
+        great_bulk.save()
+
+        #create gons
+        print('creating great gon at t%d, ch-%s'%(timepoint.index, channel.name))
+        great_gon = great_bulk.gons.create(experiment=self, composite=composite, timepoint=timepoint, channel=channel, id_token=generate_id_token(Gon), name='great_bulk')
+        paths = self.paths.filter(timepoint=timepoint.index, channel=channel.name)
+        rows, columns = imread(paths[0].url).shape
+        great_gon.rows = rows
+        great_gon.columns = columns
+        great_gon.levels = paths.count()
+
+        for path in paths:
+          print('creating gon: t%d, ch-%s, %s' % (timepoint.index, channel.name, path.url))
+          #create one gon for each image and add each path to the great gon
+          gon = great_bulk.gons.create(experiment=self, composite=composite, timepoint=timepoint, channel=channel, id_token=generate_id_token(Gon), level=path.level)
+          gon.rows = rows
+          gon.columns = columns
+
+          #paths
+          gon_path = gon.paths.create(experiment=self, url=path.url)
+          gon.save()
+          great_gon.paths.create(experiment=self, url=path.url, level=path.level)
+
+        great_gon.save()
+      great_bulk.save()
 
 class Composite(models.Model):
   #connections
@@ -61,6 +114,9 @@ class Bulk(models.Model):
   channels = models.ManyToManyField(Channel, related_name='bulks')
   timepoint = models.ForeignKey(Timepoint, related_name='bulks')
 
+  #properties
+  name = models.CharField(max_length=255, default='bulk')
+
 class Gon(models.Model):
   #connections
   experiment = models.ForeignKey(Experiment, related_name='gons')
@@ -71,6 +127,7 @@ class Gon(models.Model):
 
   #properties
   #1. identification
+  name = models.CharField(max_length=255, default='gon')
   id_token = models.CharField(max_length=8)
   abnormal_sizing = models.BooleanField(default=False)
 
@@ -91,8 +148,8 @@ class Gon(models.Model):
   def load(self):
     array = []
     for path in self.paths.order_by('level'):
-      array.append(imread(path))
-    self.array = np.array(array)
+      array.append(imread(path.url))
+    self.array = np.transpose(np.array(array), (2,0,1))
 
 ### Path objects
 class Path(models.Model):
@@ -102,7 +159,8 @@ class Path(models.Model):
 
   #properties
   url = models.CharField(max_length=255)
-  channel = models.Charfield(max_length=255)
+  channel = models.CharField(max_length=255)
+  channel_id = models.IntegerField(default=0)
   timepoint = models.IntegerField(default=0)
   level = models.IntegerField(default=0)
 

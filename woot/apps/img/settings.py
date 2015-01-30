@@ -3,6 +3,7 @@
 ''' Settings specific to the img app '''
 
 import random
+import string
 
 ### Image file extensions
 allowed_file_extensions = (
@@ -24,6 +25,7 @@ def channel(query):
   return channels[query]
 
 ### Generate id token
+chars = string.ascii_uppercase + string.digits
 def generate_id_token(Obj): #expects Obj.objects
   def get_id_token():
     return ''.join([random.choice(chars) for _ in range(8)]) #8 character string

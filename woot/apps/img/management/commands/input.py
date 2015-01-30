@@ -46,15 +46,27 @@ class Command(BaseCommand):
       experiment, exp_created = Experiment.objects.get_or_create(name=str(match.group('experiment_name')))
       if exp_created:
         experiment.path = input_path
-        experiment.save()
 
       #3. create path objects
       path, path_created = experiment.paths.get_or_create(url=os.path.join(input_path, image_file_name))
       if path_created:
         self.stdout.write('created.', ending='\n')
         path.channel = img_settings.channel(match.group('channel'))
+        path.channel_id = int(match.group('channel'))
         path.timepoint = int(match.group('timepoint'))
         path.level = int(match.group('level'))
         path.save()
       else:
         self.stdout.write('already exists.', ending='\n')
+
+      #pending composites
+      experiment.pending_composite_creation = True #images have just been added
+      experiment.save()
+
+    #create new composite
+    for experiment in Experiment.objects.all():
+      if experiment.pending_composite_creation:
+        self.stdout.write('creating new composite for experiment %s...'%experiment.name, ending='\n')
+        experiment.compose()
+        experiment.pending_composite_creation = False
+        experiment.save()
