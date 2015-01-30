@@ -20,6 +20,7 @@ class Experiment(models.Model):
 
   #1. location
   path = models.CharField(max_length=255)
+  composite_path = models.CharField(max_length=255)
 
   #2. scaling
   xmop = models.FloatField(default=0.0) #microns over pixel ratio
@@ -88,6 +89,9 @@ class Composite(models.Model):
 
   #methods
   def bulkify(self, timepoint_index=None, origin=(0,0,0), shape=(8,8,5)):
+    if not os.path.exists(self.experiment.composite_path):
+      os.mkdir(self.experiment.composite_path)
+
     print('cutting %d,%d,%d at %d,%d,%d from composite of experiment %s' % tuple(shape + origin + tuple([self.experiment.name])))
     if timepoint_index is not None:
       #coords
@@ -123,7 +127,7 @@ class Composite(models.Model):
 
         #save images and create paths
         for level, image in enumerate(np.rollaxis(new_array, 2)): #down through levels
-          path_url = self.experiment.path + '%s_%d.tiff' % (sub_gon.id_token, level)
+          path_url = self.experiment.composite_path + '%s_%d.tiff' % (sub_gon.id_token, level)
           sub_gon.paths.create(experiment=self.experiment, url=path_url, level=level)
           print('saving %s...' % path_url)
           imsave(path_url, image)
