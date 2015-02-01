@@ -92,57 +92,6 @@ class Composite(models.Model):
   #properties
   id_token = models.CharField(max_length=8)
 
-  #methods
-  def bulkify(self, timepoint_index=None, origin=(0,0,0), shape=(8,8,5)):
-    if not os.path.exists(self.experiment.composite_path):
-      os.mkdir(self.experiment.composite_path)
-
-    print('cutting %d,%d,%d at %d,%d,%d from composite of experiment %s' % tuple(shape + origin + tuple([self.experiment.name])))
-    if timepoint_index is not None:
-      #coords
-      row0, row1 = (origin[0], origin[0]+shape[0])
-      column0, column1 = (origin[1], origin[1]+shape[1])
-      level0, level1 = (origin[2], origin[2]+shape[2])
-
-      #1. load great bulk
-      great_bulk = self.bulks.get(great=True, timepoint=self.timepoints.get(index=timepoint_index))
-      sub_bulk = self.bulks.create(experiment=self.experiment, timepoint=self.timepoints.get(index=timepoint_index))
-
-      #2. load great gons for each channel
-      for channel in great_bulk.channels.all():
-        print('cutting channel %s...' % channel.name)
-        #add channels
-        sub_bulk.channels.add(channel)
-        channel.bulks.add(sub_bulk)
-        channel.save()
-
-        #coords
-        sub_gon = sub_bulk.gons.create(experiment=self.experiment, composite=self, channel=channel, timepoint=great_bulk.timepoint, id_token=generate_id_token(Gon))
-        sub_gon.row = origin[0]
-        sub_gon.column = origin[1]
-        sub_gon.level = origin[2]
-        sub_gon.rows = shape[0]
-        sub_gon.columns = shape[1]
-        sub_gon.levels = shape[2]
-
-        #cut array
-        great_gon = great_bulk.gons.get(channel=channel, great=True)
-        great_gon.load()
-        new_array = great_gon.array[row0:row1,column0:column1,level0:level1]
-
-        #save images and create paths
-        for level, image in enumerate(np.rollaxis(new_array, 2)): #down through levels
-          path_url = self.experiment.composite_path + '%s_%d.tiff' % (sub_gon.id_token, level)
-          sub_gon.paths.create(experiment=self.experiment, url=path_url, level=level)
-          print('saving %s...' % path_url)
-          imsave(path_url, image)
-
-        sub_gon.save()
-        print('channel %s done.' % channel.name)
-
-  def tile(self, shape=(8,8,5)):
-    pass
-
 ### Discontinuous coordinates ###
 class Channel(models.Model):
   #connections
@@ -175,63 +124,61 @@ class Bulk(models.Model):
   #properties
   great = models.BooleanField(default=False) #originally created by composite
 
-  #1. size
+  #1. coords
+  row = models.IntegerField(default=0)
+  column = models.IntegerField(default=0)
+  level = models.IntegerField(default=0)
   rows = models.IntegerField(default=1)
   columns = models.IntegerField(default=1)
   levels = models.IntegerField(default=1)
 
   #methods
-  def bulkify(self, origin=(0,0,0), shape=(8,8,5)):
-    ''' Good for standalone cutting, but not in groups. '''
-
+  def new_bulk(self, origin=(0,0,0), shape=(8,8,5)):
+    ''' Makes a sub bulk given dimensions '''
     if not os.path.exists(self.experiment.composite_path):
       os.mkdir(self.experiment.composite_path)
 
-    print('cutting %d,%d,%d at %d,%d,%d from composite of experiment %s' % tuple(shape + origin + tuple([self.experiment.name])))
+    print('cutting %d,%d,%d at %d,%d,%d from composite %d of experiment %s' % tuple(shape + origin + tuple([self.composite.pk, self.experiment.name])))
     #coords
-    row0, row1 = (origin[0], origin[0]+shape[0])
-    column0, column1 = (origin[1], origin[1]+shape[1])
-    level0, level1 = (origin[2], origin[2]+shape[2])
-
     great = shape==(self.rows, self.columns, self.levels)
 
     #1. load
     sub_bulk = self.sub_bulks.create(experiment=self.experiment, composite=self.composite, timepoint=self.timepoint, great=great)
+    sub_bulk.row = origin[0]
+    sub_bulk.column = origin[1]
+    sub_bulk.level = origin[2]
     sub_bulk.rows = shape[0]
     sub_bulk.columns = shape[1]
     sub_bulk.levels = shape[2]
 
-    #2. load great gons for each channel
     for channel in self.channels.all():
       print('cutting channel %s...' % channel.name)
       #add channels
       sub_bulk.channels.add(channel)
       channel.bulks.add(sub_bulk)
       channel.save()
+      sub_bulk.save()
 
-      #coords
-      sub_gon = sub_bulk.gons.create(experiment=self.experiment, composite=self.composite, channel=channel, timepoint=self.timepoint, id_token=generate_id_token(Gon), great=True)
-      sub_gon.row = origin[0]
-      sub_gon.column = origin[1]
-      sub_gon.level = origin[2]
-      sub_gon.rows = shape[0]
-      sub_gon.columns = shape[1]
-      sub_gon.levels = shape[2]
+    return sub_bulk
 
-      #cut array
-      great_gon = self.gons.get(channel=channel, great=True)
-      great_gon.load()
-      new_array = great_gon.array[row0:row1,column0:column1,level0:level1]
+  def new_great_gon(self, channel, gon_array):
+    #coords
+    sub_gon = self.gons.create(experiment=self.experiment, composite=self.composite, channel=channel, timepoint=self.timepoint, id_token=generate_id_token(Gon), great=True)
+    sub_gon.row = self.row
+    sub_gon.column = self.column
+    sub_gon.level = self.level
+    sub_gon.rows = self.rows
+    sub_gon.columns = self.columns
+    sub_gon.levels = self.levels
 
-      #save images and create paths
-      for level, image in enumerate(np.rollaxis(new_array, 2)): #down through levels
-        path_url = os.path.join(self.experiment.composite_path, '%s_%d.tiff' % (sub_gon.id_token, level))
-        sub_gon.paths.create(experiment=self.experiment, url=path_url, level=level)
-        print('saving %s...' % path_url)
-        imsave(path_url, image)
+    #save array
+    for level, image in enumerate(np.rollaxis(gon_array, 2)): #down through levels
+      path_url = os.path.join(self.experiment.composite_path, '%s_%d.tiff' % (sub_gon.id_token, level))
+      sub_gon.paths.create(experiment=self.experiment, url=path_url, level=level)
+      print('saving %s...' % path_url)
+      imsave(path_url, image)
 
-      sub_gon.save()
-      print('channel %s done.' % channel.name)
+    sub_gon.save()
 
   def tile(self, shape=(8,8,5)):
     print('tiling bulk %d from composite %d with shape (%d,%d,%d)...' % tuple((self.pk, self.composite.pk) + shape))
@@ -246,7 +193,31 @@ class Bulk(models.Model):
 
     #2. run a loop that generates a set of coordinates.
     print('tiling...')
+    count = 0
+    for row in range(0,self.rows,shape[0]):
+      for column in range(0,self.columns,shape[1]):
+        for level in range(0,self.levels,shape[2]):
+          #coords
+          row0, row1 = row, row+shape[0]
+          column0, column1 = column, column+shape[1]
+          level0, level1 = level, level+shape[2]
 
+          #make new bulk
+          sub_bulk = self.new_bulk(origin=(row0,column0,level0), shape=shape)
+
+          #make gon for each channel and add to bulk
+          for channel in self.channels.all():
+            channel_gon = channel_gons[channel.name]
+            sub_channel_gon = channel_gon[row0:row1,column0:column1,level0:level1]
+            sub_bulk.new_great_gon(channel, sub_channel_gon)
+
+          #save
+          sub_bulk.save()
+
+          print([row,column,level,count])
+          count += 1
+
+    self.save()
 
     #3. Give the coordinates to a newly created set of gons.
     #4. Create a bulk from each set of gons.
