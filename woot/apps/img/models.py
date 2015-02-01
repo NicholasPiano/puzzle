@@ -2,6 +2,7 @@
 
 #django
 from django.db import models
+from django.utils import timezone as tz
 
 #local
 from apps.img.settings import generate_id_token
@@ -214,7 +215,7 @@ class Bulk(models.Model):
           #save
           sub_bulk.save()
 
-          print([row,column,level,count])
+          print([row,column,level,count,tz.now()])
           count += 1
 
     self.save()
