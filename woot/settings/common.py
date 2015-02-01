@@ -91,6 +91,8 @@ MEDIA_ROOT = normpath(join(DJANGO_ROOT, 'media'))
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = '/media/'
+
+DATA_ROOT = normpath(join(DJANGO_ROOT, 'data'))
 ########## END MEDIA CONFIGURATION
 
 
