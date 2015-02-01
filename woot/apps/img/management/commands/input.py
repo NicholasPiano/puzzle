@@ -33,6 +33,7 @@ class Command(BaseCommand):
   def handle(self, *args, **options):
     #get path
     input_path = os.path.join(options['base'], options['path'])
+    composite_path = os.path.join(input_path, 'composite')
 
     #list directory filtered by allow extension
     image_file_list = list(filter(lambda i: os.path.splitext(i)[1] in img_settings.allowed_file_extensions, os.listdir(input_path)))
@@ -46,6 +47,7 @@ class Command(BaseCommand):
       experiment, exp_created = Experiment.objects.get_or_create(name=str(match.group('experiment_name')))
       if exp_created:
         experiment.path = input_path
+        experiment.composite_path = composite_path
 
       #3. create path objects
       path, path_created = experiment.paths.get_or_create(url=os.path.join(input_path, image_file_name))
