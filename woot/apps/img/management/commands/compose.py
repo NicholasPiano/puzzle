@@ -2,7 +2,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
 #local
-from apps.img.models import Composite
+from apps.img.models import Bulk
 
 #util
 
@@ -12,5 +12,5 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    c = Composite.objects.get()
-    c.bulkify(timepoint_index=14)
+    b = Bulk.objects.get(pk=1)
+    b.tile()
