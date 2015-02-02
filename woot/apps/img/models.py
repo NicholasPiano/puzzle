@@ -227,7 +227,7 @@ class Bulk(models.Model):
   def standard_parameters(self):
     ''' For all sub_bulks, calculate the mean, max, and median of each channel. Add these as parameters of the bulk. '''
     for sub_bulk in self.sub_bulks.all():
-      print('calculating standard parameters for sub_bulk %d with coordinates (%d,%d,%d) in bulk %d, composite %d, experiment %s'%(sub_bulk.pk, self.row, self.column, self.level, self.pk, self.composite.pk, self.experiment.name))
+      print('calculating standard parameters for sub_bulk %d with coordinates (%d,%d,%d) in bulk %d, composite %d, experiment %s: %s'%(sub_bulk.pk, self.row, self.column, self.level, self.pk, self.composite.pk, self.experiment.name, str(tz.now())))
       for channel in sub_bulk.channels.all():
         channel_gon = sub_bulk.gons.get(channel=channel, great=True)
         channel_gon.load()
