@@ -13,4 +13,4 @@ class Command(BaseCommand):
 
   def handle(self, *args, **options):
     b = Bulk.objects.get(pk=1)
-    b.tile()
+    b.standard_parameters()
