@@ -224,6 +224,21 @@ class Bulk(models.Model):
     #4. Create a bulk from each set of gons.
     #5. Save images and stores paths in gons.
 
+  def standard_parameters(self):
+    ''' For all sub_bulks, calculate the mean, max, and median of each channel. Add these as parameters of the bulk. '''
+    for sub_bulk in self.sub_bulks.all():
+      print('calculating standard parameters for sub_bulk %d with coordinates (%d,%d,%d) in bulk %d, composite %d, experiment %s'%(sub_bulk.pk, self.row, self.column, self.level, self.pk, self.composite.pk, self.experiment.name))
+      for channel in sub_bulk.channels.all():
+        channel_gon = sub_bulk.gons.get(channel=channel, great=True)
+        channel_gon.load()
+
+        array = channel_gon.array
+        #parameters - add one for each
+        for name,function in {'mean':np.mean, 'max':np.max, 'median':np.median}.items():
+          value = function(array)
+          sub_bulk.parameters.create(channel=channel, gon=channel_gon, name=name, float_value=value)
+      sub_bulk.save()
+
 class Gon(models.Model):
   #connections
   experiment = models.ForeignKey(Experiment, related_name='gons')
