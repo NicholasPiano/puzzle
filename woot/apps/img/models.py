@@ -239,6 +239,17 @@ class Bulk(models.Model):
           sub_bulk.parameters.create(channel=channel, gon=channel_gon, name=name, float_value=value)
       sub_bulk.save()
 
+  def parameter_vector(self):
+    vector = []
+    for parameter in self.parameters.all():
+      print([parameter.name, parameter.channel.name])
+      vector.append(float(parameter.float_value))
+    return np.array(vector)
+
+  def get_value(self, channel_name, name):
+    parameter = self.parameters.get(channel__name=channel_name, name=name)
+    return float(parameter.float_value)
+
 class Gon(models.Model):
   #connections
   experiment = models.ForeignKey(Experiment, related_name='gons')
