@@ -16,10 +16,4 @@ class Command(BaseCommand):
 
   def handle(self, *args, **options):
     b = Bulk.objects.get(pk=1)
-
-    max_gfp = []
-    for s in b.sub_bulks.all():
-      print(s.pk)
-      max_gfp.append(s.get_value('gfp','max'))
-
-    scipy.io.savemat('/Users/nicholaspiano/code/matlab/max.mat', mdict={'max':np.array(max_gfp)})
+    b.tile(shape=(48,48,15))
