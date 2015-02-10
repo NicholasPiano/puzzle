@@ -17,7 +17,7 @@ import numpy as np
 class Experiment(models.Model):
   #properties
   name = models.CharField(max_length=255)
-  
+
   #1. location
   base_path = models.CharField(max_length=255)
   composite_path = models.CharField(max_length=255)
@@ -55,13 +55,43 @@ class Timepoint(models.Model):
   next = models.IntegerField(default=-1)
   previous = models.IntegerField(default=-1)
 
-class Level(models.Model):
+### Cells ###
+class Cell(models.Model):
   #connections
-  experiment = models.ForeignKey(Experiment, related_name='levels')
-  composite = models.ForeignKey(Composite, related_name='levels')
+  experiment = models.ForeignKey(Experiment, related_name='cells')
+  composite = models.ForeignKey(Composite, related_name='cells')
 
   #properties
-  index = models.IntegerField(default=0)
+  #1. id
+  id_token = models.CharField(max_length=8)
+
+class CellInstance(models.Model):
+  #connections
+  experiment = models.ForeignKey(Experiment, related_name='cell_instances')
+  composite = models.ForeignKey(Composite, related_name='cell_instances')
+  cell = models.ForeignKey(Cell, related_name='cell_instances')
+
+  #properties
+  #1. id
+  id_token = models.CharField(max_length=8)
+
+  #2. origin
+  t = models.ForeignKey(Timepoint, related_name='cell_instances')
+  r = models.IntegerField(default=0) #center coordinates
+  c = models.IntegerField(default=0)
+  l = models.IntegerField(default=0)
+
+  #3. dimensions
+  rows = models.IntegerField(default=1)
+  columns = models.IntegerField(default=1)
+  levels = models.IntegerField(default=1)
+  area = models.FloatField(default=0.0)
+  volume = models.FloatField(default=0.0)
+
+  #4. movement
+  rpt = models.FloatField(default=0.0)
+  cpt = models.FloatField(default=0.0)
+  lpt = models.FloatField(default=0.0)
 
 ### Bulk pixel objects ###
 class Bulk(models.Model):
@@ -69,14 +99,17 @@ class Bulk(models.Model):
   experiment = models.ForeignKey(Experiment, related_name='bulks')
   composite = models.ForeignKey(Composite, related_name='bulks')
   channels = models.ManyToManyField(Channel, related_name='bulks')
-  timepoint = models.ForeignKey(Timepoint, related_name='bulks')
-  bulk = models.ForeignKey('self', related_name='sub_bulks', null=True)
+  cell_instance = models.ForeignKey(CellInstance, related_name='bulks', null=True)
+  bulk = models.ForeignKey('self', related_name='bulks', null=True)
 
   #properties
-  #1. coords
-  row = models.IntegerField(default=0)
-  column = models.IntegerField(default=0)
-  level = models.IntegerField(default=0)
+  #1. origin
+  t = models.ForeignKey(Timepoint, related_name='bulks')
+  r = models.IntegerField(default=0)
+  c = models.IntegerField(default=0)
+  l = models.IntegerField(default=0)
+
+  #2. dimensions
   rows = models.IntegerField(default=1)
   columns = models.IntegerField(default=1)
   levels = models.IntegerField(default=1)
@@ -86,22 +119,22 @@ class Gon(models.Model):
   experiment = models.ForeignKey(Experiment, related_name='gons')
   composite = models.ForeignKey(Composite, related_name='gons')
   channel = models.ForeignKey(Channel, related_name='gons')
-  timepoint = models.ForeignKey(Timepoint, related_name='gons')
   bulk = models.ForeignKey(Bulk, related_name='gons')
 
   #properties
   #1. identification
   id_token = models.CharField(max_length=8)
 
-  #2. size
+  #2. origin
+  t = models.ForeignKey(Timepoint, related_name='gons')
+  r = models.IntegerField(default=0)
+  c = models.IntegerField(default=0)
+  l = models.IntegerField(default=0)
+
+  #3. dimensions
   rows = models.IntegerField(default=1)
   columns = models.IntegerField(default=1)
   levels = models.IntegerField(default=1)
-
-  #3. origin
-  row = models.IntegerField(default=0)
-  column = models.IntegerField(default=0)
-  level = models.IntegerField(default=0)
 
   #4. data
   array = None
