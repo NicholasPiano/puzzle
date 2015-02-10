@@ -17,6 +17,7 @@ import numpy as np
 class Experiment(models.Model):
   #properties
   name = models.CharField(max_length=255)
+  pending_composite_creation = models.BooleanField(default=False)
 
   #1. location
   base_path = models.CharField(max_length=255)
@@ -27,6 +28,66 @@ class Experiment(models.Model):
   ymop = models.FloatField(default=0.0)
   zmop = models.FloatField(default=0.0)
   tpf = models.FloatField(default=0.0) #minutes in a timepoint
+
+  def __str__(self):
+    return self.name
+
+  #methods
+  def compose(self):
+    ''' Make a new composite using all currently available images. Each call will generate a new composite. '''
+    #1. composite
+    composite = self.composites.create(id_token=generate_id_token(Composite))
+
+    #2. run through images
+    ## Three tasks:
+    ## 1. Create channels and timepoints
+    ## 2. Create single bulk with a gon per channel for whole set
+    ## 3. Create one bulk for each level slice with image gons.
+    for path in self.paths.all():
+      channel, channel_created = self.channels.get_or_create(composite=composite, name=path.channel)
+      if channel_created:
+        channel.index = path.channel_id
+        channel.save()
+
+      timepoint, timepoint_created = self.timepoints.get_or_create(composite=composite, index=path.timepoint)
+
+    # great bulk for each timepoint
+    for timepoint in composite.timepoints.all():
+      great_bulk = composite.bulks.create(experiment=self, t=timepoint, great=True)
+      for channel in composite.channels.all():
+        great_bulk.channels.add(channel)
+        channel.bulks.add(great_bulk)
+        channel.save()
+        great_bulk.save()
+
+        #create gons
+        print('creating great gon at t%d, ch-%s'%(timepoint.index, channel.name))
+        great_gon = great_bulk.gons.create(experiment=self, composite=composite, t=timepoint, channel=channel, id_token=generate_id_token(Gon), great=True)
+        paths = self.paths.filter(timepoint=timepoint.index, channel=channel.name)
+        rows, columns = imread(paths[0].url).shape
+        great_gon.rows = rows
+        great_gon.columns = columns
+        great_gon.levels = paths.count()
+
+        great_bulk.rows = rows
+        great_bulk.columns = columns
+        great_bulk.levels = paths.count()
+
+        for path in paths:
+          print('creating gon: t%d, ch-%s, %s' % (timepoint.index, channel.name, path.url))
+          #create one gon for each image and add each path to the great gon
+          gon = great_bulk.gons.create(experiment=self, composite=composite, t=timepoint, channel=channel, id_token=generate_id_token(Gon), l=path.level)
+          gon.rows = rows
+          gon.columns = columns
+
+          #paths
+          gon_path = gon.paths.create(experiment=self, url=path.url)
+          gon.save()
+          great_gon.paths.create(experiment=self, url=path.url, level=path.level)
+
+        great_gon.save()
+
+      great_bulk.save()
 
 class Composite(models.Model):
   #connections
@@ -103,6 +164,8 @@ class Bulk(models.Model):
   bulk = models.ForeignKey('self', related_name='bulks', null=True)
 
   #properties
+  great = models.BooleanField(default=False) #represents entire extent of parent
+
   #1. origin
   t = models.ForeignKey(Timepoint, related_name='bulks')
   r = models.IntegerField(default=0)
@@ -122,6 +185,8 @@ class Gon(models.Model):
   bulk = models.ForeignKey(Bulk, related_name='gons')
 
   #properties
+  great = models.BooleanField(default=False) #represents entire extent of parent
+
   #1. identification
   id_token = models.CharField(max_length=8)
 
