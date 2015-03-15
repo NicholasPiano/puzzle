@@ -56,7 +56,7 @@ class Command(BaseCommand):
         self.stdout.write('created.', ending='\n')
         path.channel = img_settings.channel(match.group('channel'))
         path.channel_id = int(match.group('channel'))
-        path.timepoint = int(match.group('timepoint'))
+        path.frame = int(match.group('frame'))
         path.level = int(match.group('level'))
         path.save()
       else:

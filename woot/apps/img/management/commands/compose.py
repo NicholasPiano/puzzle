@@ -15,5 +15,4 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    b = Bulk.objects.get(pk=1)
-    b.tile(shape=(48,48,15))
+    pass
