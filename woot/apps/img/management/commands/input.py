@@ -17,7 +17,7 @@ class Command(BaseCommand):
     make_option('--path',
       action='store',
       dest='path',
-      default='050714',
+      default='050714-test',
       help='Path to scan for images'
     ),
     make_option('--base',
@@ -43,6 +43,8 @@ class Command(BaseCommand):
       experiment.composite_path = img_settings.default_composite_path
       experiment.img_path = img_settings.default_img_path
       experiment.plot_path = img_settings.default_plot_path
+      experiment.track_path = img_settings.default_track_path
+      experiment.makedirs()
       experiment.save()
 
     img_path = os.path.join(experiment.base_path, experiment.img_path)
@@ -70,9 +72,5 @@ class Command(BaseCommand):
         path.frame = int(match.group('frame'))
         path.level = int(match.group('level'))
         path.save()
-
-        # pending composites
-        experiment.pending_composite_creation = True # images have just been added
-        experiment.save()
       else:
         self.stdout.write('already exists.', ending='\n')

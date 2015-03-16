@@ -5,7 +5,8 @@ from django.db import models
 from django.utils import timezone as tz
 
 # local
-from apps.img.settings import generate_id_token
+from apps.img.settings import *
+from apps.img import algorithms
 
 # util
 import os
@@ -23,6 +24,7 @@ class Experiment(models.Model):
   img_path = models.CharField(max_length=255)
   composite_path = models.CharField(max_length=255)
   plot_path = models.CharField(max_length=255)
+  track_path = models.CharField(max_length=255)
 
   # 2. scaling
   xmop = models.FloatField(default=0.0) # microns over pixel ratio
@@ -32,6 +34,10 @@ class Experiment(models.Model):
 
   def __str__(self):
     return self.name
+
+  def makedirs(self):
+    for path in [self.composite_path, self.plot_path, self.track_path]:
+      os.makedirs(os.path.join(self.base_path, path))
 
 class Series(models.Model):
   # connections
@@ -117,6 +123,13 @@ class Composite(models.Model):
   # properties
   id_token = models.CharField(max_length=8)
 
+  # methods
+  def get_max_channel_index(self):
+    return max([channel.index for channel in self.channels.all()])
+
+  def get_max_frame_index(self):
+    return max([frame.index for frame in self.frames.all()])
+
 ### Discontinuous coordinates ###
 class Channel(models.Model):
   # connections
@@ -138,6 +151,13 @@ class Frame(models.Model):
   index = models.IntegerField(default=0)
   next = models.IntegerField(default=-1)
   previous = models.IntegerField(default=-1)
+
+  # methods
+  def __str__(self):
+    max_frame = self.composite.get_max_frame_index()
+    max_digits = len(str(max_frame))
+    digits = len(str(self.index))
+    return str('0'*(max_digits-digits) + str(self.index))
 
 class Level(models.Model):
   # connections
@@ -175,7 +195,7 @@ class CellInstance(models.Model):
   t = models.ForeignKey(Frame, related_name='cell_instances')
   r = models.IntegerField(default=0) # center coordinates
   c = models.IntegerField(default=0)
-  l = models.IntegerField(default=0)
+  l = models.ForeignKey(Level, related_name='cell_instances')
 
   # 3. dimensions
   rows = models.IntegerField(default=1)
@@ -200,12 +220,12 @@ class CellTrack(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='cell_tracks')
   series = models.ForeignKey(Series, related_name='cell_tracks')
-  composite = models.ForeignKey(Composite, related_name='cell_tracks')
-  cell = models.ForeignKey(Cell, related_name='cell_tracks')
+  cell = models.ForeignKey(Cell, related_name='cell_tracks', null=True)
 
   # properties
   # 1. id
   id_token = models.CharField(max_length=8)
+  filename = models.CharField(max_length=255)
 
 class CellMarker(models.Model):
   '''
@@ -215,13 +235,11 @@ class CellMarker(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='cell_markers')
   series = models.ForeignKey(Series, related_name='cell_markers')
-  composite = models.ForeignKey(Composite, related_name='cell_markers')
-  cell = models.ForeignKey(Cell, related_name='cell_markers')
-  cell_instance = models.ForeignKey(CellInstance, related_name='cell_markers')
+  cell = models.ForeignKey(Cell, related_name='cell_markers', null=True)
+  cell_instance = models.ForeignKey(CellInstance, related_name='cell_markers', null=True)
   cell_track = models.ForeignKey(CellTrack, related_name='cell_markers')
 
   # properties
-  filename = models.CharField(max_length=255)
   line = models.IntegerField(default=0)
   t = models.ForeignKey(Frame, related_name='cell_markers')
   r = models.IntegerField(default=0) # center coordinates
@@ -285,7 +303,7 @@ class Gon(models.Model):
 
   # methods
   def shape(self):
-    return (self.rows, self.column, self.levels)
+    return (self.rows, self.columns, self.levels)
 
   def load(self):
     self.array = []
@@ -293,6 +311,27 @@ class Gon(models.Model):
       array = imread(path.url)
       self.array.append(array)
     self.array = np.dstack(self.array).squeeze() # remove unnecessary dimensions
+
+  def split(self, id_token):
+    ''' Take a multi-leveled gon and split into levels '''
+    if self.paths.count()==0 and self.great and self.array:
+      for level in range(self.levels):
+
+        # get array
+        plane = np.array(self.array[:,:,level])
+
+        # make gon
+        gon = self.bulk.gons.create(experiment=self.experiment, series=self.series, composite=self.composite, channel=self.channel, id_token=generate_id_token(Gon), t=self.t, l=self.l, rows=self.rows, columns=self.columns)
+
+        # make path
+        img_url = os.path.join(self.experiment.composite_path, composite_img_reverse % (self.experiment.name, self.series.name, self.channel.name, str(self.t), str(self.l), ))
+
+        # make path object
+        self.paths.create(experiment=self.experiment, series=self.series, url=img_url, channel=self.channel.name, frame=self.frame.index, level=self.l)
+        gon.paths.create(experiment=self.experiment, series=self.series, url=img_url, channel=self.channel.name, frame=self.frame.index, level=self.l)
+
+        # save image
+        imsave(img_url, plane)
 
 ### Path objects
 class Path(models.Model):
@@ -318,3 +357,22 @@ class Parameter(models.Model):
   # properties
   name = models.CharField(max_length=255)
   value = models.FloatField(default=0.0)
+
+### Mod objects
+class Mod(models.Model):
+  # connections
+  experiment = models.ForeignKey(Experiment, related_name='mods')
+  series = models.ForeignKey(Series, related_name='mods')
+  composite = models.ForeignKey(Composite, related_name='mods')
+
+  # properties
+  id_token = models.CharField(max_length=255)
+  date_created = models.DateTimeField(auto_add_now=True)
+  algorithm = models.CharField(max_length=255)
+
+  # methods
+  def run(self):
+    ''' Runs associated algorithm to produce a new channel. '''
+    algorithm = getattr(algorithms, self.algorithm)
+
+    algorithm(self.composite, self.id_token)

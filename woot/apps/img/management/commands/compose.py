@@ -2,7 +2,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
 #local
-from apps.img.models import Experiment
+from apps.img.models import Series
 
 #util
 import matplotlib.pyplot as plt
@@ -13,7 +13,6 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    e = Experiment.objects.get()
-    s = e.series.get(name='12')
-    g = s.gons.get(pk=6)
-    g.load()
+    for series in Series.objects.all():
+      if series.composites.count()==0:
+        series.compose()

@@ -21,9 +21,9 @@ class Experiment():
     self.tpf = tpf
 
 class Series():
-  def __init__(self, experiment_name, index):
+  def __init__(self, experiment_name, name):
     self.experiment_name = experiment_name
-    self.index = index
+    self.name = name
 
 ### Data
 regions = [
@@ -35,20 +35,24 @@ regions = [
 
 experiments = [
   Experiment(name='050714', rmop=0.5369, cmop=0.5369, zmop=1.482, tpf=10.7003),
+  Experiment(name='050714-test', rmop=0.5369, cmop=0.5369, zmop=1.482, tpf=10.7003),
   Experiment(name='190714', rmop=0.501, cmop=0.5015, zmop=1.482, tpf=9.7408),
   Experiment(name='260714', rmop=0.5696074, cmop=0.5701647, zmop=1.482, tpf=7.6807),
 ]
 
 series = [
   # 050714
-  Series(experiment_name='050714', index=14),
+  Series(experiment_name='050714', name='13'),
+
+  # 050714-test
+  Series(experiment_name='050714', name='13'),
 
   # 190714
-  Series(experiment_name='190714', index=13),
+  Series(experiment_name='190714', name='12'),
 
   # 260714
-  Series(experiment_name='260714', index=13),
-  Series(experiment_name='260714', index=14),
-  Series(experiment_name='260714', index=15),
-  Series(experiment_name='260714', index=16),
+  Series(experiment_name='260714', name='12'),
+  Series(experiment_name='260714', name='13'),
+  Series(experiment_name='260714', name='14'),
+  Series(experiment_name='260714', name='15'),
 ]
