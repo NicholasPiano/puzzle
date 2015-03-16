@@ -11,11 +11,16 @@ allowed_file_extensions = (
 )
 
 ### image filename templates
-img_template = r'(?P<experiment_name>.+)_ch(?P<channel>[0-9]+)_t(?P<timepoint>[0-9]+)_z(?P<level>[0-9]+)\.(?P<extension>.+)$'
+img_template = r'^(?P<experiment_name>.+)_s(?P<series_name>.+)_ch(?P<channel>[0-9]+)_t(?P<frame>[0-9]+)_z(?P<level>[0-9]+)\.(?P<extension>.+)$'
 composite_img_template = {
   'template':r'',
   'regex':r'',
 }
+
+### Default paths
+default_img_path = 'img/storage/'
+default_composite_path = 'img/composite/'
+default_plot_path = 'plot/'
 
 ### Image types
 channels = {
