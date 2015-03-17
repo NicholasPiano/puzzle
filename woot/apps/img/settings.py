@@ -12,8 +12,8 @@ allowed_file_extensions = (
 
 ### image filename templates
 img_template = r'^(?P<experiment_name>.+)_s(?P<series_name>.+)_ch(?P<channel>.+)_t(?P<frame>[0-9]+)_z(?P<level>[0-9]+)\.(?P<extension>.+)$'
-composite_img_template = r'^(?P<experiment_name>.+)_s(?P<series_name>.+)_ch(?P<channel>.+)_t(?P<frame>[0-9]+)_z(?P<level>[0-9]+)_id(?P<id_token>.+)\.(?P<extension>.+)$'
-composite_img_reverse = r'%s_s%s_ch%s_t%s_z%s_id%s.tiff'
+composite_img_template = r'^(?P<experiment_name>.+)_s(?P<series_name>.+)_ch-(?P<channel>.+)_t(?P<frame>[0-9]+)_z(?P<level>[0-9]+)_id-(?P<id_token>.+)\.(?P<extension>.+)$'
+composite_img_reverse = r'%s_s%s_ch-%s_t%s_z%s_id-%s.tiff'
 
 ### Default paths
 default_img_path = 'img/storage/'
