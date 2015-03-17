@@ -2,12 +2,10 @@
 from django.core.management.base import BaseCommand, CommandError
 
 #local
-from apps.img.models import Bulk
+from apps.img.models import Series
 
 #util
 import matplotlib.pyplot as plt
-import scipy.io
-import numpy as np
 
 ### Command
 class Command(BaseCommand):
@@ -15,4 +13,6 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    pass
+    for series in Series.objects.all():
+      if series.composites.count()==0:
+        series.compose()

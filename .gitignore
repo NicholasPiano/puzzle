@@ -3,3 +3,4 @@ media
 assets
 *.pyc
 __pycache__
+db
