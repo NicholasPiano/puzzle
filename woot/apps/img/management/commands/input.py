@@ -17,7 +17,7 @@ class Command(BaseCommand):
     make_option('--path',
       action='store',
       dest='path',
-      default='050714-test',
+      default='050714',
       help='Path to scan for images'
     ),
     make_option('--base',
