@@ -20,6 +20,7 @@ default_img_path = 'img/storage/'
 default_composite_path = 'img/composite/'
 default_plot_path = 'plot/'
 default_track_path = 'track/'
+default_out_path = 'out/'
 
 ### Image types
 channels = {

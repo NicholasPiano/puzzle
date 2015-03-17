@@ -25,6 +25,7 @@ class Experiment(models.Model):
   composite_path = models.CharField(max_length=255)
   plot_path = models.CharField(max_length=255)
   track_path = models.CharField(max_length=255)
+  out_path = models.CharField(max_length=255)
 
   # 2. scaling
   xmop = models.FloatField(default=0.0) # microns over pixel ratio
@@ -36,8 +37,13 @@ class Experiment(models.Model):
     return self.name
 
   def makedirs(self):
-    for path in [self.composite_path, self.plot_path, self.track_path]:
-      os.makedirs(os.path.join(self.base_path, path))
+    for path in [self.composite_path, self.plot_path, self.track_path, self.out_path]:
+      full_path = os.path.join(self.base_path, path)
+      if not os.path.exists(full_path):
+        os.makedirs(full_path)
+
+  def gon_id_token(self):
+    return generate_id_token(Gon)
 
 class Series(models.Model):
   # connections
@@ -311,11 +317,13 @@ class Gon(models.Model):
       array = imread(path.url)
       self.array.append(array)
     self.array = np.dstack(self.array).squeeze() # remove unnecessary dimensions
+    return self.array
 
   def split(self, id_token):
     ''' Take a multi-leveled gon and split into levels '''
-    if self.paths.count()==0 and self.great and self.array:
+    if self.paths.count()==0 and self.great and self.array is not None:
       for level in range(self.levels):
+        print('saving level %d' % level)
 
         # get array
         plane = np.array(self.array[:,:,level])
@@ -324,11 +332,11 @@ class Gon(models.Model):
         gon = self.bulk.gons.create(experiment=self.experiment, series=self.series, composite=self.composite, channel=self.channel, id_token=generate_id_token(Gon), t=self.t, l=self.l, rows=self.rows, columns=self.columns)
 
         # make path
-        img_url = os.path.join(self.experiment.composite_path, composite_img_reverse % (self.experiment.name, self.series.name, self.channel.name, str(self.t), str(self.l), ))
+        img_url = os.path.join(self.experiment.base_path, self.experiment.composite_path, composite_img_reverse % (self.experiment.name, self.series.name, self.channel.name, str(self.t), str(level), id_token))
 
         # make path object
-        self.paths.create(experiment=self.experiment, series=self.series, url=img_url, channel=self.channel.name, frame=self.frame.index, level=self.l)
-        gon.paths.create(experiment=self.experiment, series=self.series, url=img_url, channel=self.channel.name, frame=self.frame.index, level=self.l)
+        self.paths.create(experiment=self.experiment, series=self.series, url=img_url, channel=self.channel.name, frame=self.t.index, level=self.l)
+        gon.paths.create(experiment=self.experiment, series=self.series, url=img_url, channel=self.channel.name, channel_id=self.channel.index, frame=self.t.index, level=level)
 
         # save image
         imsave(img_url, plane)
@@ -367,7 +375,7 @@ class Mod(models.Model):
 
   # properties
   id_token = models.CharField(max_length=255)
-  date_created = models.DateTimeField(auto_add_now=True)
+  date_created = models.DateTimeField(auto_now_add=True)
   algorithm = models.CharField(max_length=255)
 
   # methods

@@ -44,6 +44,7 @@ class Command(BaseCommand):
       experiment.img_path = img_settings.default_img_path
       experiment.plot_path = img_settings.default_plot_path
       experiment.track_path = img_settings.default_track_path
+      experiment.out_path = img_settings.default_out_path
       experiment.makedirs()
       experiment.save()
 
