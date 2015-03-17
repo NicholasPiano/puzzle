@@ -23,7 +23,7 @@ def pmod_track(composite, id_token):
 
     # create new channel
     name = 'pmod-track-' + id_token
-    channel, channel_created = composite.channels.get_or_create(experiment=composite.experiment, series=composite.series, name=name, index=composite.get_max_channel_index())
+    channel, channel_created = composite.channels.get_or_create(experiment=composite.experiment, series=composite.series, name=name, index=composite.get_max_channel_index()+1)
 
     # make new great gon
     new_great_gon = bulk.gons.create(experiment=composite.experiment, series=composite.series, composite=composite, channel=channel, great=True, id_token=composite.experiment.gon_id_token(), t=bulk.t, rows=bulk.rows, columns=bulk.columns, levels=bulk.levels)
