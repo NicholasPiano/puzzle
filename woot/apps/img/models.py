@@ -255,6 +255,11 @@ class CellMarker(models.Model):
   def __str__(self):
     return '%d %d: [%d %d %d]'%(self.cell.pk, self.cell_instance.pk, self.r, self.c, self.l)
 
+class CellMask(models.Model):
+  '''
+  Stores masks obtained from cell profiler in the form of images. Not necessarily connected 
+  '''
+
 ### Bulk pixel objects ###
 class Bulk(models.Model):
   # connections
