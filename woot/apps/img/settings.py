@@ -1,6 +1,6 @@
-#woot.apps.img.settings
+# woot.apps.img.settings
 
-''' Settings specific to the img app '''
+''' Settings specific to the img app. '''
 
 import random
 import string
@@ -11,21 +11,32 @@ allowed_file_extensions = (
 )
 
 ### image filename templates
-img_template = r'^(?P<experiment_name>.+)_s(?P<series_name>.+)_ch(?P<channel>.+)_t(?P<frame>[0-9]+)_z(?P<level>[0-9]+)\.(?P<extension>.+)$'
-composite_img_template = r'^(?P<experiment_name>.+)_s(?P<series_name>.+)_ch-(?P<channel>.+)_t(?P<frame>[0-9]+)_z(?P<level>[0-9]+)_id-(?P<id_token>.+)\.(?P<extension>.+)$'
-composite_img_reverse = r'%s_s%s_ch-%s_t%s_z%s_id-%s.tiff'
+templates = {
+  'source':{
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<frame>[0-9]+)_z(?P<level>.+)\.(?P<extension>.+)$',
+    'rv':r'%s_s%s_ch-%s_t%s_z%s.tiff',
+  },
+  'composite':{
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>.+)_t(?P<frame>[0-9]+)_z(?P<level>.+)_id-(?P<id_token>.+)\.(?P<extension>.+)$',
+    'rv':r'%s_s%s_ch-%s_t%s_z%s_id-%s.tiff',
+  },
+}
 
 ### Default paths
-default_img_path = 'img/storage/'
-default_composite_path = 'img/composite/'
-default_plot_path = 'plot/'
-default_track_path = 'track/'
-default_out_path = 'out/'
+default_paths = {
+  'img':'img/storage/',
+  'composite':'img/composite/',
+  'plot':'plot/',
+  'track':'track/',
+  'out':'out/',
+}
 
 ### Image types
 channels = {
-  '0':'gfp','1':'bf','2':'mask',
+  '0':'gfp',
+  '1':'bf',
 }
+
 def channel(query):
   return channels[query]
 

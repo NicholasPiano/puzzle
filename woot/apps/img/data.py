@@ -6,12 +6,6 @@ Specific experiment and series information in the form of lists of prototype obj
 import os
 
 ### Classes
-class Region():
-  def __init__(self, name, index, description):
-    self.index = index
-    self.name = name
-    self.description = description
-
 class Experiment():
   def __init__(self, name, rmop, cmop, zmop, tpf):
     self.name = name
@@ -45,7 +39,7 @@ series = [
   Series(experiment_name='050714', name='13'),
 
   # 050714-test
-  Series(experiment_name='050714', name='13'),
+  Series(experiment_name='050714-test', name='13'),
 
   # 190714
   Series(experiment_name='190714', name='12'),
