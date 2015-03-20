@@ -48,4 +48,11 @@ class Command(BaseCommand):
     # list directory filtered by allow extension
     file_list = [file_name for file_name in os.listdir(experiment.img_path) if os.path.splitext(file_name)[1] in allowed_file_extensions]
 
-    
+    # make paths and series
+    for i, file_name in enumerate(file_list):
+
+      # get template
+      template = experiment.match_template(file_name)
+      path, created = template.get_or_create_path(file_name)
+
+      print('%s... %s' % (path, 'created.' if created else 'already exists.'))

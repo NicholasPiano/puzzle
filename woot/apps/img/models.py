@@ -9,6 +9,7 @@ from apps.img.data import experiments, series
 
 # util
 import os
+import re
 
 ###### Models
 ### Top level structure ###
@@ -53,15 +54,25 @@ class Experiment(models.Model):
     return list(filter(lambda x: x.name==self.name, experiments))[0]
 
   def get_metadata(self):
+
+    # data
     prototype = self.prototype()
     self.rmop = prototype.rmop
     self.cmop = prototype.cmop
     self.zmop = prototype.zmop
     self.tpf = prototype.tpf
+
+    #templates
+    for name, template in templates.items():
+      self.templates.create(name=name, rx=template['rx'], rv=template['rv'])
+
     self.save()
 
   def allowed_series(self, series_name):
     return (series_name in [s.name for s in filter(lambda x: x.experiment_name==self.name, series)])
+
+  def match_template(self, string):
+    return list(filter(lambda x: x.match(string) is not None, self.templates.all()))[0]
 
 class Series(models.Model):
   # connections
@@ -81,13 +92,42 @@ class Series(models.Model):
 ### Path objects
 class Template(models.Model):
   # connections
-  experiment = models.ForeignKey(Experiment, related_name='path_templates')
-  series = models.ForeignKey(Series, related_name='path_templates')
+  experiment = models.ForeignKey(Experiment, related_name='templates')
 
   # properties
   name = models.CharField(max_length=255)
   rx = models.CharField(max_length=255)
   rv = models.CharField(max_length=255)
+
+  # methods
+  def __str__(self):
+    return '%s: %s' % (self.name, self.rx)
+
+  def match(self, string):
+    return re.match(self.rx, string)
+
+  def dict(self, string):
+    return self.match(string).groupdict()
+
+  def get_or_create_path(self, string):
+    # metadata
+    metadata = self.dict(string)
+
+    # series
+    series, series_created = self.experiment.series.get_or_create(name=metadata['series'])
+    if series_created:
+      series.id_token = generate_id_token(Series)
+      series.save()
+
+    # path
+    path, created = self.paths.get_or_create(experiment=self.experiment, series=series, url=string)
+    if created:
+      path.channel_id = int(metadata['channel'])
+      path.frame = int(metadata['frame'])
+      path.z=int(metadata['z'])
+      path.save()
+
+    return path, created
 
 class Path(models.Model):
   # connections
@@ -99,4 +139,8 @@ class Path(models.Model):
   url = models.CharField(max_length=255)
   channel_id = models.IntegerField(default=0)
   frame = models.IntegerField(default=0)
-  level = models.IntegerField(default=0)
+  z = models.IntegerField(default=0)
+
+  # methods
+  def __str__(self):
+    return '%s: %s' % (self.experiment.name, self.url)

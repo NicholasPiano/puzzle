@@ -13,11 +13,11 @@ allowed_file_extensions = (
 ### image filename templates
 templates = {
   'source':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<frame>[0-9]+)_z(?P<level>.+)\.(?P<extension>.+)$',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<frame>[0-9]+)_z(?P<z>.+)\.(?P<extension>.+)$',
     'rv':r'%s_s%s_ch-%s_t%s_z%s.tiff',
   },
   'composite':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>.+)_t(?P<frame>[0-9]+)_z(?P<level>.+)_id-(?P<id_token>.+)\.(?P<extension>.+)$',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>.+)_t(?P<frame>[0-9]+)_z(?P<z>.+)_id-(?P<id_token>.+)\.(?P<extension>.+)$',
     'rv':r'%s_s%s_ch-%s_t%s_z%s_id-%s.tiff',
   },
 }
