@@ -16,7 +16,7 @@ class Command(BaseCommand):
 
     make_option('--name', # path of images unique to this experiment.
       action='store',
-      dest='path',
+      dest='name',
       default='050714',
       help='Path to scan for images'
     ),
@@ -45,6 +45,3 @@ class Command(BaseCommand):
       experiment.get_metadata()
 
     # list directory filtered by allow extension
-    for experiment in Experiment.objects.all():
-      print('%s: %s > %f, %f, %f, %f'%(experiment.name, str([s.name for s in experiment.series.all()]), experiment.xmop, experiment.ymop, experiment.zmop, experiment.tpf))
-    

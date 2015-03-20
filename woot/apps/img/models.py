@@ -25,8 +25,8 @@ class Experiment(models.Model):
   out_path = models.CharField(max_length=255)
 
   # 2. scaling
-  xmop = models.FloatField(default=0.0) # microns over pixel ratio
-  ymop = models.FloatField(default=0.0)
+  rmop = models.FloatField(default=0.0) # microns over pixel ratio
+  cmop = models.FloatField(default=0.0)
   zmop = models.FloatField(default=0.0)
   tpf = models.FloatField(default=0.0) # minutes in a frame
 
@@ -50,12 +50,12 @@ class Experiment(models.Model):
     self.save()
 
   def prototype(self):
-    return filter(lambda x: x.name==self.name, experiments)[0]
+    return list(filter(lambda x: x.name==self.name, experiments))[0]
 
   def get_metadata(self):
     prototype = self.prototype()
-    self.xmop = prototype.xmop
-    self.ymop = prototype.ymop
+    self.rmop = prototype.rmop
+    self.cmop = prototype.cmop
     self.zmop = prototype.zmop
     self.tpf = prototype.tpf
     self.save()
