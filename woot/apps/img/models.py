@@ -5,6 +5,7 @@ from django.db import models
 
 # local
 from apps.img.settings import *
+from apps.img.data import experiments, series
 
 # util
 import os
@@ -48,8 +49,19 @@ class Experiment(models.Model):
 
     self.save()
 
+  def prototype(self):
+    return filter(lambda x: x.name==self.name, experiments)[0]
+
   def get_metadata(self):
-    
+    prototype = self.prototype()
+    self.xmop = prototype.xmop
+    self.ymop = prototype.ymop
+    self.zmop = prototype.zmop
+    self.tpf = prototype.tpf
+    self.save()
+
+  def allowed_series(self, series_name):
+    return (series_name in [s.name for s in filter(lambda x: x.experiment_name==self.name, series)])
 
 class Series(models.Model):
   # connections
@@ -62,6 +74,9 @@ class Series(models.Model):
   # methods
   def __str__(self):
     return '%s > %s'%(self.experiment.name, self.name)
+
+  def prototype(self):
+    return filter(lambda x: x.name==self.name and x.experiment_name==self.experiment.name, series)[0]
 
 ### Path objects
 class Template(models.Model):

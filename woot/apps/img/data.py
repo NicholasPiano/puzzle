@@ -20,13 +20,6 @@ class Series():
     self.name = name
 
 ### Data
-regions = [
-  Region(index=1, name='medium', description='Cells in the medium not connected to any endothelial cells or PDMS boundaries.'),
-  Region(index=2, name='barrier_boundary', description='Cells immediately adjacent to the front edge of the barrier without any full contact with endothelial cells.'),
-  Region(index=3, name='barrier_embedded', description='Cells fully embedded in the barrier. In contact with endothelial cells on all sides.'),
-  Region(index=4, name='gel', description='Cells in the gel not connected to any endothelial cells or PDMS boundaries.'),
-]
-
 experiments = [
   Experiment(name='050714', rmop=0.5369, cmop=0.5369, zmop=1.482, tpf=10.7003),
   Experiment(name='050714-test', rmop=0.5369, cmop=0.5369, zmop=1.482, tpf=10.7003),

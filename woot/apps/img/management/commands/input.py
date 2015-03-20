@@ -14,7 +14,7 @@ from optparse import make_option
 class Command(BaseCommand):
   option_list = BaseCommand.option_list + (
 
-    make_option('--path', # path of images unique to this experiment.
+    make_option('--name', # path of images unique to this experiment.
       action='store',
       dest='path',
       default='050714',
@@ -27,6 +27,7 @@ class Command(BaseCommand):
       default=settings.DATA_ROOT,
       help='Base path on filesystem'
     ),
+
   )
 
   args = ''
@@ -34,13 +35,16 @@ class Command(BaseCommand):
 
   def handle(self, *args, **options):
     # get path
-    experiment_name = options['path']
+    experiment_name = options['name']
     base_path = os.path.join(options['base'], experiment_name)
 
     # check if experiment exists
     experiment, exp_created = Experiment.objects.get_or_create(name=experiment_name)
     if exp_created:
       experiment.make_paths(base_path)
-
+      experiment.get_metadata()
 
     # list directory filtered by allow extension
+    for experiment in Experiment.objects.all():
+      print('%s: %s > %f, %f, %f, %f'%(experiment.name, str([s.name for s in experiment.series.all()]), experiment.xmop, experiment.ymop, experiment.zmop, experiment.tpf))
+    
