@@ -133,7 +133,7 @@ class Path(models.Model):
   experiment = models.ForeignKey(Experiment, related_name='paths')
   series = models.ForeignKey(Series, related_name='paths')
   template = models.ForeignKey(Template, related_name='paths')
-  gons = models.ManyToManyField(Gon)
+  gons = models.ManyToManyField('Gon')
 
   # properties
   url = models.CharField(max_length=255)
@@ -160,7 +160,6 @@ class Composite(models.Model):
   # properties
   id_token = models.CharField(max_length=8)
   max_t = models.IntegerField(default=0)
-  max_ch = models.IntegerField(default=0)
   max_z = models.IntegerField(default=0)
 
 class Gon(models.Model):
@@ -206,7 +205,7 @@ class Gon(models.Model):
     self.array = np.dstack(self.array).squeeze() # remove unnecessary dimensions
     return self.array
 
-  def set_location(self, (r,c,z,t)):
+  def set_location(self, r, c, z, t):
     if self.paths.count()==0: #can only set if the images have not been saved
       self.r = r
       self.c = c
@@ -214,12 +213,18 @@ class Gon(models.Model):
       self.t = t
       self.save()
 
-  def set_extent(self, (rs,cs,zs)):
+  def set_extent(self, rs, cs, zs):
     if self.paths.count()==0: #can only set if the images have not been saved
       self.rs = rs
       self.cs = cs
       self.zs = zs
       self.save()
+
+  def t_str(self):
+    return str('0'*(len(str(self.composite.max_t)) - len(str(self.t))) + str(self.t))
+
+  def z_str(self):
+    return str('0'*(len(str(self.composite.max_z)) - len(str(self.z))) + str(self.z))
 
   # 2. saving -> stage 3: segmentation and external processing
   def save_composite_paths(self, mod_id_token, mod_name):
@@ -233,10 +238,10 @@ class Gon(models.Model):
       array = self.array[:,:,level] if len(self.array.shape)==3 else self.array
 
       # new gon
-      gon = self.gons.create(experiment=self.experiment, series=self.series, id_token=generate_id_token(Gon), channel=self.channel)
+      gon = self.gons.create(experiment=self.experiment, series=self.series, id_token=generate_id_token('self'), channel=self.channel)
 
       # origin
-      gon.set_location((self.r, self.c, level, self.t))
+      gon.set_location(self.r, self.c, level, self.t)
 
       # extent
       gon.set_extent(self.rs, self.cs, 1)

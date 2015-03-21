@@ -17,7 +17,7 @@ templates = {
     'rv':r'%s_s%s_ch-%s_t%s_z%s.tiff',
   },
   'composite':{
-    'rx':r'^(?P<id_token>.+)\.(?P<extension>.+)$',
+    'rx':r'^(?P<id_token>[A-Z0-9]{8})\.(?P<extension>.+)$',
     'rv':r'%s.tiff',
   },
   'output':{
