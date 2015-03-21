@@ -194,10 +194,7 @@ class Gon(models.Model):
   array = None
 
   # methods
-  def output_url(self, z):
-    output_template = self.experiment.templates.get(name='output')
-    return output_template.rv % (self.experiment.name, self.series.name, self.channel, str(self.frame), str(self.z), self.id_token)
-
+  # 1. get and set
   def shape(self):
     return (self.rs, self.cs, self.zs)
 
@@ -224,6 +221,7 @@ class Gon(models.Model):
       self.zs = zs
       self.save()
 
+  # 2. saving -> stage 3: segmentation and external processing
   def save_composite_paths(self, mod_id_token, mod_name):
     '''
     Split 'self.array' into as many paths as necessary and save to composite directory.
@@ -244,10 +242,9 @@ class Gon(models.Model):
       gon.set_extent(self.rs, self.cs, 1)
 
       # path
-      path = self.experiment.paths.create(series=self.series, )
+      # path = self.experiment.paths.create(series=self.series, )
 
       # save
-
 
   def save_output_paths(self, mod_id_token, mod_name):
     '''
@@ -255,6 +252,7 @@ class Gon(models.Model):
     Intended for external use.
 
     '''
+    pass
 
 class Mod(models.Model):
   '''

@@ -13,6 +13,4 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    for series in Series.objects.all():
-      if series.composites.count()==0:
-        series.compose()
+    
