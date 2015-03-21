@@ -38,7 +38,7 @@ class Command(BaseCommand):
           m = re.match(line_template, line)
           instances.append({'id':int(m.group('cell')), 'frame':int(m.group('frame'))-1, 'row':int(m.group('row')), 'column':int(m.group('column'))})
 
-      out_path = os.path.join(experiment.base_path, experiment.out_path)
+      output_path = os.path.join(experiment.base_path, experiment.output_path)
 
       for frame in range(89):
 
@@ -51,4 +51,4 @@ class Command(BaseCommand):
           circle = (xx - instance['row']) ** 2 + (yy - instance['column']) ** 2 # distance from c
           black[circle<10] = 255 # radius of 10 px
 
-        imsave(os.path.join(out_path, 'primary_f%s.tiff' % (str('0'*(len(str(89))-len(str(frame)))) + str(frame))), black)
+        imsave(os.path.join(output_path, 'primary_f%s.tiff' % (str('0'*(len(str(89))-len(str(frame)))) + str(frame))), black)

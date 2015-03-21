@@ -30,7 +30,7 @@ class Command(BaseCommand):
 
     bulk = c.bulks.get(t__index=0)
 
-    out_path = os.path.join(c.experiment.base_path, c.experiment.out_path)
+    output_path = os.path.join(c.experiment.base_path, c.experiment.output_path)
 
     # process gfp as a great gon
     gfp_great_gon = bulk.gons.get(great=True, channel__index=0)
@@ -63,7 +63,7 @@ class Command(BaseCommand):
       bf = ex.rescale_intensity(bf)
       new_bf = bf*out
 
-      imsave(os.path.join(out_path, 'pmod_z%s.tiff' % (str('0'*(len(str(bulk.levels))-len(str(level)))) + str(level))), new_bf)
+      imsave(os.path.join(output_path, 'pmod_z%s.tiff' % (str('0'*(len(str(bulk.levels))-len(str(level)))) + str(level))), new_bf)
 
     # display test
     # plt.imshow(new_bf, cmap='Greys_r')
