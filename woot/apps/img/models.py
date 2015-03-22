@@ -10,6 +10,7 @@ from apps.img.data import experiments, series
 # util
 import os
 import re
+from scipy.misc import imread
 
 ###### Models
 ### TOP LEVEL STRUCTURE #############################################
@@ -119,7 +120,6 @@ class Template(models.Model):
     # path
     path, created = self.paths.get_or_create(experiment=self.experiment, series=series, channel=channel, url=os.path.join(root, string), file_name=string)
     if created:
-      path.channel = int(metadata['channel'])
       path.t = int(metadata['frame'])
       path.z=int(metadata['z'])
       path.save()
@@ -132,7 +132,6 @@ class Path(models.Model):
   series = models.ForeignKey(Series, related_name='paths')
   channel = models.ForeignKey(Channel, related_name='paths')
   template = models.ForeignKey(Template, related_name='paths')
-  gon = models.ForeignKey('Gon', related_name='paths')
 
   # properties
   url = models.CharField(max_length=255)

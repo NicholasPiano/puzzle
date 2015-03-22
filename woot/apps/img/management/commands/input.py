@@ -58,7 +58,7 @@ class Command(BaseCommand):
       print('%s... %s' % (path, 'created.' if created else 'already exists.'))
 
     # set extent for each series
-    for series in series.objects.all():
+    for series in Series.objects.all():
       if series.rs==-1:
         # rows and columns from image
         (rs,cs) = series.paths.get(channel=series.channels.all()[0], t=0, z=0).load().shape
@@ -68,3 +68,5 @@ class Command(BaseCommand):
         # z and t from counts
         series.zs = series.paths.filter(channel=series.channels.all()[0], t=0).count()
         series.ts = series.paths.filter(channel=series.channels.all()[0], z=0).count()
+
+        series.save()
