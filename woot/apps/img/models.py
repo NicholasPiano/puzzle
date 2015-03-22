@@ -112,15 +112,12 @@ class Template(models.Model):
 
     # series
     series, series_created = self.experiment.series.get_or_create(name=metadata['series'])
-    if series_created:
-      series.id_token = generate_id_token(Series)
-      series.save()
 
     # channel
-    channel, channel_created = self.experiment.channels.get_or_create(name=)
+    channel, channel_created = self.experiment.channels.get_or_create(series=series, name=metadata['channel'])
 
     # path
-    path, created = self.paths.get_or_create(experiment=self.experiment, series=series, url=os.path.join(root, string), file_name=string)
+    path, created = self.paths.get_or_create(experiment=self.experiment, series=series, channel=channel, url=os.path.join(root, string), file_name=string)
     if created:
       path.channel = int(metadata['channel'])
       path.t = int(metadata['frame'])
@@ -133,13 +130,13 @@ class Path(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='paths')
   series = models.ForeignKey(Series, related_name='paths')
+  channel = models.ForeignKey(Channel, related_name='paths')
   template = models.ForeignKey(Template, related_name='paths')
   gon = models.ForeignKey('Gon', related_name='paths')
 
   # properties
   url = models.CharField(max_length=255)
   file_name = models.CharField(max_length=255)
-  channel = models.IntegerField(default=0)
   t = models.IntegerField(default=0)
   z = models.IntegerField(default=0)
 
