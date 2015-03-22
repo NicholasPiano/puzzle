@@ -113,6 +113,14 @@ class Series(models.Model):
           template = composite.templates.get(name=path.template.name)
           gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=z)
 
+          # sub gon
+          sub_gon = gon.gons.create(experiment=self.experiment, composite=composite, channel=composite_channel)
+          sub_gon.set_origin(0,0,z,t)
+          sub_gon.set_extent(self.rs, self.cs, 1)
+          sub_gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=z)
+
+          sub_gon.save()
+
         gon.save()
 
     composite.save()

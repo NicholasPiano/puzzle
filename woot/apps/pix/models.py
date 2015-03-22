@@ -30,9 +30,10 @@ class Composite(models.Model):
 class Gon(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='gons')
-  series = models.ForeignKey(Series, related_name='gons')
+  series = models.ForeignKey(Series, related_name='gons', null=True)
   composite = models.ForeignKey(Composite, related_name='gons')
   channel = models.ForeignKey('Channel', related_name='gons')
+  gon = models.ForeignKey('self', related_name='gons', null=True)
 
   # properties
   # 1. origin
@@ -115,3 +116,9 @@ class Path(models.Model):
 
   def load(self):
     return imread(self.url)
+
+class Mod(models.Model):
+  # connections
+  composite = models.ForeignKey(Composite, related_name='mods')
+
+  # properties
