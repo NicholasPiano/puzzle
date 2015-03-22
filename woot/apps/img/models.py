@@ -11,6 +11,8 @@ from apps.img.data import experiments, series
 import os
 import re
 from scipy.misc import imread
+import random
+import string
 
 ###### Models
 ### TOP LEVEL STRUCTURE #############################################
@@ -80,10 +82,53 @@ class Series(models.Model):
   def prototype(self):
     return filter(lambda x: x.name==self.name and x.experiment_name==self.experiment.name, series)[0]
 
+  def compose(self):
+
+    # composite
+    composite = self.composites.create(experiment=self.experiment, id_token=self.generate_composite_id())
+
+    # templates
+    for template in self.experiment.templates.all():
+      composite.templates.create(name=template.name, rx=template.rx, rv=template.rv)
+
+    # iterate over paths
+    for channel in self.channels.all():
+      composite_channel = composite.channels.create(experiment=channel.experiment, name=channel.name)
+
+      for t in range(self.ts):
+
+        # path set
+        path_set = self.paths.filter(channel=channel, t=t)
+
+        # gon
+        gon = self.gons.create(experiment=self.experiment, composite=composite, channel=composite_channel)
+        gon.set_origin(0,0,0,t)
+        gon.set_extent(self.rs, self.cs, self.zs)
+
+        for z in range(self.zs):
+
+          # path
+          path = path_set.get(channel=channel, t=t, z=z)
+          template = composite.templates.get(name=path.template.name)
+          gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=z)
+
+        gon.save()
+
+    composite.save()
+
+  def generate_composite_id(self):
+    def get_id_token():
+      return ''.join([random.choice(chars) for _ in range(8)]) #8 character string
+
+    id_token = get_id_token()
+    while self.composites.filter(id_token=id_token).count()>0:
+      id_token = get_id_token()
+
+    return id_token
+
 class Channel(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='channels')
-  series = models.ForeignKey(Series, related_name='channels')
 
   # properties
   name = models.CharField(max_length=255)
@@ -115,7 +160,7 @@ class Template(models.Model):
     series, series_created = self.experiment.series.get_or_create(name=metadata['series'])
 
     # channel
-    channel, channel_created = self.experiment.channels.get_or_create(series=series, name=metadata['channel'])
+    channel, channel_created = self.experiment.channels.get_or_create(name=metadata['channel'])
 
     # path
     path, created = self.paths.get_or_create(experiment=self.experiment, series=series, channel=channel, url=os.path.join(root, string), file_name=string)

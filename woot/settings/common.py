@@ -214,6 +214,7 @@ THIRD_PARTY_APPS = (
 LOCAL_APPS = (
   'apps.users',
   'apps.img',
+  'apps.pix',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

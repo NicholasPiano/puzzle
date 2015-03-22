@@ -43,15 +43,3 @@ channels = {
 
 def channel(query):
   return channels[query]
-
-### Generate id token
-chars = string.ascii_uppercase + string.digits
-def generate_id_token(Obj): #expects Obj.objects
-  def get_id_token():
-    return ''.join([random.choice(chars) for _ in range(8)]) #8 character string
-
-  id_token = get_id_token()
-  while Obj.objects.filter(id_token=id_token).count()>0:
-    id_token = get_id_token()
-
-  return id_token
