@@ -92,8 +92,8 @@ class Series(models.Model):
       composite.templates.create(name=template.name, rx=template.rx, rv=template.rv)
 
     # iterate over paths
-    for channel in self.channels.all():
-      composite_channel = composite.channels.create(experiment=channel.experiment, name=channel.name)
+    for channel in self.experiment.channels.all():
+      composite_channel = composite.channels.create(name=channel.name)
 
       for t in range(self.ts):
 
@@ -106,6 +106,7 @@ class Series(models.Model):
         gon.set_extent(self.rs, self.cs, self.zs)
 
         for z in range(self.zs):
+          print('processing %s, %d, %d' % (channel.name, t, z))
 
           # path
           path = path_set.get(channel=channel, t=t, z=z)
@@ -117,6 +118,8 @@ class Series(models.Model):
     composite.save()
 
   def generate_composite_id(self):
+    chars = string.ascii_uppercase + string.digits
+
     def get_id_token():
       return ''.join([random.choice(chars) for _ in range(8)]) #8 character string
 

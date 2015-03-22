@@ -23,30 +23,35 @@ class Composite(models.Model):
   # properties
   id_token = models.CharField(max_length=8)
 
+  # methods
+  def __str__(self):
+    return '%s, %s > %s' % (self.experiment.name, self.series.name, self.id_token)
+
 class Gon(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='gons')
   series = models.ForeignKey(Series, related_name='gons')
   composite = models.ForeignKey(Composite, related_name='gons')
-  channel = models.ForeignKey(Channel, related_name='gons')
+  channel = models.ForeignKey('Channel', related_name='gons')
 
   # properties
-  # 1. id
-  id_token = models.CharField(max_length=8)
-
-  # 2. origin
+  # 1. origin
   r = models.IntegerField(default=0)
   c = models.IntegerField(default=0)
   z = models.IntegerField(default=0)
   t = models.IntegerField(default=-1)
 
-  # 3. extent
+  # 2. extent
   rs = models.IntegerField(default=-1)
   cs = models.IntegerField(default=-1)
   zs = models.IntegerField(default=1)
 
-  # 4. data
+  # 3. data
   array = None
+
+  # methods
+  def __str__(self):
+    return '%s > (%s, %d, %d, %d, %d),(%d, %d, %d)' % (self.composite.id_token, self.channel.name, self.r, self.c ,self.z, self.t, self.rs, self.cs, self.zs)
 
   def set_origin(self, r, c, z, t):
     self.r = r
@@ -67,6 +72,10 @@ class Channel(models.Model):
 
   # properties
   name = models.CharField(max_length=255)
+
+  # methods
+  def __str__(self):
+    return '%s > %s' % (self.composite.id_token, self.name)
 
 class Template(models.Model):
   # connections
@@ -102,7 +111,7 @@ class Path(models.Model):
 
   # methods
   def __str__(self):
-    return '%s: %s' % (self.experiment.name, self.url)
+    return '%s: %s' % (self.composite.id_token, self.file_name)
 
   def load(self):
     return imread(self.url)
