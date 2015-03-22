@@ -53,6 +53,17 @@ class Command(BaseCommand):
 
       # get template
       template = experiment.match_template(file_name)
-      path, created = template.get_or_create_path(file_name)
+      path, created = template.get_or_create_path(experiment.img_path, file_name)
 
       print('%s... %s' % (path, 'created.' if created else 'already exists.'))
+
+    # set extent for each series
+    for series in series.objects.all():
+      if series.rs==-1:
+        # rows and columns from image
+        (rs,cs) = series.paths.get(channel='0',t=0,z=0).load().shape
+        series.rs = rs
+        series.cs = cs
+
+        # z and t from 
+        series.zs =

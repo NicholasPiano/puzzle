@@ -82,12 +82,49 @@ class Series(models.Model):
   name = models.CharField(max_length=255)
   id_token = models.CharField(max_length=8)
 
+  # extent
+  rs = models.IntegerField(default=-1)
+  cs = models.IntegerField(default=-1)
+  zs = models.IntegerField(default=-1)
+  ts = models.IntegerField(default=-1)
+
   # methods
   def __str__(self):
     return '%s > %s'%(self.experiment.name, self.name)
 
   def prototype(self):
     return filter(lambda x: x.name==self.name and x.experiment_name==self.experiment.name, series)[0]
+
+  def compose(self):
+    '''
+    Takes all images currently associated with the series and forms a composite complete with gons and paths.
+    '''
+    # composite
+    composite = self.composites.create(experiment=self.experiment, id_token=generate_id_token(Composite))
+
+    # paths
+    path_set = self.paths.all()
+
+    # extremes
+    composite.max_t = max([path.t for path in path_set])
+    composite.max_z = max([path.z for path in path_set])
+    channels = list(set([path.channel for path in path_set]))
+
+    # iterate
+    for channel in channels:
+      for t in range(composite.max_t+1):
+
+        # gon
+        gon = self.gons.create(experiment=self.experiment, composite=composite, id_token=generate_id_token(Gon), channel=channel)
+
+        gon.set_location(0,0,0,t)
+        gon.set_extent(self.rs,self.cs,self.zs)
+
+        for z in range(composite.max_z+1):
+
+          # get image
+          path = path_set.get(channel=channel, t=t, z=z)
+          gon.paths.add(path)
 
 class Template(models.Model):
   # connections
@@ -108,7 +145,7 @@ class Template(models.Model):
   def dict(self, string):
     return self.match(string).groupdict()
 
-  def get_or_create_path(self, string):
+  def get_or_create_path(self, root, string):
     # metadata
     metadata = self.dict(string)
 
@@ -119,7 +156,7 @@ class Template(models.Model):
       series.save()
 
     # path
-    path, created = self.paths.get_or_create(experiment=self.experiment, series=series, url=string)
+    path, created = self.paths.get_or_create(experiment=self.experiment, series=series, url=os.path.join(root, string), file_name=string)
     if created:
       path.channel = int(metadata['channel'])
       path.t = int(metadata['frame'])
@@ -133,10 +170,11 @@ class Path(models.Model):
   experiment = models.ForeignKey(Experiment, related_name='paths')
   series = models.ForeignKey(Series, related_name='paths')
   template = models.ForeignKey(Template, related_name='paths')
-  gons = models.ManyToManyField('Gon')
+  gon = models.ForeignKey('Gon', related_name='paths')
 
   # properties
   url = models.CharField(max_length=255)
+  file_name = models.CharField(max_length=255)
   channel = models.IntegerField(default=0)
   t = models.IntegerField(default=0)
   z = models.IntegerField(default=0)
@@ -144,6 +182,9 @@ class Path(models.Model):
   # methods
   def __str__(self):
     return '%s: %s' % (self.experiment.name, self.url)
+
+  def load(self):
+    return imread(self.url)
 
 ### SECONDARY STRUCTURE #############################################
 ### Bulk pixel objects ###
