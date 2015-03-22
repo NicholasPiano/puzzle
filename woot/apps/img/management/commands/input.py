@@ -61,9 +61,10 @@ class Command(BaseCommand):
     for series in series.objects.all():
       if series.rs==-1:
         # rows and columns from image
-        (rs,cs) = series.paths.get(channel='0',t=0,z=0).load().shape
+        (rs,cs) = series.paths.get(channel=series.channels.all()[0], t=0, z=0).load().shape
         series.rs = rs
         series.cs = cs
 
         # z and t from counts
-        series.zs = series.paths.filter(channel).count()
+        series.zs = series.paths.filter(channel=series.channels.all()[0], t=0).count()
+        series.ts = series.paths.filter(channel=series.channels.all()[0], z=0).count()

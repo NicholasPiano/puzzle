@@ -85,7 +85,7 @@ class Channel(models.Model):
   series = models.ForeignKey(Series, related_name='channels')
 
   # properties
-
+  name = models.CharField(max_length=255)
 
 class Template(models.Model):
   # connections
