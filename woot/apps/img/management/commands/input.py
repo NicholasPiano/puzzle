@@ -65,5 +65,5 @@ class Command(BaseCommand):
         series.rs = rs
         series.cs = cs
 
-        # z and t from 
-        series.zs =
+        # z and t from counts
+        series.zs = series.paths.filter(channel).count()
