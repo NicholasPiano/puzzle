@@ -5,13 +5,15 @@ from django.db import models
 
 # local
 from apps.img.models import Experiment, Series
+from apps.pix import algorithms
 
 # util
 import os
 import re
-from scipy.misc import imread
+from scipy.misc import imread, imsave
 import random
 import string
+import numpy as np
 
 ### SECONDARY STRUCTURE #############################################
 ### Bulk pixel objects ###
@@ -30,8 +32,8 @@ class Composite(models.Model):
 class Gon(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='gons')
-  series = models.ForeignKey(Series, related_name='gons', null=True)
-  composite = models.ForeignKey(Composite, related_name='gons')
+  series = models.ForeignKey(Series, related_name='gons')
+  composite = models.ForeignKey(Composite, related_name='gons', null=True)
   channel = models.ForeignKey('Channel', related_name='gons')
   gon = models.ForeignKey('self', related_name='gons', null=True)
 
@@ -66,6 +68,46 @@ class Gon(models.Model):
     self.cs = cs
     self.zs = zs
     self.save()
+
+  def shape(self):
+    return (self.rs, self.cs, self.zs)
+
+  def t_str(self):
+    return str('0'*(len(str(self.series.ts)) - len(str(self.t))) + str(self.t))
+
+  def z_str(self):
+    return str('0'*(len(str(self.series.zs)) - len(str(self.z))) + str(self.z))
+
+  def load(self):
+    self.array = []
+    for path in self.paths.order_by('z'):
+      array = imread(path.url)
+      self.array.append(array)
+    self.array = np.dstack(self.array).squeeze() # remove unnecessary dimensions
+    return self.array
+
+  def save_paths(self, url, template):
+    if self.array and len(self.array.shape)==3:
+      for z in range(self.zs):
+        # array
+        array = self.array[:,:,z]
+
+        # path
+        path_url = url % (self.channel.name, self.t_str(), self.z_str())
+        file_name = template.rv % (self.channel.name, self.t_str(), self.z_str())
+        path = self.paths.create(composite=self.composite, channel=self.channel, template=template, url=path_url, file_name=file_name, t=self.t, z=self.z)
+
+        # save
+        imsave(path_url, array)
+
+  def split(self):
+    if self.zs>1 and self.gons.count()>0:
+      for path in self.paths.all():
+        # gon
+        gon = self.gons.create(experiment=self.experiment, series=self.series, channel=self.channel)
+        gon.set_origin(0,0,z,t)
+        gon.set_extent(self.rs, self.cs, 1)
+        gon.paths.create(composite=path.composite, channel=path.channel, template=path.template, url=path.url, file_name=path.file_name, t=path.t, z=path.z)
 
 class Channel(models.Model):
   # connections
@@ -122,3 +164,13 @@ class Mod(models.Model):
   composite = models.ForeignKey(Composite, related_name='mods')
 
   # properties
+  id_token = models.CharField(max_length=8)
+  algorithm = models.CharField(max_length=255)
+  date_created = models.DateTimeField(auto_now_add=True)
+
+  # methods
+  def run(self):
+    ''' Runs associated algorithm to produce a new channel. '''
+    algorithm = getattr(algorithms, self.algorithm)
+
+    algorithm(self.composite, self.id_token, self.algorithm)

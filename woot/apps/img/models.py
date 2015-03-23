@@ -23,6 +23,7 @@ class Experiment(models.Model):
   # 1. location
   base_path = models.CharField(max_length=255)
   img_path = models.CharField(max_length=255)
+  composite_path = models.CharField(max_length=255)
 
   # 2. scaling
   rmop = models.FloatField(default=0.0) # microns over pixel ratio
@@ -37,7 +38,12 @@ class Experiment(models.Model):
     # fetch default paths from settings
     self.base_path = base_path
     self.img_path = os.path.join(self.base_path, default_paths['img'])
+    self.img_path = os.path.join(self.base_path, default_paths['composite'])
     self.save()
+
+    for path in [self.composite_path]:
+      if not os.path.exists(path):
+        os.makedirs(path)
 
   def prototype(self):
     return list(filter(lambda x: x.name==self.name, experiments))[0]
@@ -114,7 +120,7 @@ class Series(models.Model):
           gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=z)
 
           # sub gon
-          sub_gon = gon.gons.create(experiment=self.experiment, composite=composite, channel=composite_channel)
+          sub_gon = self.gons.create(experiment=self.experiment, gon=gon, channel=composite_channel)
           sub_gon.set_origin(0,0,z,t)
           sub_gon.set_extent(self.rs, self.cs, 1)
           sub_gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=z)
