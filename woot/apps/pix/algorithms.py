@@ -5,7 +5,7 @@
 # local
 
 # util
-
+import os
 
 # methods
 # every algorithm follows this pattern:
@@ -22,36 +22,32 @@ def channel_test_3D(composite, mod_id, algorithm):
   gfp_set = composite.gons.filter(channel__name='0')
 
   # paths
-  composite_template = composite.experiment.templates.get(name='composite')
+  composite_template = composite.templates.get(name='composite')
   composite_url = os.path.join(composite.experiment.composite_path, composite_template.rv)
 
   # channel
-  channel, created = composite.channels.get_or_create(name='%s-%s' % (mod_id, algorithm))
+  channel = composite.channels.create(name='%s-%s' % (mod_id, algorithm))
 
-  if not created:
-    for t in range(composite.series.ts):
-      print(t)
-      # 1. get
-      bf = bf_set.get(t=t)
-      bf_array = bf.load()
+  for t in range(composite.series.ts):
+    print(t)
+    # 1. get
+    bf = bf_set.get(t=t)
+    bf_array = bf.load()
 
-      gfp = gfp_set.get(t=t)
-      gfp_array = gfp.load()
+    gfp = gfp_set.get(t=t)
+    gfp_array = gfp.load()
 
-      # 2. calculations
-      product = gfp_array * bf_array
+    # 2. calculations
+    product = gfp_array * bf_array
 
-      # 3. output
-      gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel)
-      gon.set_origin(bf.r, bf.c, bf.z, bf.t)
-      gon.set_origin(bf.rs, bf.cs, bf.zs)
+    # 3. output
+    gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel)
+    gon.set_origin(bf.r, bf.c, bf.z, bf.t)
+    gon.set_extent(bf.rs, bf.cs, bf.zs)
 
-      gon.array = product
+    gon.array = product
 
-      gon.save_paths(composite_url, composite_template)
-      gon.split()
+    gon.save_paths(composite_url, composite_template)
+    gon.split()
 
-      gon.save()
-
-  else:
-    print('This channel, %s, has already been created.' % channel.name)
+    gon.save()

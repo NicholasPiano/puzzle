@@ -70,3 +70,6 @@ class Command(BaseCommand):
         series.ts = series.paths.filter(channel=series.experiment.channels.all()[0], z=0).count()
 
         series.save()
+
+      if series.composites.count()==0:
+        series.compose()

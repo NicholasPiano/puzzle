@@ -29,6 +29,18 @@ class Composite(models.Model):
   def __str__(self):
     return '%s, %s > %s' % (self.experiment.name, self.series.name, self.id_token)
 
+  def generate_mod_id(self):
+    chars = string.ascii_uppercase + string.digits
+
+    def get_id_token():
+      return ''.join([random.choice(chars) for _ in range(8)]) #8 character string
+
+    id_token = get_id_token()
+    while self.mods.filter(id_token=id_token).count()>0:
+      id_token = get_id_token()
+
+    return id_token
+
 class Gon(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='gons')
@@ -75,8 +87,8 @@ class Gon(models.Model):
   def t_str(self):
     return str('0'*(len(str(self.series.ts)) - len(str(self.t))) + str(self.t))
 
-  def z_str(self):
-    return str('0'*(len(str(self.series.zs)) - len(str(self.z))) + str(self.z))
+  def z_str(self, z=None):
+    return str('0'*(len(str(self.series.zs)) - len(str(self.z if z is None else z))) + str(self.z if z is None else z))
 
   def load(self):
     self.array = []
@@ -87,15 +99,15 @@ class Gon(models.Model):
     return self.array
 
   def save_paths(self, url, template):
-    if self.array and len(self.array.shape)==3:
+    if self.array is not None and len(self.array.shape)==3:
       for z in range(self.zs):
         # array
         array = self.array[:,:,z]
 
         # path
-        path_url = url % (self.channel.name, self.t_str(), self.z_str())
-        file_name = template.rv % (self.channel.name, self.t_str(), self.z_str())
-        path = self.paths.create(composite=self.composite, channel=self.channel, template=template, url=path_url, file_name=file_name, t=self.t, z=self.z)
+        path_url = url % (self.channel.name, self.t_str(), self.z_str(z))
+        file_name = template.rv % (self.channel.name, self.t_str(), self.z_str(z))
+        self.paths.create(composite=self.composite, channel=self.channel, template=template, url=path_url, file_name=file_name, t=self.t, z=z)
 
         # save
         imsave(path_url, array)
