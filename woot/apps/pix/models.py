@@ -113,11 +113,11 @@ class Gon(models.Model):
         imsave(path_url, array)
 
   def split(self):
-    if self.zs>1 and self.gons.count()>0:
+    if self.zs>1 and self.gons.count()==0:
       for path in self.paths.all():
         # gon
         gon = self.gons.create(experiment=self.experiment, series=self.series, channel=self.channel)
-        gon.set_origin(0,0,z,t)
+        gon.set_origin(0,0,path.z,path.t)
         gon.set_extent(self.rs, self.cs, 1)
         gon.paths.create(composite=path.composite, channel=path.channel, template=path.template, url=path.url, file_name=path.file_name, t=path.t, z=path.z)
 
