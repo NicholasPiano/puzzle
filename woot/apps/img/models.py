@@ -38,7 +38,7 @@ class Experiment(models.Model):
     # fetch default paths from settings
     self.base_path = base_path
     self.img_path = os.path.join(self.base_path, default_paths['img'])
-    self.img_path = os.path.join(self.base_path, default_paths['composite'])
+    self.composite_path = os.path.join(self.base_path, default_paths['composite'])
     self.save()
 
     for path in [self.composite_path]:
