@@ -57,6 +57,8 @@ class Command(BaseCommand):
 
       print('%s... %s' % (path, 'created.' if created else 'already exists.'))
 
+    # make composites and masks
+
     # set extent for each series
     for series in Series.objects.all():
       if series.rs==-1:
