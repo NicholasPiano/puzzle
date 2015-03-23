@@ -34,7 +34,7 @@ templates = {
   },
   'mask':{
     'rx':r'^mask_(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_z(?P<z>.+)\.(?P<extension>.+)$',
-    'rv':r'mask_%s_s%s_t%s_z%s.tif',
+    'rv':r'mask_%s_s%s_ch%s_t%s_z%s.tif',
   }
 }
 
@@ -42,7 +42,7 @@ templates = {
 default_paths = {
   'img':'img/storage/',
   'composite':'img/composite/',
-  'mask':'img/mask/',
+  'mask':'img/mask/out/',
   'plot':'plot/',
   'track':'track/',
   'out':'out/',
