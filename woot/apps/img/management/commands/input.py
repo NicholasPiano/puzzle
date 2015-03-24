@@ -46,7 +46,7 @@ class Command(BaseCommand):
       experiment.get_metadata()
 
     # list directory filtered by allow extension
-    file_list = [file_name for file_name in os.listdir(experiment.img_path) if os.path.splitext(file_name)[1] in allowed_file_extensions]
+    file_list = [file_name for file_name in os.listdir(experiment.img_path) if os.path.splitext(file_name)[1] in allowed_img_extensions]
 
     # make paths and series
     for i, file_name in enumerate(file_list):

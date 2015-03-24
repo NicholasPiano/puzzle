@@ -4,33 +4,12 @@
 from django.db import models
 
 # local
-from apps.img.models import Experiment, Series, Path
-from apps.pix.models import Composite, Channel
+from apps.img.models import Experiment, Series
+from apps.pix.models import Composite, Channel, Gon
 
 # util
 
 ### RECOGNITION STAGE
-class RegionMask(models.Model):
-  # connections
-  experiment = models.ForeignKey(Experiment, related_name='region_masks')
-  series = models.ForeignKey(Series, related_name='region_masks')
-  path = models.ForeignKey(Path, related_name='region_masks')
-
-  # properties
-  mask_id = models.IntegerField(default=0)
-  index = models.IntegerField(default=0)
-
-  mask = None
-
-  def load(self):
-    # load image from path
-    masks = self.path.load()
-
-    # keep only the parts of the image that have the same id as mask
-    masks[masks!=self.mask_id] = 0
-    self.mask = masks==0
-    return self.mask
-
 class CellTrack(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='cell_tracks')
@@ -51,26 +30,27 @@ class CellMarker(models.Model):
   c = models.IntegerField(default=0)
   t = models.IntegerField(default=0)
 
-class CellMask(models.Model): # cell mask is composite and channel dependent
+class Mask(models.Model): # cell mask is composite and channel dependent
   # connections
-  experiment = models.ForeignKey(Experiment, related_name='cell_masks')
-  series = models.ForeignKey(Series, related_name='cell_masks')
-  path = models.ForeignKey(Path, related_name='cell_masks')
+  composite = models.ForeignKey(Composite, related_name='masks')
+  channel = models.ForeignKey(Channel, related_name='masks')
+  gon = models.ForeignKey(Gon, related_name='masks')
 
   # properties
   mask_id = models.IntegerField(default=0)
-  index = models.IntegerField(default=0)
 
   mask = None
 
-  def load(self):
-    # load image from path
-    masks = self.path.load()
+class MaskPath(models.Model):
+  # connections
+  experiment = models.ForeignKey(Experiment, related_name='mask_paths')
+  series = models.ForeignKey(Series, related_name='mask_paths')
 
-    # keep only the parts of the image that have the same id as mask
-    masks[masks!=self.mask_id] = 0
-    self.mask = masks==0
-    return self.mask
+  # properties
+  url = models.CharField(max_length=255)
+  file_name = models.CharField(max_length=255)
+  t = models.IntegerField(default=0)
+  z = models.IntegerField(default=0)
 
 ### DATA STAGE #####
 class Region(models.Model):

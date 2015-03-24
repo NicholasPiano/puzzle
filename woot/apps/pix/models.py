@@ -105,14 +105,16 @@ class Gon(models.Model):
         array = self.array[:,:,z]
 
         # path
-        path_url = url % (self.channel.name, self.t_str(), self.z_str(z))
-        file_name = template.rv % (self.channel.name, self.t_str(), self.z_str(z))
+        path_url = url % (self.experiment.name, self.series.name, self.channel.name, self.t_str(), self.z_str(z))
+        file_name = template.rv % (self.experiment.name, self.series.name, self.channel.name, self.t_str(), self.z_str(z))
         self.paths.create(composite=self.composite, channel=self.channel, template=template, url=path_url, file_name=file_name, t=self.t, z=z)
 
         # save
         imsave(path_url, array)
 
   def split(self):
+    ''' If the gon is 3D, make 2D slices into gons. '''
+
     if self.zs>1 and self.gons.count()==0:
       for path in self.paths.all():
         # gon
@@ -120,6 +122,10 @@ class Gon(models.Model):
         gon.set_origin(0,0,path.z,path.t)
         gon.set_extent(self.rs, self.cs, 1)
         gon.paths.create(composite=path.composite, channel=path.channel, template=path.template, url=path.url, file_name=path.file_name, t=path.t, z=path.z)
+
+  def duplicate(self):
+    ''' If the gon is 2D, make a 3D gon with paths along with 2D slices. '''
+    pass
 
 class Channel(models.Model):
   # connections
