@@ -69,6 +69,12 @@ class Command(BaseCommand):
 
             sub_gon.save()
 
+            # load gon and get unique id's
+            array = sub_gon.load()
+            unique_ids = [u for u in np.unique(array) if u!=0]
+            for uid in unique_ids:
+              sub_gon.masks.create(composite=composite, channel=region_channel, mask_id=uid)
+
           gon.save()
 
         ### MASKS
@@ -99,6 +105,12 @@ class Command(BaseCommand):
               sub_gon.paths.create(composite=composite, channel=mask_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=z)
 
               sub_gon.save()
+
+              # load gon and get unique id's
+              array = sub_gon.load()
+              unique_ids = [u for u in np.unique(array) if u!=0]
+              for uid in unique_ids:
+                sub_gon.masks.create(composite=composite, channel=mask_channel, mask_id=uid)
 
             gon.save()
 

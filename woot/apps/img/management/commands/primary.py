@@ -25,5 +25,5 @@ class Command(BaseCommand):
   def handle(self, *args, **options):
     c = Composite.objects.get()
 
-    m = c.mods.create(id_token=c.generate_mod_id(), algorithm='pmod')
+    m = c.mods.create(id_token=c.generate_mod_id(), algorithm='primary')
     m.run()

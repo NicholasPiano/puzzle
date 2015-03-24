@@ -39,7 +39,13 @@ class Mask(models.Model): # cell mask is composite and channel dependent
   # properties
   mask_id = models.IntegerField(default=0)
 
-  mask = None
+  array = None
+
+  def load(self):
+    array = self.gon.load()
+    array[array!=self.mask_id] = 0
+    self.array = array==self.mask_id
+    return self.array
 
 class MaskPath(models.Model):
   # connections
@@ -53,14 +59,33 @@ class MaskPath(models.Model):
   z = models.IntegerField(default=0)
 
 ### DATA STAGE #####
-class Region(models.Model):
-  pass
-
-class RegionInstance(models.Model):
-  pass
-
 class Cell(models.Model):
-  pass
+  # connections
+  experiment = models.ForeignKey(Experiment, related_name='cells')
+  series = models.ForeignKey(Series, related_name='cells')
+
+  # properties
+  cell_id = models.IntegerField(default=0)
+
+  # methods
+  def velocities(self):
+    pass
 
 class CellInstance(models.Model):
-  pass
+  # connections
+  experiment = models.ForeignKey(Experiment, related_name='cell_instances')
+  series = models.ForeignKey(Series, related_name='cell_instances')
+  cell = models.ForeignKey(Cell, related_name='cell_instances')
+
+  # properties
+  r = models.IntegerField(default=0)
+  c = models.IntegerField(default=0)
+  z = models.IntegerField(default=0)
+  t = models.IntegerField(default=0)
+
+  a = models.IntegerField(default=0)
+  region = models.IntegerField(default=0)
+
+  vr = models.IntegerField(default=0)
+  vc = models.IntegerField(default=0)
+  vz = models.IntegerField(default=0)
