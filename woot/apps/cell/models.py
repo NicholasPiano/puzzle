@@ -4,8 +4,8 @@
 from django.db import models
 
 # local
-from apps.img.models import Experiment, Series
-from apps.pix.models import Composite, Channel, Path
+from apps.img.models import Experiment, Series, Path
+from apps.pix.models import Composite, Channel
 
 # util
 
@@ -18,18 +18,42 @@ class RegionMask(models.Model):
 
   # properties
   mask_id = models.IntegerField(default=0)
+  index = models.IntegerField(default=0)
+
+  mask = None
+
+  def load(self):
+    # load image from path
+    masks = self.path.load()
+
+    # keep only the parts of the image that have the same id as mask
+    masks[masks!=self.mask_id] = 0
+    self.mask = masks==0
+    return self.mask
 
 class CellTrack(models.Model):
   # connections
-  pass
+  experiment = models.ForeignKey(Experiment, related_name='cell_tracks')
+  series = models.ForeignKey(Series, related_name='cell_tracks')
+  path = models.ForeignKey(Path, related_name='cell_tracks')
 
   # properties
+  track_id = models.IntegerField(default=0)
+  index = models.IntegerField(default=0)
 
 class CellMarker(models.Model):
   # connections
-  pass
+  experiment = models.ForeignKey(Experiment, related_name='cell_markers')
+  series = models.ForeignKey(Series, related_name='cell_markers')
+  path = models.ForeignKey(Path, related_name='cell_markers')
+  track = models.ForeignKey(CellTrack, related_name='markers')
 
   # properties
+  marker_id = models.IntegerField(default=0)
+  index = models.IntegerField(default=0)
+
+  r = models.IntegerField(default=0)
+  c = models.IntegerField(default=0)
 
 class CellMask(models.Model): # cell mask is composite and channel dependent
   # connections
@@ -39,12 +63,25 @@ class CellMask(models.Model): # cell mask is composite and channel dependent
 
   # properties
   mask_id = models.IntegerField(default=0)
+  index = models.IntegerField(default=0)
+
+  mask = None
+
+  def load(self):
+    # load image from path
+    masks = self.path.load()
+
+    # keep only the parts of the image that have the same id as mask
+    masks[masks!=self.mask_id] = 0
+    self.mask = masks==0
+    return self.mask
 
 ### DATA STAGE #####
 class Region(models.Model):
-  passw
+  pass
 
 class RegionInstance(models.Model):
+  pass
 
 class Cell(models.Model):
   pass

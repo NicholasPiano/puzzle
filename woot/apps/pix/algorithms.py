@@ -16,7 +16,6 @@ import os
 # 5. done.
 
 def channel_test_3D(composite, mod_id, algorithm):
-
   # simply multiply each 3D gon in the brightfield by its corresponding gon in the GFP.
   bf_set = composite.gons.filter(channel__name='1')
   gfp_set = composite.gons.filter(channel__name='0')
@@ -51,3 +50,6 @@ def channel_test_3D(composite, mod_id, algorithm):
     gon.split()
 
     gon.save()
+
+def pmod(composite, mod_id, algorithm):
+  pass

@@ -215,7 +215,7 @@ LOCAL_APPS = (
   'apps.users',
   'apps.img',
   'apps.pix',
-  # 'apps.cell',
+  'apps.cell',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
