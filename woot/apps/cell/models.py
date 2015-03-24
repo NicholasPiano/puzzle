@@ -35,7 +35,6 @@ class CellTrack(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='cell_tracks')
   series = models.ForeignKey(Series, related_name='cell_tracks')
-  path = models.ForeignKey(Path, related_name='cell_tracks')
 
   # properties
   track_id = models.IntegerField(default=0)
@@ -45,15 +44,12 @@ class CellMarker(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='cell_markers')
   series = models.ForeignKey(Series, related_name='cell_markers')
-  path = models.ForeignKey(Path, related_name='cell_markers')
   track = models.ForeignKey(CellTrack, related_name='markers')
 
   # properties
-  marker_id = models.IntegerField(default=0)
-  index = models.IntegerField(default=0)
-
   r = models.IntegerField(default=0)
   c = models.IntegerField(default=0)
+  t = models.IntegerField(default=0)
 
 class CellMask(models.Model): # cell mask is composite and channel dependent
   # connections
