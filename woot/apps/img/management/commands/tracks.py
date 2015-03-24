@@ -44,13 +44,13 @@ class Command(BaseCommand):
               t = int(line[2]) - 1
 
               if track_id in tracks:
-                tracks[track_id].append((t,r,c))
+                tracks[track_id].append((r,c,t))
               else:
-                tracks[track_id] = [(t,r,c)]
+                tracks[track_id] = [(r,c,t)]
 
             for track_id, markers in tracks.items():
               track_index = series.cell_tracks.filter(track_id=track_id).count()
               track = series.cell_tracks.create(experiment=series.experiment, track_id=track_id, index=track_index)
 
               for marker in markers:
-                track.markers.create(experiment=series.experiment, series=series, r=r, c=c, t=t)
+                track.markers.create(experiment=series.experiment, series=series, r=marker[0], c=marker[1], t=marker[2])

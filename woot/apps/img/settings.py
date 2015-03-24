@@ -20,12 +20,8 @@ templates = {
     'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_z(?P<z>.+)\.(?P<extension>.+)$',
     'rv':r'%s_s%s_ch-%s_t%s_z%s.tiff',
   },
-  'composite':{
-    'rx':r'^(?P<mod_id>[A-Z0-9]{8})_t(?P<t>[0-9]+)_z(?P<z>.+)\.(?P<extension>.+)$',
-    'rv':r'%s_t%s_z%s.tiff',
-  },
   'output':{
-    'rx':r'^out_(?P<mod_id>[A-Z0-9]{8})_t(?P<t>[0-9]+)_z(?P<z>.+)\.(?P<extension>.+)$',
+    'rx':r'^out_(?P<name>.+)_t(?P<t>[0-9]+)_z(?P<z>.+)\.(?P<extension>.+)$',
     'rv':r'out_%s_t%s_z%s.tiff',
   },
   'track':{
