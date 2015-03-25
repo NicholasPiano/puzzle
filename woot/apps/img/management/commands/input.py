@@ -61,7 +61,7 @@ class Command(BaseCommand):
 
     # set extent for each series
     for series in experiment.series.all():
-      if experiment.allow_series(series.name):
+      if experiment.allowed_series(series.name):
         if series.rs==-1:
           # rows and columns from image
           (rs,cs) = series.paths.get(channel=series.experiment.channels.all()[0], t=0, z=0).load().shape
