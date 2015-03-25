@@ -35,7 +35,7 @@ class Command(BaseCommand):
             tracks = {} # stores list of tracks that can then be put into the database
 
             for line in track_file.readlines():
-              line = line.rstrip().split('\t')
+              line = line.rstrip().split(',')
 
               # details
               track_id = int(line[1])
