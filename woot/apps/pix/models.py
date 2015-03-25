@@ -41,6 +41,18 @@ class Composite(models.Model):
 
     return id_token
 
+  def generate_gon_id(self):
+    chars = string.ascii_uppercase + string.digits
+
+    def get_id_token():
+      return ''.join([random.choice(chars) for _ in range(8)]) #8 character string
+
+    id_token = get_id_token()
+    while self.gons.filter(id_token=id_token).count()>0:
+      id_token = get_id_token()
+
+    return id_token
+
 class Gon(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='gons')
@@ -50,6 +62,8 @@ class Gon(models.Model):
   gon = models.ForeignKey('self', related_name='gons', null=True)
 
   # properties
+  id_token = models.CharField(max_length=8, default='')
+
   # 1. origin
   r = models.IntegerField(default=0)
   c = models.IntegerField(default=0)

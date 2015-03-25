@@ -112,6 +112,25 @@ class Command(BaseCommand):
               for uid in unique_ids:
                 sub_gon.masks.create(composite=composite, channel=mask_channel, mask_id=uid)
 
+                mask = array==uid
+
+                r0 = np.argmax(np.any(mask, axis=1))
+                r1 = np.argmax(np.any(mask, axis=1)[::-1])
+                c0 = np.argmax(np.any(mask, axis=0))
+                c1 = np.argmax(np.any(mask, axis=0)[::-1])
+
+                mask = mask[r0-1:r1+1,c0-1:c1+1]
+                out = np.zeros(mask.shape)
+                out[mask] = 255
+
+                template = composite.templates.get(name='mask')
+
+                mask_gon = sub_gon.gons.create(experiment=series.experiment, series=series, channel=mask_channel, id_token=composite.generate_gon_id())
+                mask_gon.set_origin(r0,c0,z,t)
+                mask_gon.set_extent(r1-r0+1, c1-c0+1, 1)
+                mask_path = mask_gon.paths.create(composite=composite, channel=mask_channel, template=template, url=os.path.join(composite.experiment.mask_path, template.rv % mask_gon.id_token), file_name=template.rv % mask_gon.id_token, t=t, z=z)
+                imsave(mask_path.url, out)
+
             gon.save()
 
         composite.save()
