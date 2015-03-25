@@ -24,7 +24,7 @@ templates = {
   'mask':{
     'rx':r'^(?P<id_token>[A-Z0-9]{8})\.(?P<extension>.+)$',
     'rv':r'%s.tiff',
-  }
+  },
   'track':{
     'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_(?P<index>[0-9]+)\.(?P<extension>.+)$',
     'rv':r'%s_s%s_%s.xls',
@@ -43,4 +43,5 @@ default_paths = {
   'plot':'plot/',
   'track':'track/',
   'output':'output/',
+  'mask':'img/mask/',
 }

@@ -10,6 +10,8 @@ from apps.img.settings import *
 import os
 import re
 import numpy as np
+from scipy.misc import imsave
+import matplotlib.pyplot as plt
 
 ### Command
 class Command(BaseCommand):
@@ -115,17 +117,17 @@ class Command(BaseCommand):
                 mask = array==uid
 
                 r0 = np.argmax(np.any(mask, axis=1))
-                r1 = np.argmax(np.any(mask, axis=1)[::-1])
+                r1 = mask.shape[0] - np.argmax(np.any(mask, axis=1)[::-1]) - 1
                 c0 = np.argmax(np.any(mask, axis=0))
-                c1 = np.argmax(np.any(mask, axis=0)[::-1])
+                c1 = mask.shape[1] - np.argmax(np.any(mask, axis=0)[::-1]) - 1
 
-                mask = mask[r0-1:r1+1,c0-1:c1+1]
+                mask = mask[r0:r1+1,c0:c1+1]
                 out = np.zeros(mask.shape)
                 out[mask] = 255
 
                 template = composite.templates.get(name='mask')
 
-                mask_gon = sub_gon.gons.create(experiment=series.experiment, series=series, channel=mask_channel, id_token=composite.generate_gon_id())
+                mask_gon = sub_gon.gons.create(experiment=series.experiment, series=series, composite=composite, channel=mask_channel, id_token=composite.generate_gon_id())
                 mask_gon.set_origin(r0,c0,z,t)
                 mask_gon.set_extent(r1-r0+1, c1-c0+1, 1)
                 mask_path = mask_gon.paths.create(composite=composite, channel=mask_channel, template=template, url=os.path.join(composite.experiment.mask_path, template.rv % mask_gon.id_token), file_name=template.rv % mask_gon.id_token, t=t, z=z)
