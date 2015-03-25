@@ -44,16 +44,16 @@ class Command(BaseCommand):
         ### REGIONS
         region_channel = composite.channels.create(name='region')
 
+        path = region_paths.get()
+        experiment_template = series.experiment.match_template(path.file_name)
+        template = composite.templates.get(name=experiment_template.name)
+
         for t in range(series.ts):
 
           # gon
           gon = series.gons.create(experiment=series.experiment, composite=composite, channel=region_channel)
           gon.set_origin(0,0,0,t)
           gon.set_extent(series.rs, series.cs, series.zs)
-
-          path = region_paths.get(t=t)
-          experiment_template = series.experiment.match_template(path.file_name)
-          template = composite.templates.get(name=experiment_template.name)
 
           for z in range(series.zs):
             print('processing %s, %d, %d' % (region_channel.name, t, z))
