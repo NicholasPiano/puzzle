@@ -69,7 +69,17 @@ class Cell(models.Model):
 
   # methods
   def velocities(self):
-    pass
+    frames = [ci.t for ci in self.cell_instances.all()]
+    for frame in sorted(frames):
+      ci = self.cell_instances.get(t=frame)
+
+      prev_ci = self.cell_instances.get(t=(frame-1 if frame>0 else 0))
+
+      ci.vr = ci.r - prev_ci.r
+      ci.vc = ci.c - prev_ci.c
+      ci.vz = ci.z - prev_ci.z
+
+      ci.save()
 
 class CellInstance(models.Model):
   # connections
@@ -89,3 +99,9 @@ class CellInstance(models.Model):
   vr = models.IntegerField(default=0)
   vc = models.IntegerField(default=0)
   vz = models.IntegerField(default=0)
+
+  def velocity(self):
+    return ((self.vr * self.experiment.rmop)**2 + (self.vc * self.experiment.cmop)**2 + (self.vz * self.experiment.zmop)**2)**0.5 / self.experiment.tpf
+
+  def area(self):
+    return self.a * self.experiment.rmop * self.experiment.cmop
