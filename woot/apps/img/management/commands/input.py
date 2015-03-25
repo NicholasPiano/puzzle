@@ -18,7 +18,7 @@ class Command(BaseCommand):
     make_option('--name', # path of images unique to this experiment.
       action='store',
       dest='name',
-      default='050714-test',
+      default='050714',
       help='Path to scan for images'
     ),
 
