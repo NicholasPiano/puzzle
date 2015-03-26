@@ -105,3 +105,6 @@ class CellInstance(models.Model):
 
   def area(self):
     return self.a * self.experiment.rmop * self.experiment.cmop
+
+  def line(self):
+    return '%d,%d,%d,%d,%d,%f,%f,%d' % (self.cell.cell_id, self.t * self.experiment.tpf, self.r * self.experiment.rmop, self.c * self.experiment.cmop, self.z * self.experiment.zmop, self.velocity(), self.area(), self.region)
