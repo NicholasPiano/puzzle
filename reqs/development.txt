@@ -1,5 +1,0 @@
--r common.txt
-
-# Debug toolbar
-django-debug-toolbar
-sqlparse

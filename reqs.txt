@@ -32,8 +32,9 @@ django-appconf
 # Python 2 -> Python 3
 six
 
-# App specific settings
-django-configurations
-
 # LESS and SASS
 # https://github.com/andreyfedoseev/django-static-precompiler
+
+# Debug toolbar
+django-debug-toolbar
+sqlparse

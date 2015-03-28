@@ -1,16 +1,16 @@
-#woot.apps.users.models
+# woot.apps.users.models
 
-#django
+# django
 from django.db import models
 from django.contrib.auth.models import (
   BaseUserManager, AbstractBaseUser, PermissionsMixin
 )
 
-#local
+# local
 
-#vars
+# vars
 
-#classes
+# classes
 class UserManager(BaseUserManager):
   def create_user(self, email, date_of_birth, password=None):
     """
@@ -43,20 +43,20 @@ class UserManager(BaseUserManager):
     return user
 
 class User(AbstractBaseUser, PermissionsMixin):
-  #properties
+  # properties
   email = models.EmailField(verbose_name='email address',max_length=255,unique=True)
   date_of_birth = models.DateField()
   is_active = models.BooleanField(default=True)
   is_admin = models.BooleanField(default=False)
   objects = UserManager()
 
-  #-settings
+  # -settings
   autocomplete_setting = models.CharField(max_length=4, choices=(('f','full'),('t','tags'),('o','off')), default='full')
 
   USERNAME_FIELD = 'email'
   REQUIRED_FIELDS = ['date_of_birth']
 
-  #methods
+  # methods
   def get_full_name(self):
     # The user is identified by their email address
     return self.email

@@ -1,15 +1,14 @@
-#puzzle.configs.developement.settings
-'''Common settings and globals.'''
+# puzzle.settings
 
-#django
+# django
 
-#util
+# util
 from datetime import timedelta
 from os.path import abspath, basename, dirname, join, normpath
 from sys import path
 import string
 
-#third party
+# third party
 
 ########## TEST CONFIGURATION
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
@@ -91,8 +90,6 @@ MEDIA_ROOT = normpath(join(DJANGO_ROOT, 'media'))
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = '/media/'
-
-DATA_ROOT = join('/','Volumes','transport','data','puzzle')
 ########## END MEDIA CONFIGURATION
 
 
@@ -118,7 +115,7 @@ STATICFILES_FINDERS = (
 
 ########## SECRET CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
-SECRET_KEY = 'd3&3@fq+6_6fpa3dh%r0dwhxz*n!+@p9&6l!6%sqw($&j4^_ym'
+SECRET_KEY = 'q5h)dv^qufre)%0k=ty_3487ot$v5*0yd$$i0z&t6_bu1$9nn*'
 ########## END SECRET CONFIGURATION
 
 
@@ -193,29 +190,26 @@ DJANGO_APPS = (
   'django.contrib.staticfiles',
 
   # Useful template tags:
-  'django.contrib.humanize',
+  # 'django.contrib.humanize',
 
   # Admin panel and documentation:
-  'django.contrib.admin',
-  'django.contrib.admindocs',
+  # 'django.contrib.admin',
+  # 'django.contrib.admindocs',
 
   # flatpages for static pages
-  'django.contrib.flatpages',
+  # 'django.contrib.flatpages',
 )
 
 THIRD_PARTY_APPS = (
   # Asynchronous task scheduling
-  'djcelery',
+  # 'djcelery',
 
   # Static file management:
-  'compressor',
+  # 'compressor',
 )
 
 LOCAL_APPS = (
-  'apps.users',
-  'apps.img',
-  'apps.pix',
-  'apps.cell',
+
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -289,8 +283,8 @@ from djcelery import setup_loader
 
 CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
 
-#: Only add pickle to this list if your broker is secured
-#: from unwanted access (see userguide/security.html)
+# : Only add pickle to this list if your broker is secured
+# : from unwanted access (see userguide/security.html)
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -304,8 +298,8 @@ CELERY_CHORD_PROPAGATES = True
 # See: http://celery.github.com/celery/django/
 setup_loader()
 
-#rabbitmq: https://www.rabbitmq.com/man/rabbitmqctl.1.man.html
-#celery: https://zapier.com/blog/async-celery-example-why-and-how/
+# rabbitmq: https://www.rabbitmq.com/man/rabbitmqctl.1.man.html
+# celery: https://zapier.com/blog/async-celery-example-why-and-how/
 ########## END CELERY CONFIGURATION
 
 
@@ -315,3 +309,21 @@ FILE_UPLOAD_HANDLERS = (
   'django.core.files.uploadhandler.TemporaryFileUploadHandler',
 )
 ########## END FILE UPLOAD CONFIGURATION
+
+
+########## DATABASE CONFIGURATION
+DATABASE_USER = environ.get('DB_USER')
+DATABASE_PWD = environ.get('DB_PWD')
+
+# mysql: https://github.com/PyMySQL/mysqlclient-python
+DATABASES = {
+  'default': {
+    'ENGINE': 'mysql.connector.django', # Add 'postgresql_psycopg2' for PG django.db.backends.mysql
+    'NAME': '',
+    'USER': '',
+    'PASSWORD': '',
+    'HOST': '', # Set to empty string for localhost.
+    'PORT': '', # Set to empty string for default.
+  }
+}
+########## END DATABASE CONFIGURATION
