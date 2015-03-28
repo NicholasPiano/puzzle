@@ -7,6 +7,7 @@ from datetime import timedelta
 from os.path import abspath, basename, dirname, join, normpath
 from sys import path
 import string
+from os import environ
 
 # third party
 
@@ -209,7 +210,9 @@ THIRD_PARTY_APPS = (
 )
 
 LOCAL_APPS = (
-
+  'apps.expt',
+  'apps.img',
+  'apps.cell',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
