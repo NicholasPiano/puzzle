@@ -30,7 +30,7 @@ ALLOWED_HOSTS = (
 
 ########## PATH CONFIGURATION
 # Absolute filesystem path to the Django project directory:
-DJANGO_ROOT = dirname(dirname(abspath(__file__)))
+DJANGO_ROOT = dirname(abspath(__file__))
 
 # Absolute filesystem path to the top-level project folder:
 SITE_ROOT = dirname(DJANGO_ROOT)
@@ -91,6 +91,8 @@ MEDIA_ROOT = normpath(join(DJANGO_ROOT, 'media'))
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = '/media/'
+
+DATA_ROOT = '/Volumes/transport/data/puzzle/'
 ########## END MEDIA CONFIGURATION
 
 
@@ -213,6 +215,7 @@ LOCAL_APPS = (
   'apps.expt',
   'apps.img',
   'apps.cell',
+  'apps.users',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -315,16 +318,16 @@ FILE_UPLOAD_HANDLERS = (
 
 
 ########## DATABASE CONFIGURATION
-DATABASE_USER = environ.get('DB_USER')
-DATABASE_PWD = environ.get('DB_PWD')
+DB_USER = environ.get('DB_USER')
+DB_PWD = environ.get('DB_PWD')
 
 # mysql: https://github.com/PyMySQL/mysqlclient-python
 DATABASES = {
   'default': {
     'ENGINE': 'mysql.connector.django', # Add 'postgresql_psycopg2' for PG django.db.backends.mysql
-    'NAME': '',
-    'USER': '',
-    'PASSWORD': '',
+    'NAME': 'puzzle_default',
+    'USER': DB_USER,
+    'PASSWORD': DB_PWD,
     'HOST': '', # Set to empty string for localhost.
     'PORT': '', # Set to empty string for default.
   }
