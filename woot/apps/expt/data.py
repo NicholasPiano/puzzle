@@ -58,7 +58,7 @@ allowed_data_extensions = (
 templates = {
   'source':{
     'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>(?P<channel_base>[a-z0-9]+)(?P<channel_suffix>-(?P<composite_id>[0-9A-Z]+)-(?P<mod>[a-z]+)-(?P<mod_id>[0-9A-Z]+)){0,1})_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
-    'rv':r'%s_s%s_ch-%s_t%s_z%s.tiff',
+    'rv':r'%s_s%s_ch%s_t%s_z%s.tiff',
   },
   'mask':{
     'rx':r'^(?P<id_token>[A-Z0-9]{8})\.(?P<extension>.+)$',

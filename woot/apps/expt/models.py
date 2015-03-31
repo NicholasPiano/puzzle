@@ -1,13 +1,16 @@
-# woot.apps.expt.models
+# apps.expt.models
 
 # django
 from django.db import models
 
 # local
 from apps.expt.data import *
+from apps.expt.util import generate_id_token
 
 # util
-
+import os
+import re
+from scipy.misc import imread, imsave
 
 ### Models
 class Experiment(models.Model):
@@ -88,7 +91,7 @@ class Series(models.Model):
   def compose(self):
 
     # composite
-    composite = self.composites.create(experiment=self.experiment, id_token=self.generate_composite_id())
+    composite = self.composites.create(experiment=self.experiment, id_token=generate_id_token('img', 'Composite'))
 
     # templates
     for template in self.experiment.templates.all():
@@ -109,7 +112,7 @@ class Series(models.Model):
         gon.set_extent(self.rs, self.cs, self.zs)
 
         for z in range(self.zs):
-          print('processing %s, %d, %d' % (channel.name, t, z))
+          print('creating composite... processing channel %s, t%d, z%d' % (channel.name, t, z))
 
           # path
           path = path_set.get(channel=channel, t=t, z=z)
@@ -127,18 +130,6 @@ class Series(models.Model):
         gon.save()
 
     composite.save()
-
-  def generate_composite_id(self):
-    chars = string.ascii_uppercase + string.digits
-
-    def get_id_token():
-      return ''.join([random.choice(chars) for _ in range(8)]) #8 character string
-
-    id_token = get_id_token()
-    while self.composites.filter(id_token=id_token).count()>0:
-      id_token = get_id_token()
-
-    return id_token
 
 class Channel(models.Model):
   # connections
@@ -175,13 +166,6 @@ class Template(models.Model):
 
     # channel
     channel, channel_created = self.experiment.channels.get_or_create(name=metadata['channel'])
-
-    if metadata['channel_suffix']:
-      # composite
-      composite, composite_created = self.composites.get_or_create(experiment=self.experiment, id_token=metadata['composite_id'])
-
-      # mod
-      mod, mod_created = composite.mods.get_or_create(algorithm=metadata['mod'], id_token=metadata['mod_id'])
 
     # path
     path, created = self.paths.get_or_create(experiment=self.experiment, series=series, channel=channel, url=os.path.join(root, string), file_name=string)

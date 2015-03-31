@@ -18,7 +18,7 @@ class Command(BaseCommand):
     make_option('--name', # path of images unique to this experiment.
       action='store',
       dest='name',
-      default='050714',
+      default='050714-test',
       help='Path to scan for images'
     ),
 
@@ -46,7 +46,9 @@ class Command(BaseCommand):
       experiment.get_metadata()
 
     # list directory filtered by allow extension
-    file_list = [file_name for file_name in os.listdir(experiment.img_path) if os.path.splitext(file_name)[1] in allowed_img_extensions]
+    storage_file_list = [file_name for file_name in os.listdir(experiment.img_path) if os.path.splitext(file_name)[1] in allowed_img_extensions]
+    composite_file_list = [file_name for file_name in os.listdir(experiment.composite_path) if os.path.splitext(file_name)[1] in allowed_img_extensions]
+    file_list = storage_file_list + composite_file_list
 
     # make paths and series
     for i, file_name in enumerate(file_list):
