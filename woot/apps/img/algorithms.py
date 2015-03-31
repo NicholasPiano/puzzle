@@ -63,7 +63,7 @@ def mod_primary(composite, mod_id, algorithm):
   for t in range(composite.series.ts):
     print(t)
 
-    markers = composite.series.cell_markers.filter(t=t)
+    markers = composite.series.markers.filter(t=t)
 
     # black field in which to place markers
     b = np.zeros((composite.series.rs, composite.series.cs), dtype='uint8')
