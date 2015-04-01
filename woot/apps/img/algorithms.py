@@ -87,3 +87,33 @@ def mod_primary(composite, mod_id, algorithm):
     gon.save()
 
 mod_primary.description = 'Create channel containing track points to set as primary in Cell Profiler.'
+
+def mod_reduced(composite, mod_id, algorithm):
+  # paths
+  template = composite.templates.get(name='source')
+  url = os.path.join(composite.experiment.composite_path, template.rv)
+
+  # channels
+  pmod_reduced_channel = composite.channels.create(name='1-%s-%s-%s' % (composite.id_token, 'pmodreduced', mod_id))
+  primary_reduced_channel = composite.channels.create(name='1-%s-%s-%s' % (composite.id_token, 'primaryreduced', mod_id))
+
+  # image sets
+  bf_set = composite.gons.filter(channel__name='1')
+  gfp_set = composite.gons.filter(channel__name='0')
+
+  # loop through timesteps
+  for t in range(composite.series.ts):
+    print(t)
+
+    # 1. get
+    bf = bf_set.get(t=t)
+    bf_array = exposure.rescale_intensity(bf.load() * 1.0)
+
+    gfp = gfp_set.get(t=t)
+    gfp_array = exposure.rescale_intensity(gfp.load() * 1.0)
+
+    markers = composite.series.markers.filter(t=t)
+
+    # 2. 
+
+mod_reduced.description = ''
