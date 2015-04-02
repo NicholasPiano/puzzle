@@ -30,6 +30,7 @@ class Experiment(models.Model):
   plot_path = models.CharField(max_length=255)
   track_path = models.CharField(max_length=255)
   data_path = models.CharField(max_length=255)
+  pipeline_path = models.CharField(max_length=255)
 
   # 2. scaling
   rmop = models.FloatField(default=0.0) # microns over pixel ratio
@@ -54,9 +55,10 @@ class Experiment(models.Model):
     self.plot_path = os.path.join(self.base_path, default_paths['plot'])
     self.track_path = os.path.join(self.base_path, default_paths['track'])
     self.data_path = os.path.join(self.base_path, default_paths['data'])
+    self.pipeline_path = os.path.join(self.base_path, default_paths['pipeline'])
     self.save()
 
-    for path in [self.composite_path, self.cp_path, self.output_path, self.mask_path, self.region_path, self.region_img_path, self.plot_path, self.track_path, self.data_path]:
+    for path in [self.tracking_path, self.composite_path, self.cp_path, self.output_path, self.mask_path, self.region_path, self.region_img_path, self.plot_path, self.track_path, self.data_path, self.pipeline_path]:
       if not os.path.exists(path):
         os.makedirs(path)
 

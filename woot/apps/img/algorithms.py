@@ -12,10 +12,10 @@ from scipy.misc import imsave
 
 # methods
 ### STEP 2: Generate images for
-def mod_step2_visible(composite, mod_id, algorithm):
+def mod_step2_tracking(composite, mod_id, algorithm):
   pass
 
-mod_step2_visible.description = ''
+mod_step2_tracking.description = ''
 
 ### STEP 5: Combine channels
 def mod_step5_pmod(composite, mod_id, algorithm):
@@ -67,8 +67,8 @@ def mod_step5_reduced(composite, mod_id, algorithm):
   url = os.path.join(composite.experiment.cp_path, template.rv) # CP PATH
 
   # channels
-  pmod_reduced_channel = composite.channels.create(name='1-%s-%s-%s' % (composite.id_token, 'pmodreduced', mod_id))
-  primary_reduced_channel = composite.channels.create(name='1-%s-%s-%s' % (composite.id_token, 'primaryreduced', mod_id))
+  pmod_reduced_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'pmodreduced', mod_id))
+  primary_reduced_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'primaryreduced', mod_id))
 
   # image sets
   pmod_set = composite.gons.filter(channel__name__contains='pmod-')
