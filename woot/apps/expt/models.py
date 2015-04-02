@@ -21,9 +21,12 @@ class Experiment(models.Model):
   base_path = models.CharField(max_length=255)
   img_path = models.CharField(max_length=255)
   composite_path = models.CharField(max_length=255)
-  mask_path = models.CharField(max_length=255)
   cp_path = models.CharField(max_length=255)
+  output_path = models.CharField(max_length=255)
+  mask_path = models.CharField(max_length=255)
+  plot_path = models.CharField(max_length=255)
   track_path = models.CharField(max_length=255)
+  data_path = models.CharField(max_length=255)
 
   # 2. scaling
   rmop = models.FloatField(default=0.0) # microns over pixel ratio
@@ -39,12 +42,15 @@ class Experiment(models.Model):
     self.base_path = base_path
     self.img_path = os.path.join(self.base_path, default_paths['img'])
     self.composite_path = os.path.join(self.base_path, default_paths['composite'])
-    self.mask_path = os.path.join(self.base_path, default_paths['mask'])
     self.cp_path = os.path.join(self.base_path, default_paths['cp'])
+    self.output_path = os.path.join(self.base_path, default_paths['output'])
+    self.mask_path = os.path.join(self.base_path, default_paths['mask'])
+    self.plot_path = os.path.join(self.base_path, default_paths['plot'])
     self.track_path = os.path.join(self.base_path, default_paths['track'])
+    self.data_path = os.path.join(self.base_path, default_paths['data'])
     self.save()
 
-    for path in [self.composite_path, self.cp_path, self.track_path, self.mask_path]:
+    for path in [self.composite_path, self.cp_path, self.output_path, self.mask_path, self.plot_path, self.track_path, self.data_path]:
       if not os.path.exists(path):
         os.makedirs(path)
 

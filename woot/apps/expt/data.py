@@ -77,10 +77,12 @@ templates = {
 ### Default paths
 default_paths = {
   'img':'img/storage/',
+  'tracking':'img/tracking',
   'composite':'img/composite/',
-  'cp':'cp/',
+  'cp':'img/cp/',
+  'output':'img/output/',
+  'mask':'img/mask/',
   'plot':'plot/',
   'track':'track/',
-  'output':'output/',
-  'mask':'img/mask/',
+  'data':'data/',
 }
