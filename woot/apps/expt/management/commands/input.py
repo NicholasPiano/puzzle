@@ -77,3 +77,11 @@ class Command(BaseCommand):
 
         if series.composites.count()==0:
           series.compose()
+
+        for region_prototype in list(filter(lambda x: x.experiment==experiment.name and x.series==series.name, regions)):
+          region, region_created = series.regions.get_or_create(experiment=experiment, name=region_prototype.name)
+          if region_created:
+            region.description = region_prototype.description
+            region.index = region_prototype.index
+            region.vertical_sort_index = region_prototype.vertical_sort_index
+            region.save()

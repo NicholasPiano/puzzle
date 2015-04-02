@@ -65,14 +65,14 @@ class Experiment(models.Model):
     self.zmop = prototype.zmop
     self.tpf = prototype.tpf
 
-    #templates
+    # templates
     for name, template in templates.items():
       self.templates.create(name=name, rx=template['rx'], rv=template['rv'])
 
     self.save()
 
   def allowed_series(self, series_name):
-    return (series_name in [s.name for s in filter(lambda x: x.experiment_name==self.name, series)])
+    return (series_name in [s.name for s in filter(lambda x: x.experiment==self.name, series)])
 
 class Series(models.Model):
   # connections
@@ -92,7 +92,7 @@ class Series(models.Model):
     return '%s > %s'%(self.experiment.name, self.name)
 
   def prototype(self):
-    return filter(lambda x: x.name==self.name and x.experiment_name==self.experiment.name, series)[0]
+    return filter(lambda x: x.name==self.name and x.experiment==self.experiment.name, series)[0]
 
   def compose(self):
 
@@ -201,3 +201,14 @@ class Path(models.Model):
 
   def load(self):
     return imread(self.url)
+
+class Region(models.Model):
+  # connections
+  experiment = models.ForeignKey(Experiment, related_name='regions')
+  series = models.ForeignKey(Series, related_name='regions')
+
+  # properties
+  name = models.CharField(max_length=255)
+  description = models.CharField(max_length=255)
+  index = models.IntegerField(default=0)
+  vertical_sort_index = models.IntegerField(default=0)
