@@ -21,6 +21,7 @@ class Command(BaseCommand):
   def handle(self, *args, **options):
     # 1. look in each experiments track directories, determine new files
     for series in Series.objects.all():
+      print('processing markers for series %s...' % str(series))
 
       # open files in track directory and read lines
       file_list = [file_name for file_name in os.listdir(series.experiment.track_path) if '.csv' in file_name]
@@ -58,6 +59,7 @@ class Command(BaseCommand):
                 track.markers.create(experiment=series.experiment, series=series, r=marker[0], c=marker[1], t=marker[2])
 
       for t in range(series.ts):
+        print('processing marker z positions... t%d' % t)
         # markers
         markers = series.markers.filter(t=t)
 
