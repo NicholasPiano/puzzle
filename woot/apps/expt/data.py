@@ -92,7 +92,7 @@ templates = {
   'composite':{
     'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>(?P<composite_id>[0-9A-Z]+)-(?P<mod>[a-z]+)-(?P<mod_id>[0-9A-Z]+))_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
     'rv':r'%s_s%s_ch-%s_t%s_z%s.tiff',
-  }
+  },
   'cp':{
     'rx':r'^cp_(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
     'rv':r'cp_%s_s%s_ch%s_t%s_z%s.tiff',

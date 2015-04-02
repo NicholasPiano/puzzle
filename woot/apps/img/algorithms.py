@@ -13,7 +13,45 @@ from scipy.misc import imsave
 # methods
 ### STEP 2: Generate images for
 def mod_step2_tracking(composite, mod_id, algorithm):
-  pass
+  bf_set = composite.gons.filter(channel__name='1')
+  gfp_set = composite.gons.filter(channel__name='0')
+
+  # paths
+  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
+  url = os.path.join(composite.experiment.tracking_path, template.rv) # TRACKING DIRECTORY
+
+  # channel
+  tracking_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'tracking', mod_id))
+
+  # iterate over frames
+  for t in range(composite.series.ts):
+    print('processing mod_step2_tracking t%d...' % t)
+
+    # 1. get
+    bf_gon = bf_set.get(t=t)
+    bf_gon = bf_gon.gons.get(z=int(bf_gon.zs/2.0))
+    bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
+
+    gfp_gon = gfp_set.get(t=t)
+    gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+
+    # 2. calculations
+    gfp_smooth = gf(gfp, sigma=2)
+    gfp_smooth = np.sum(gfp_smooth, axis=2) / 14.0 # completely arbitrary factor
+    # gfp_reduced_glow = gfp_smooth * gfp_smooth
+    # gfp_reduced_glow = np.sum(gfp_reduced_glow, axis=2)
+
+    product = bf + gfp_smooth # superimposes the (slightly) smoothed gfp onto the bright field.
+
+    # pmod
+    tracking_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=tracking_channel)
+    tracking_gon.set_origin(0, 0, 0, t)
+    tracking_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+
+    tracking_gon.array = product
+
+    tracking_gon.save_single(url, template, 0)
+    tracking_gon.save()
 
 mod_step2_tracking.description = ''
 
@@ -29,25 +67,26 @@ def mod_step5_pmod(composite, mod_id, algorithm):
   # channel
   channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'pmod', mod_id))
 
+  # iterate over frames
   for t in range(composite.series.ts):
-    print(t)
+    print('processing mod_step5_pmod t%d...' % t)
     # 1. get
-    bf = bf_set.get(t=t)
-    bf_array = exposure.rescale_intensity(bf.load() * 1.0)
+    bf_gon = bf_set.get(t=t)
+    bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
 
-    gfp = gfp_set.get(t=t)
-    gfp_array = exposure.rescale_intensity(gfp.load() * 1.0)
+    gfp_gon = gfp_set.get(t=t)
+    gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
 
     # 2. calculations
-    gfp_smooth = gf(gfp_array, sigma=5)
+    gfp_smooth = gf(gfp, sigma=5)
     gfp_reduced_glow = gfp_smooth * gfp_smooth
 
-    product = gfp_reduced_glow * bf_array
+    product = gfp_reduced_glow * bf
 
     # 3. output
     gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel)
-    gon.set_origin(bf.r, bf.c, bf.z, bf.t)
-    gon.set_extent(bf.rs, bf.cs, bf.zs)
+    gon.set_origin(bf_gon.r, bf_gon.c, bf_gon.z, bf_gon.t)
+    gon.set_extent(bf_gon.rs, bf_gon.cs, bf_gon.zs)
 
     gon.array = product
 
@@ -73,9 +112,9 @@ def mod_step5_reduced(composite, mod_id, algorithm):
   # image sets
   pmod_set = composite.gons.filter(channel__name__contains='pmod-')
 
-  # loop through timesteps
+  # iterate over frames
   for t in range(composite.series.ts):
-    print(t)
+    print('processing mod_step5_reduced t%d...' % t)
 
     # 1. get
     pmod_gon = pmod_set.get(t=t)
