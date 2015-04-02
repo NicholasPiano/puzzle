@@ -106,7 +106,7 @@ templates = {
     'rv':r'%s.tiff',
   },
   'track':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_(?P<index>[0-9]+)\.xls$',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_n(?P<index>[0-9]+)\.xls$',
     'rv':r'%s_s%s_%s.xls',
   },
   'measure':{

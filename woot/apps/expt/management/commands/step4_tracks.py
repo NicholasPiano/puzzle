@@ -24,7 +24,7 @@ class Command(BaseCommand):
       print('processing markers for series %s...' % str(series))
 
       # open files in track directory and read lines
-      file_list = [file_name for file_name in os.listdir(series.experiment.track_path) if '.csv' in file_name]
+      file_list = [file_name for file_name in os.listdir(series.experiment.track_path) if '.xls' in file_name]
 
       for file_name in file_list:
         # get template
@@ -33,12 +33,12 @@ class Command(BaseCommand):
         # check series name and load
         dict = template.dict(file_name)
         if dict['series']==series.name:
-          with open(os.path.join(series.experiment.track_path, file_name)) as track_file:
+          with open(os.path.join(series.experiment.track_path, file_name), 'rb') as track_file:
 
             tracks = {} # stores list of tracks that can then be put into the database
 
-            for line in track_file.readlines():
-              line = line.rstrip().split('\t')
+            for line in track_file.read().decode('mac-roman').split('\n')[1:-1]: # omit title line and final blank line
+              line = line.split('\t')
 
               # details
               track_id = int(line[1])
