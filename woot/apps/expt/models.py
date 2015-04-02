@@ -24,6 +24,8 @@ class Experiment(models.Model):
   cp_path = models.CharField(max_length=255)
   output_path = models.CharField(max_length=255)
   mask_path = models.CharField(max_length=255)
+  region_path = models.CharField(max_length=255)
+  region_img_path = models.CharField(max_length=255)
   plot_path = models.CharField(max_length=255)
   track_path = models.CharField(max_length=255)
   data_path = models.CharField(max_length=255)
@@ -45,12 +47,14 @@ class Experiment(models.Model):
     self.cp_path = os.path.join(self.base_path, default_paths['cp'])
     self.output_path = os.path.join(self.base_path, default_paths['output'])
     self.mask_path = os.path.join(self.base_path, default_paths['mask'])
+    self.region_path = os.path.join(self.base_path, default_paths['region'])
+    self.region_img_path = os.path.join(self.base_path, default_paths['region_img'])
     self.plot_path = os.path.join(self.base_path, default_paths['plot'])
     self.track_path = os.path.join(self.base_path, default_paths['track'])
     self.data_path = os.path.join(self.base_path, default_paths['data'])
     self.save()
 
-    for path in [self.composite_path, self.cp_path, self.output_path, self.mask_path, self.plot_path, self.track_path, self.data_path]:
+    for path in [self.composite_path, self.cp_path, self.output_path, self.mask_path, self.region_path, self.region_img_path, self.plot_path, self.track_path, self.data_path]:
       if not os.path.exists(path):
         os.makedirs(path)
 

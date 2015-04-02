@@ -86,19 +86,31 @@ allowed_data_extensions = (
 ### image filename templates
 templates = {
   'source':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>(?P<channel_base>[a-z0-9]+)(?P<channel_suffix>-(?P<composite_id>[0-9A-Z]+)-(?P<mod>[a-z]+)-(?P<mod_id>[0-9A-Z]+)){0,1})_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
     'rv':r'%s_s%s_ch%s_t%s_z%s.tiff',
+  },
+  'composite':{
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>(?P<composite_id>[0-9A-Z]+)-(?P<mod>[a-z]+)-(?P<mod_id>[0-9A-Z]+))_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
+    'rv':r'%s_s%s_ch%s-%s-%s_t%s_z%s.tiff',
+  }
+  'cp':{
+    'rx':r'^cp_(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
+    'rv':r'cp_%s_s%s_ch%s_t%s_z%s.tiff',
+  },
+  'region':{
+    'rx':r'^region_(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
+    'rv':r'region_%s_s%s_ch%s_t%s_z%s.tiff',
   },
   'mask':{
     'rx':r'^(?P<id_token>[A-Z0-9]{8})\.(?P<extension>.+)$',
     'rv':r'%s.tiff',
   },
   'track':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_(?P<index>[0-9]+)\.(?P<extension>.+)$',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_(?P<index>[0-9]+)\.xls$',
     'rv':r'%s_s%s_%s.xls',
   },
   'measure':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_(?P<index>[0-9]+)\.(?P<extension>.+)$',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_(?P<index>[0-9]+)\.csv$',
     'rv':r'%s_s%s_%s.csv',
   }
 }
@@ -111,6 +123,8 @@ default_paths = {
   'cp':'img/cp/',
   'output':'img/output/',
   'mask':'img/mask/',
+  'region':'img/region',
+  'region_img':'img/region-img',
   'plot':'plot/',
   'track':'track/',
   'data':'data/',
