@@ -100,6 +100,17 @@ class Gon(models.Model):
         # save
         imsave(path_url, array)
 
+  def save_single(self, url, template, z):
+    if self.array is not None:
+
+      # path
+      path_url = url % (self.experiment.name, self.series.name, self.channel.name, self.t_str(), self.z_str(z))
+      file_name = template.rv % (self.experiment.name, self.series.name, self.channel.name, self.t_str(), self.z_str(z))
+      self.paths.create(composite=self.composite, channel=self.channel, template=template, url=path_url, file_name=file_name, t=self.t, z=z)
+
+      # save
+      imsave(path_url, self.array)
+
   def split(self):
     ''' If the gon is 3D, make 2D slices into gons. '''
 

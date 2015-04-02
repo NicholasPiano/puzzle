@@ -80,6 +80,7 @@ class Marker(models.Model):
   # properties
   r = models.IntegerField(default=0)
   c = models.IntegerField(default=0)
+  z = models.IntegerField(default=0)
   t = models.IntegerField(default=0)
 
 class Mask(models.Model):
