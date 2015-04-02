@@ -46,16 +46,14 @@ class Command(BaseCommand):
       experiment.get_metadata()
 
     # list directory filtered by allow extension
-    storage_file_list = {file_name:experiment.img_path for file_name in os.listdir(experiment.img_path) if os.path.splitext(file_name)[1] in allowed_img_extensions}
-    composite_file_list = {file_name:experiment.composite_path for file_name in os.listdir(experiment.composite_path) if os.path.splitext(file_name)[1] in allowed_img_extensions}
-    storage_file_list.update(composite_file_list)
+    file_list = [file_name for file_name in os.listdir(experiment.img_path) if os.path.splitext(file_name)[1] in allowed_img_extensions]
 
     # make paths and series
-    for i, (file_name, path) in enumerate(storage_file_list.items()):
+    for i, file_name in enumerate(file_list):
 
       # get template
       template = experiment.templates.get(name='source')
-      path, created = template.get_or_create_path(path, file_name)
+      path, created = template.get_or_create_path(experiment.img_path, file_name)
 
       print('%s... %s' % (path, 'created.' if created else 'already exists.'))
 

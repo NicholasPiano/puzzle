@@ -11,16 +11,23 @@ import numpy as np
 from scipy.misc import imsave
 
 # methods
-def mod_pmod(composite, mod_id, algorithm):
+### STEP 2: Generate images for
+def mod_step2_visible(composite, mod_id, algorithm):
+  pass
+
+mod_step2_visible.description = ''
+
+### STEP 5: Combine channels
+def mod_step5_pmod(composite, mod_id, algorithm):
   bf_set = composite.gons.filter(channel__name='1')
   gfp_set = composite.gons.filter(channel__name='0')
 
   # paths
-  template = composite.templates.get(name='source')
-  url = os.path.join(composite.experiment.composite_path, template.rv)
+  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
+  url = os.path.join(composite.experiment.composite_path, template.rv) # COMPOSITE DIRECTORY
 
   # channel
-  channel = composite.channels.create(name='1-%s-%s-%s' % (composite.id_token, 'pmod', mod_id))
+  channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'pmod', mod_id))
 
   for t in range(composite.series.ts):
     print(t)
@@ -49,12 +56,15 @@ def mod_pmod(composite, mod_id, algorithm):
 
     gon.save()
 
-mod_pmod.description = 'Scale portions of the brightfield using the gfp density.'
+mod_step5_pmod.description = 'Scale portions of the brightfield using the gfp density.'
 
-def mod_reduced(composite, mod_id, algorithm):
+### STEP 5: generate images for cell profiler
+# Output images in composite format
+# Cell profiler will prepend 'cp_' to the filename
+def mod_step5_reduced(composite, mod_id, algorithm):
   # paths
-  template = composite.templates.get(name='source')
-  url = os.path.join(composite.experiment.cp_path, template.rv)
+  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
+  url = os.path.join(composite.experiment.cp_path, template.rv) # CP PATH
 
   # channels
   pmod_reduced_channel = composite.channels.create(name='1-%s-%s-%s' % (composite.id_token, 'pmodreduced', mod_id))
@@ -103,4 +113,4 @@ def mod_reduced(composite, mod_id, algorithm):
       rprimary_gon.save_single(url, template, z)
       rprimary_gon.save()
 
-mod_reduced.description = ''
+mod_step5_reduced.description = ''

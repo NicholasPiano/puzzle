@@ -20,6 +20,7 @@ class Experiment(models.Model):
   # 1. location
   base_path = models.CharField(max_length=255)
   img_path = models.CharField(max_length=255)
+  tracking_path = models.CharField(max_length=255)
   composite_path = models.CharField(max_length=255)
   cp_path = models.CharField(max_length=255)
   output_path = models.CharField(max_length=255)
@@ -43,6 +44,7 @@ class Experiment(models.Model):
     # fetch default paths from settings
     self.base_path = base_path
     self.img_path = os.path.join(self.base_path, default_paths['img'])
+    self.tracking_path = os.path.join(self.base_path, default_paths['tracking'])
     self.composite_path = os.path.join(self.base_path, default_paths['composite'])
     self.cp_path = os.path.join(self.base_path, default_paths['cp'])
     self.output_path = os.path.join(self.base_path, default_paths['output'])
