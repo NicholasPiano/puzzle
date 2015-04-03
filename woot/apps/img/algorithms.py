@@ -160,3 +160,38 @@ def mod_step5_reduced(composite, mod_id, algorithm):
         rprimary_gon.save()
 
 mod_step5_reduced.description = ''
+
+def mod_step5_gfp_flat(composite, mod_id, algorithm):
+
+  gfp_set = composite.gons.filter(channel__name='0')
+
+  # paths
+  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
+  url = os.path.join(composite.experiment.cp_path, template.rv) # CP DIRECTORY
+
+  # channel
+  channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'pmodgfpflat', mod_id))
+
+  # iterate over frames
+  for t in range(composite.series.ts):
+    print('processing mod_step5_gfp_flat t%d...' % t)
+    # 1. get
+
+    gfp_gon = gfp_set.get(t=t)
+    gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+
+    # 2. calculations
+    gfp_smooth = exposure.rescale_intensity(gf(gfp, sigma=2))
+    # gfp_reduced_glow = gfp_smooth * gfp_smooth
+
+    # 3. output
+    gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel)
+    gon.set_origin(gfp_gon.r, gfp_gon.c, gfp_gon.z, gfp_gon.t)
+    gon.set_extent(gfp_gon.rs, gfp_gon.cs, 1)
+
+    gon.array = np.sum(gfp_smooth, axis=2)
+    gon.save_single(url, template, 0)
+
+    gon.save()
+
+mod_step5_gfp_flat.description = 'Flatten gfp and blur slightly.'
