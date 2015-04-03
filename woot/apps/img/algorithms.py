@@ -78,11 +78,11 @@ def mod_step5_pmod(composite, mod_id, algorithm):
     gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
 
     # 2. calculations
-    gfp_smooth = exposure.rescale_intensity(gf(gfp, sigma=5))
+    gfp_smooth = exposure.rescale_intensity(gf(gfp, sigma=5)) / 2.0
     # gfp_reduced_glow = gfp_smooth * gfp_smooth
 
     # product = gfp_reduced_glow * bf
-    product = gfp_smooth * bf
+    product = bf * gfp_smooth
 
     # 3. output
     gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel)
