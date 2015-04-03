@@ -94,12 +94,12 @@ templates = {
     'rv':r'%s_s%s_ch-%s_t%s_z%s.tiff',
   },
   'cp':{
-    'rx':r'^cp_(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
-    'rv':r'cp_%s_s%s_ch%s_t%s_z%s.tiff',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)_cp\.(?P<extension>.+)$',
+    'rv':r'%s_s%s_ch%s_t%s_z%s_cp.tiff',
   },
   'region':{
-    'rx':r'^region_(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
-    'rv':r'region_%s_s%s_ch%s_t%s_z%s.tiff',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_region\.(?P<extension>.+)$',
+    'rv':r'%s_s%s_ch%s_t%s_z%s_region.tiff',
   },
   'mask':{
     'rx':r'^(?P<id_token>[A-Z0-9]{8})\.(?P<extension>.+)$',

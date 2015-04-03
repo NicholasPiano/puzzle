@@ -78,10 +78,11 @@ def mod_step5_pmod(composite, mod_id, algorithm):
     gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
 
     # 2. calculations
-    gfp_smooth = gf(gfp, sigma=5)
-    gfp_reduced_glow = gfp_smooth * gfp_smooth
+    gfp_smooth = exposure.rescale_intensity(gf(gfp, sigma=5))
+    # gfp_reduced_glow = gfp_smooth * gfp_smooth
 
-    product = gfp_reduced_glow * bf
+    # product = gfp_reduced_glow * bf
+    product = gfp_smooth * bf
 
     # 3. output
     gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel)
@@ -125,31 +126,37 @@ def mod_step5_reduced(composite, mod_id, algorithm):
     marker_z_values = list(np.unique([marker.z for marker in markers]))
 
     for z in marker_z_values:
-      # pmod
-      rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel)
-      rpmod_gon.set_origin(0, 0, 0, t)
-      rpmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+      # save z range
+      lower_z = z - 1 if z - 1 >= 0 else 0
+      upper_z = z + 2 if z + 2 < composite.series.zs else composite.series.zs
 
-      rpmod_gon.array = pmod_gon.gons.get(z=z).load()
+      for sz in range(lower_z,upper_z):
 
-      rpmod_gon.save_single(url, template, z)
-      rpmod_gon.save()
+        # pmod
+        rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel)
+        rpmod_gon.set_origin(0, 0, 0, t)
+        rpmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
-      # markers
-      rprimary_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=primary_reduced_channel)
-      rprimary_gon.set_origin(0, 0, 0, t)
-      rprimary_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+        rpmod_gon.array = pmod_gon.gons.get(z=sz).load()
 
-      # make black field
-      markers_z = markers.filter(z=z)
-      b = np.zeros((composite.series.rs, composite.series.cs), dtype='uint8')
+        rpmod_gon.save_single(url, template, sz)
+        rpmod_gon.save()
 
-      for marker in markers_z:
-        b[marker.r-1:marker.r+1, marker.c-1:marker.c+1] = 255
+        # markers
+        rprimary_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=primary_reduced_channel)
+        rprimary_gon.set_origin(0, 0, 0, t)
+        rprimary_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
-      rprimary_gon.array = b
+        # make black field
+        markers_z = markers.filter(z__gte=lower_z, z__lt=upper_z)
+        b = np.zeros((composite.series.rs, composite.series.cs), dtype='uint8')
 
-      rprimary_gon.save_single(url, template, z)
-      rprimary_gon.save()
+        for marker in markers_z:
+          b[marker.r-1:marker.r+1, marker.c-1:marker.c+1] = 255
+
+        rprimary_gon.array = b
+
+        rprimary_gon.save_single(url, template, sz)
+        rprimary_gon.save()
 
 mod_step5_reduced.description = ''
