@@ -70,7 +70,10 @@ class Gon(models.Model):
     self.save()
 
   def shape(self):
-    return (self.rs, self.cs, self.zs)
+    if self.zs==1:
+      return (self.rs, self.cs)
+    else:
+      return (self.rs, self.cs, self.zs)
 
   def t_str(self):
     return str('0'*(len(str(self.series.ts)) - len(str(self.t))) + str(self.t))
