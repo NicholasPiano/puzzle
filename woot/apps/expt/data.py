@@ -90,15 +90,15 @@ templates = {
     'rv':r'%s_s%s_ch%s_t%s_z%s.tiff',
   },
   'composite':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>(?P<composite_id>[0-9A-Z]+)-(?P<mod>[a-z]+)-(?P<mod_id>[0-9A-Z]+))_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>(?P<composite_id>[0-9A-Z]+)-(?P<mod>[a-z]+)-(?P<mod_id>[0-9A-Z]+))_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
     'rv':r'%s_s%s_ch-%s_t%s_z%s.tiff',
   },
   'cp':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)_cp\.(?P<extension>.+)$',
-    'rv':r'%s_s%s_ch%s_t%s_z%s_cp.tiff',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>(?P<composite_id>[0-9A-Z]+)-(?P<mod>[a-z]+)-(?P<mod_id>[0-9A-Z]+))_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)_cp-(?P<secondary_channel>.+)\.(?P<extension>.+)$',
+    'rv':r'%s_s%s_ch-%s_t%s_z%s_cp-%s.tiff',
   },
   'region':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_region\.(?P<extension>.+)$',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>.+)_t(?P<t>[0-9]+)_region\.(?P<extension>.+)$',
     'rv':r'%s_s%s_ch%s_t%s_z%s_region.tiff',
   },
   'mask':{

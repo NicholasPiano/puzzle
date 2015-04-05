@@ -78,6 +78,7 @@ class Marker(models.Model):
   track = models.ForeignKey(Track, related_name='markers')
 
   # properties
+  channel = models.CharField(max_length=255)
   r = models.IntegerField(default=0)
   c = models.IntegerField(default=0)
   z = models.IntegerField(default=0)
