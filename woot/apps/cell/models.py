@@ -100,14 +100,3 @@ class Mask(models.Model):
     array[array!=self.mask_id] = 0
     self.array = array==self.mask_id
     return self.array
-
-class MaskPath(models.Model):
-  # connections
-  experiment = models.ForeignKey(Experiment, related_name='mask_paths')
-  series = models.ForeignKey(Series, related_name='mask_paths')
-
-  # properties
-  url = models.CharField(max_length=255)
-  file_name = models.CharField(max_length=255)
-  t = models.IntegerField(default=0)
-  z = models.IntegerField(default=0)

@@ -110,8 +110,8 @@ templates = {
     'rv':r'%s_s%s_%s.xls',
   },
   'measure':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_(?P<index>[0-9]+)\.csv$',
-    'rv':r'%s_s%s_%s.csv',
+    'rx':r'^m_(?P<experiment>.+)_s(?P<series>.+)_ch_(?P<channel>.+)_cp_(?P<secondary_channel>.+)\.csv$',
+    'rv':r'm_%s_s%s_ch_%s_cp_%s.csv',
   }
 }
 

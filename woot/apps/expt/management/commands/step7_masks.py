@@ -3,8 +3,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
 #local
-from apps.img.models import Series
-from apps.img.settings import *
+from apps.expt.models import Series
+from apps.expt.data import *
 
 #util
 import os
@@ -20,4 +20,11 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    pass
+    # 1. input masks for each series
+    for series in Series.objects.all():
+      file_list = [file_name for file_name in os.listdir(series.experiment.mask_path) if os.path.splitext(file_name)[1] in allowed_img_extensions]
+
+      mask_template = series.experiment.templates.get(name='cp')
+
+      for file_name in file_list:
+        print(mask_template.dict(file_name))
