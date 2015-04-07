@@ -66,6 +66,7 @@ class Track(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='tracks')
   series = models.ForeignKey(Series, related_name='tracks')
+  channel = models.ForeignKey(Channel, related_name='tracks')
 
   # properties
   track_id = models.IntegerField(default=0)
@@ -75,28 +76,37 @@ class Marker(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='markers')
   series = models.ForeignKey(Series, related_name='markers')
+  composite = models.ForeignKey(Composite, related_name='markers')
+  channel = models.ForeignKey(Channel, related_name='markers')
   track = models.ForeignKey(Track, related_name='markers')
 
   # properties
-  channel = models.CharField(max_length=255)
   r = models.IntegerField(default=0)
   c = models.IntegerField(default=0)
   z = models.IntegerField(default=0)
   t = models.IntegerField(default=0)
 
+  #- categorisation
+  confidence = models.FloatField(default=0.0) # value between -1.0 and 1.0
+
 class Mask(models.Model):
   # connections
   composite = models.ForeignKey(Composite, related_name='masks')
   channel = models.ForeignKey(Channel, related_name='masks')
-  gon = models.ForeignKey(Gon, related_name='masks')
+  gon = models.OneToOneField(Gon, related_name='mask')
 
   # properties
   mask_id = models.IntegerField(default=0)
 
-  array = None
+  # methods
+  # 1. methods to deal with properties
+  def property_dict(self):
+    return {p.name:p.value for p in self.properties.all()}
 
-  def load(self):
-    array = self.gon.load()
-    array[array!=self.mask_id] = 0
-    self.array = array==self.mask_id
-    return self.array
+class MaskProperty(models.Model):
+  # connections
+  mask = models.ForeignKey(Mask, related_name='properties')
+
+  # properties
+  name = models.CharField(max_length=255)
+  value = models.FloatField(default=0.0)
