@@ -66,6 +66,7 @@ class Track(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='tracks')
   series = models.ForeignKey(Series, related_name='tracks')
+  composite = models.ForeignKey(Composite, related_name='tracks')
   channel = models.ForeignKey(Channel, related_name='tracks')
 
   # properties
@@ -88,6 +89,10 @@ class Marker(models.Model):
 
   #- categorisation
   confidence = models.FloatField(default=0.0) # value between -1.0 and 1.0
+
+  # methods
+  def centre(self):
+    return (self.r, self.c)
 
 class Mask(models.Model):
   # connections
