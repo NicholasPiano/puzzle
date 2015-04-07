@@ -66,6 +66,7 @@ class Track(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='tracks')
   series = models.ForeignKey(Series, related_name='tracks')
+  composite = models.ForeignKey(Composite, related_name='markers')
   channel = models.ForeignKey(Channel, related_name='tracks')
 
   # properties
