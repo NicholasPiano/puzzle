@@ -35,6 +35,7 @@ class Command(BaseCommand):
         composite = series.composites.get(id_token=file_dict['composite_id'])
         channel = composite.channels.get(name=file_dict['channel'])
         cp_template = composite.templates.get(name='cp')
+        mask_template = composite.templates.get(name='mask')
 
         # 2. get or create channel
         mask_channel, mask_channel_created = composite.channels.get_or_create(name=file_dict['secondary_channel'])
@@ -65,4 +66,4 @@ class Command(BaseCommand):
             cut = cut_to_black(unique_array)
 
             mask_template = composite.templates.get(name='mask')
-            mask_gon = gon.gons.create(experiment=gon.experiment, series=gon.series, )
+            mask_gon = gon.gons.create(experiment=gon.experiment, series=gon.series, composite=composite, channel=mask_channel)
