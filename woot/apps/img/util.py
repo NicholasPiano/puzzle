@@ -15,7 +15,7 @@ def cut_to_black(array):
   c1 = array.shape[1] - np.argmax(np.any(array, axis=0)[::-1])
 
   # return cut
-  return array[r0:r1,c0:c1]
+  return array[r0:r1,c0:c1], (r0,c0,(r1-r0),(c1-c0))
 
 # for point, distance in spiral(centre=marker.centre(), direction='+r', gap=1, steps=10):
 
@@ -77,26 +77,26 @@ def cut_to_black(array):
 
 
 
-def spiral():
-
-  spiral = []
-
-  steps = 100
-  step = 0
-  target = -1
-  origin = [0,0]
-  coord = [0,0]
-
-  while step < steps:
-    if coord[0]==target:
-      if coord[1]==target:
-        target = -(target + sign(target))
-        coord[0] += sign(target)
-      else:
-        coord[1] += sign(target)
-    else:
-      coord[0] += sign(target)
-    spiral.append(coord.copy())
-    step += 1
-
-  return spiral
+# def spiral():
+#
+#   spiral = []
+#
+#   steps = 100
+#   step = 0
+#   target = -1
+#   origin = [0,0]
+#   coord = [0,0]
+#
+#   while step < steps:
+#     if coord[0]==target:
+#       if coord[1]==target:
+#         target = -(target + sign(target))
+#         coord[0] += sign(target)
+#       else:
+#         coord[1] += sign(target)
+#     else:
+#       coord[0] += sign(target)
+#     spiral.append(coord.copy())
+#     step += 1
+#
+#   return spiral

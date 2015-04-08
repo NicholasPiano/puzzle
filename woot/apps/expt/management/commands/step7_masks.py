@@ -29,6 +29,7 @@ class Command(BaseCommand):
       template = series.experiment.templates.get(name='cp')
 
       for file_name in file_list:
+        print('processing mask path %s... ' % file_name, end='\r')
         file_dict = template.dict(file_name)
 
         # 1. get current composite, channel
@@ -56,14 +57,25 @@ class Command(BaseCommand):
 
           # open file and get split into masks
           mask_array = gon.load()
-          for unique_id in [u for u in np.unique(mask_array) if u>0]:
+          for i, unique_id in enumerate([u for u in np.unique(mask_array) if u>0]):
+            print('processing mask path %s... %d masks' % (file_name, (i+1)) , end='\r')
             # get array with single value
             unique_array = mask_array.copy()
             unique_array[unique_array!=unique_id] = 0
             unique_array[unique_array!=0] = 1
 
             # cut to size
-            cut = cut_to_black(unique_array)
+            cut, (r,c,rs,cs) = cut_to_black(unique_array)
 
             mask_template = composite.templates.get(name='mask')
-            mask_gon = gon.gons.create(experiment=gon.experiment, series=gon.series, composite=composite, channel=mask_channel)
+            mask_gon = gon.gons.create(experiment=gon.experiment, series=gon.series, composite=composite, channel=mask_channel, id_token=generate_id_token('img', 'Gon'))
+            mask_gon.set_origin(r,c,z,t)
+            mask_gon.set_extent(rs, cs, 1)
+
+            mask_file_name = mask_template.rv % (mask_gon.id_token)
+            mask_url = os.path.join(series.experiment.mask_path, mask_file_name)
+            mask_gon.paths.create(composite=composite, channel=mask_channel, template=mask_template, url=mask_url, file_name=mask_file_name, t=t, z=z)
+
+            imsave(mask_url, cut)
+
+          print('processing mask path %s... %d masks... done.' % (file_name, (i+1)) , end='\n')
