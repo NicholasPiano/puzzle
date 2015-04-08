@@ -98,7 +98,7 @@ class Mask(models.Model):
   # connections
   composite = models.ForeignKey(Composite, related_name='masks')
   channel = models.ForeignKey(Channel, related_name='masks')
-  gon = models.OneToOneField(Gon, related_name='mask')
+  gon = models.ForeignKey(Gon, related_name='masks')
 
   # properties
   mask_id = models.IntegerField(default=0)
@@ -107,6 +107,15 @@ class Mask(models.Model):
   # 1. methods to deal with properties
   def property_dict(self):
     return {p.name:p.value for p in self.properties.all()}
+
+  # 2. load
+  def load(self):
+    # load gon
+    array = self.gon.load()
+    mask = np.zeros(array.shape, dtype=bool)
+    mask[array==self.mask_id] = True
+    
+    return mask
 
 class MaskProperty(models.Model):
   # connections
