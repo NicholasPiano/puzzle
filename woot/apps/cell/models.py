@@ -103,6 +103,14 @@ class Mask(models.Model):
   # properties
   mask_id = models.IntegerField(default=0)
 
+    # 1. origin
+  r = models.IntegerField(default=0)
+  c = models.IntegerField(default=0)
+
+  # 2. extent
+  rs = models.IntegerField(default=-1)
+  cs = models.IntegerField(default=-1)
+
   # methods
   # 1. methods to deal with properties
   def property_dict(self):
@@ -114,7 +122,7 @@ class Mask(models.Model):
     array = self.gon.load()
     mask = np.zeros(array.shape, dtype=bool)
     mask[array==self.mask_id] = True
-    
+
     return mask
 
 class MaskProperty(models.Model):

@@ -61,6 +61,17 @@ class Command(BaseCommand):
             print('processing mask path %s... %d masks' % (file_name, (i+1)) , end='\r')
 
             # make mask
-            gon.masks.create(composite=composite, channel=mask_channel, mask_id=unique_id)
+            mask = gon.masks.create(composite=composite, channel=mask_channel, mask_id=unique_id)
+
+            # cut
+            unique_image = np.zeros(mask_array.shape)
+            unique_image[mask_array==unique_id] = 1
+            cut, (r,c,rs,cs) = cut_to_black()
+
+            mask.r = r
+            mask.c = c
+            mask.rs = rs
+            mask.cs = cs
+            mask.save()
 
           print('processing mask path %s... %d masks... done.' % (file_name, (i+1)) , end='\n')
