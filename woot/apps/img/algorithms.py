@@ -9,6 +9,8 @@ from scipy.ndimage.filters import gaussian_filter as gf
 from skimage import exposure
 import numpy as np
 from scipy.misc import imsave
+from PIL import Image
+import matplotlib.cm as cm
 
 # methods
 ### STEP 2: Generate images for
@@ -251,7 +253,7 @@ mod_step5_bf_gfp_reduced.description = 'Include bf channel to aid recognition'
 def mod_system_check(composite, mod_id, algorithm):
   # paths
   template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
-  url = os.path.join(composite.experiment.output_path, template.rv) # CP PATH
+  url = os.path.join(composite.experiment.composite_path, template.rv) # CP PATH
 
   # channels
   system_check_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'systemcheck', mod_id))
@@ -277,14 +279,27 @@ def mod_system_check(composite, mod_id, algorithm):
 
       # make array
       # - 1. bf image at z
-      bf_z = bf_gon.gons.get(z=z).load()
+      bf_z = exposure.rescale_intensity(bf_gon.gons.get(z=z).load())
 
       # - 2. the sum of all the combined masks at this z
+      combined_mask_sum = np.zeros((composite.series.rs, composite.series.cs), dtype=float)
+      for marker in composite.series.markers.filter(t=t, z=z):
+        combined_mask_sum += marker.combined_mask()
 
+      combined_mask_sum = exposure.rescale_intensity(combined_mask_sum)
+
+      # print('############## #### #### #### #### #### RANGES: %d, %d - %d, %d' % (bf_z.min(), bf_z.max(), combined_mask_sum.min(), combined_mask_sum.max()))
+
+      # - 3. alpha-ness is proportional to the value of the image.
+      # bf_pil = Image.fromarray(np.dstack([bf_z*255,bf_z*255,bf_z*255,np.ones((composite.series.rs, composite.series.cs))*255]), mode='RGBA')
+      # cms_pil = Image.fromarray(np.dstack([combined_mask_sum*255,combined_mask_sum*255,combined_mask_sum*255,combined_mask_sum*255]), mode='RGBA')
+
+      # bf_pil.paste(cms_pil, (0,0), cms_pil)
 
       # assign array
-      # system_check_gon.array = 
+      # system_check_gon.array = np.array(bf_pil)[:,:,0]
+      system_check_gon.array = combined_mask_sum.copy()
 
       # save gon and image
-      system_check_gon.save_single(url, template, sz)
+      system_check_gon.save_single(url, template, z)
       system_check_gon.save()

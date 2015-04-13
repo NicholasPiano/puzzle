@@ -164,7 +164,7 @@ class Channel(models.Model):
       if mask.self_overlaps_mask(query_mask):
         mask_overlap.append(mask)
 
-    print('channel: %s - boxes: %d/%d, masks: %d/%d' % (str(self), len(box_overlap), self.masks.filter(gon__t=query_mask.gon.t).count(), len(mask_overlap), len(box_overlap)))
+    # print('channel: %s - boxes: %d/%d, masks: %d/%d' % (str(self), len(box_overlap), self.masks.filter(gon__t=query_mask.gon.t).count(), len(mask_overlap), len(box_overlap)))
 
     return mask_overlap
 
