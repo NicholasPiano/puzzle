@@ -70,7 +70,10 @@ class Gon(models.Model):
     self.save()
 
   def shape(self):
-    return (self.rs, self.cs, self.zs)
+    if self.zs==1:
+      return (self.rs, self.cs)
+    else:
+      return (self.rs, self.cs, self.zs)
 
   def t_str(self):
     return str('0'*(len(str(self.series.ts)) - len(str(self.t))) + str(self.t))
@@ -136,6 +139,34 @@ class Channel(models.Model):
   # methods
   def __str__(self):
     return '%s > %s' % (self.composite.id_token, self.name)
+
+  def masks_overlap_with_marker(self, marker):
+    box_overlap = []
+    for mask in self.masks.filter(gon__t=marker.t):
+      if mask.box_overlaps_marker(marker):
+        box_overlap.append(mask)
+
+    mask_overlap = []
+    for mask in box_overlap:
+      if mask.self_overlaps_marker(marker):
+        mask_overlap.append(mask)
+
+    return mask_overlap
+
+  def masks_overlap_with_mask(self, query_mask):
+    box_overlap = []
+    for mask in self.masks.filter(gon__t=query_mask.gon.t):
+      if mask.box_overlaps_box(query_mask):
+        box_overlap.append(mask)
+
+    mask_overlap = []
+    for mask in box_overlap:
+      if mask.self_overlaps_mask(query_mask):
+        mask_overlap.append(mask)
+
+    print('channel: %s - boxes: %d/%d, masks: %d/%d' % (str(self), len(box_overlap), self.masks.filter(gon__t=query_mask.gon.t).count(), len(mask_overlap), len(box_overlap)))
+
+    return mask_overlap
 
 class Template(models.Model):
   # connections

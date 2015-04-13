@@ -90,15 +90,15 @@ templates = {
     'rv':r'%s_s%s_ch%s_t%s_z%s.tiff',
   },
   'composite':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>(?P<composite_id>[0-9A-Z]+)-(?P<mod>[a-z]+)-(?P<mod_id>[0-9A-Z]+))_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>(?P<composite_id>[0-9A-Z]+)-(?P<mod>[a-z]+)-(?P<mod_id>[0-9A-Z]+))_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
     'rv':r'%s_s%s_ch-%s_t%s_z%s.tiff',
   },
   'cp':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)_cp\.(?P<extension>.+)$',
-    'rv':r'%s_s%s_ch%s_t%s_z%s_cp.tiff',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>(?P<composite_id>[0-9A-Z]+)-(?P<mod>[a-z]+)-(?P<mod_id>[0-9A-Z]+))_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)_cp-(?P<secondary_channel>.+)\.(?P<extension>.+)$',
+    'rv':r'%s_s%s_ch-%s_t%s_z%s_cp-%s.tiff',
   },
   'region':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_region\.(?P<extension>.+)$',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>.+)_t(?P<t>[0-9]+)_region\.(?P<extension>.+)$',
     'rv':r'%s_s%s_ch%s_t%s_z%s_region.tiff',
   },
   'mask':{
@@ -110,8 +110,8 @@ templates = {
     'rv':r'%s_s%s_%s.xls',
   },
   'measure':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_(?P<index>[0-9]+)\.csv$',
-    'rv':r'%s_s%s_%s.csv',
+    'rx':r'^m_(?P<experiment>.+)_s(?P<series>.+)_ch_(?P<channel>.+)_cp_(?P<secondary_channel>.+)\.csv$',
+    'rv':r'm_%s_s%s_ch_%s_cp_%s.csv',
   }
 }
 

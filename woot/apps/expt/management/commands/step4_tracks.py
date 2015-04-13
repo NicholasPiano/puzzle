@@ -51,12 +51,14 @@ class Command(BaseCommand):
               else:
                 tracks[track_id] = [(r,c,t)]
 
-            for track_id, markers in tracks.items():
-              track_index = series.tracks.filter(track_id=track_id).count()
-              track = series.tracks.create(experiment=series.experiment, track_id=track_id, index=track_index)
+            for composite in series.composites.all(): # add for every composite and channel
+              for channel in composite.channels.all():
+                for track_id, markers in tracks.items():
+                  track_index = series.tracks.filter(track_id=track_id).count()
+                  track = channel.tracks.create(experiment=series.experiment, series=series, composite=composite, track_id=track_id, index=track_index)
 
-              for marker in markers:
-                track.markers.create(experiment=series.experiment, series=series, r=marker[0], c=marker[1], t=marker[2])
+                  for marker in markers:
+                    track.markers.create(experiment=series.experiment, series=series, composite=composite, channel=channel, r=marker[0], c=marker[1], t=marker[2])
 
       for t in range(series.ts):
         print('processing marker z positions... t%d' % t)
