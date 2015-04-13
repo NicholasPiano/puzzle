@@ -103,15 +103,13 @@ class Marker(models.Model):
     # 1. channels
     pmod_mask_channel = self.composite.channels.get(name='pmodreduced')
     bf_mask_channel = self.composite.channels.get(name='bfreduced')
-    # bf_mini_mask_channel = self.composite.channels.get(name='bfreducedmini')
 
     # 2. get masks
     pmod_mask_overlap = pmod_mask_channel.masks_overlap_with_marker(self)
     bf_mask_overlap = bf_mask_channel.masks_overlap_with_marker(self)
-    # bf_mini_mask_overlap = bf_mini_mask_channel.masks_overlap_with_marker(self)
 
     # 3. return complete set
-    return pmod_mask_overlap + bf_mask_overlap# + bf_mini_mask_overlap
+    return pmod_mask_overlap + bf_mask_overlap
 
   def secondary_mask_set(self):
 
@@ -123,7 +121,6 @@ class Marker(models.Model):
     # 2. get channels
     pmod_mask_channel = self.composite.channels.get(name='pmodreduced')
     bf_mask_channel = self.composite.channels.get(name='bfreduced')
-    # bf_mini_mask_channel = self.composite.channels.get(name='bfreducedmini')
 
     # 3. for each mask, find the list of masks that it overlaps, excluding the ones currently in the primary set
     secondary_mask_set = []
@@ -131,11 +128,9 @@ class Marker(models.Model):
       print('getting secondary masks for %d out of %d masks' % (i+1, len(primary_mask_set)))
       pmod_mask_overlap = pmod_mask_channel.masks_overlap_with_mask(mask)
       bf_mask_overlap = bf_mask_channel.masks_overlap_with_mask(mask)
-      # bf_mini_mask_overlap = bf_mini_mask_channel.masks_overlap_with_mask(mask)
 
-      secondary_mask_set += pmod_mask_overlap + bf_mask_overlap# + bf_mini_mask_overlap
+      secondary_mask_set += pmod_mask_overlap + bf_mask_overlap
 
-      # print('%d/%d - pmod: %d, bf: %d, bf_mini: %d, total: %d' % (i, len(primary_mask_set), len(pmod_mask_overlap), len(bf_mask_overlap), len(bf_mini_mask_overlap), len(pmod_mask_overlap + bf_mask_overlap + bf_mini_mask_overlap)))
       print('%d/%d - pmod: %d, bf: %d, total: %d' % (i, len(primary_mask_set), len(pmod_mask_overlap), len(bf_mask_overlap), len(pmod_mask_overlap + bf_mask_overlap)))
 
     return secondary_mask_set
