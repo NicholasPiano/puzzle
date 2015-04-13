@@ -141,7 +141,7 @@ class Marker(models.Model):
 
     # add each mask based on its z compared to that of the marker
     for mask in self.secondary_mask_set():
-      black += mask.load().astype(float) * 1.0/(1.0 + abs(m.z - mask.gon.z))
+      black += mask.load().astype(float) * 1.0/(1.0 + abs(self.z - mask.gon.z))
 
     # non-zero mean threshold
     black[black<np.ma.array(black, mask=black==0).mean()] = 0
