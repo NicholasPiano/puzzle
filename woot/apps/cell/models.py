@@ -131,7 +131,7 @@ class Marker(models.Model):
 
       secondary_mask_set += pmod_mask_overlap + bf_mask_overlap
 
-      print('%d/%d - pmod: %d, bf: %d, total: %d' % (i, len(primary_mask_set), len(pmod_mask_overlap), len(bf_mask_overlap), len(pmod_mask_overlap + bf_mask_overlap)))
+      print('%d/%d - pmod: %d, bf: %d, total: %d' % (i+1, len(primary_mask_set), len(pmod_mask_overlap), len(bf_mask_overlap), len(pmod_mask_overlap + bf_mask_overlap)))
 
     return secondary_mask_set
 
@@ -147,6 +147,7 @@ class Mask(models.Model):
   # 1. origin
   r = models.IntegerField(default=0)
   c = models.IntegerField(default=0)
+  z = models.IntegerField(default=0)
 
   # 2. extent
   rs = models.IntegerField(default=-1)
