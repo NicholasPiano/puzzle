@@ -22,7 +22,7 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    out = '/Volumes/TRANSPORT/data/puzzle/050714-test/img/output/'
+    out = '/Volumes/TRANSPORT/data/puzzle/050714/img/output/'
 
     # 1. get composite
     c = Composite.objects.get()
