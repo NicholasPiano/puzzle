@@ -283,7 +283,7 @@ def mod_system_check(composite, mod_id, algorithm):
 
 
       # assign array
-      system_check_gon.array =
+      # system_check_gon.array = 
 
       # save gon and image
       system_check_gon.save_single(url, template, sz)
