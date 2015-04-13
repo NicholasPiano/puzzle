@@ -247,3 +247,44 @@ def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
         rbf_gon.save()
 
 mod_step5_bf_gfp_reduced.description = 'Include bf channel to aid recognition'
+
+def mod_system_check(composite, mod_id, algorithm):
+  # paths
+  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
+  url = os.path.join(composite.experiment.output_path, template.rv) # CP PATH
+
+  # channels
+  system_check_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'systemcheck', mod_id))
+
+  # image sets
+  bf_set = composite.gons.filter(channel__name='1')
+
+  # iterate over frames
+  for t in range(composite.series.ts):
+    print('processing mod_system_check t%d...' % t)
+
+    # 1. get
+    bf_gon = bf_set.get(t=t)
+
+    # 2. for each unique z value of the markers, make a gon and add it to the pmod_reduced channel
+    marker_z_values = list(np.unique([marker.z for marker in composite.series.markers.filter(t=t)]))
+
+    for z in marker_z_values:
+      # make new gon
+      system_check_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=system_check_channel)
+      system_check_gon.set_origin(0, 0, z, t)
+      system_check_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+
+      # make array
+      # - 1. bf image at z
+      bf_z = bf_gon.gons.get(z=z).load()
+
+      # - 2. the sum of all the combined masks at this z
+
+
+      # assign array
+      system_check_gon.array =
+
+      # save gon and image
+      system_check_gon.save_single(url, template, sz)
+      system_check_gon.save()

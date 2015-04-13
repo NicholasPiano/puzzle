@@ -33,6 +33,7 @@ class Command(BaseCommand):
         file_dict = template.dict(file_name)
 
         # 1. get current composite, channel
+        print(file_dict['composite_id'])
         composite = series.composites.get(id_token=file_dict['composite_id'])
         channel = composite.channels.get(name=file_dict['channel'])
         cp_template = composite.templates.get(name='cp')
