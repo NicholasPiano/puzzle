@@ -29,11 +29,13 @@ class Command(BaseCommand):
       template = series.experiment.templates.get(name='cp')
 
       for file_name in file_list:
-        print('processing mask path %s... ' % file_name, end='\r')
+        # print('processing mask path %s... ' % file_name, end='\r')
         file_dict = template.dict(file_name)
 
         # 1. get current composite, channel
         print(file_dict['composite_id'])
+        c = series.composites.get()
+        print(c.id_token)
         composite = series.composites.get(id_token=file_dict['composite_id'])
         channel = composite.channels.get(name=file_dict['channel'])
         cp_template = composite.templates.get(name='cp')
