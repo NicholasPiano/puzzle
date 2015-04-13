@@ -66,7 +66,7 @@ class Command(BaseCommand):
             # cut
             unique_image = np.zeros(mask_array.shape)
             unique_image[mask_array==unique_id] = 1
-            cut, (r,c,rs,cs) = cut_to_black()
+            cut, (r,c,rs,cs) = cut_to_black(unique_image)
 
             mask.r = r
             mask.c = c

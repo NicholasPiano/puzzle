@@ -106,6 +106,7 @@ class Series(models.Model):
 
     # composite
     composite = self.composites.create(experiment=self.experiment, id_token=generate_id_token('img', 'Composite'))
+    # composite = self.composites.create(experiment=self.experiment, id_token='')
 
     # templates
     for template in self.experiment.templates.all():
