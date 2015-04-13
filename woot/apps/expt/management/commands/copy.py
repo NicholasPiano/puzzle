@@ -22,16 +22,12 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    out = '/Volumes/TRANSPORT/data/puzzle/050714-test/img/output/'
+    out = '/Volumes/TRANSPORT/data/puzzle/050714-test/img/region-img/'
 
-    # 1. get composite
-    c = Composite.objects.get()
+    series = Series.objects.get()
 
-    # 2. get marker
-    for m in c.markers.all():
+    # 1. get time series
+    time_set = series.gons.filter(channel__name='1', zs=1, z=30)
 
-      # 3. get masks
-      black = m.combined_mask()
-
-      plt.imshow(black)
-      plt.savefig(os.path.join(out, 'mask_%d' % m.pk))
+    for gon in time_set:
+      imsave(os.path.join(out, 'region_%d.tiff' % gon.t), gon.load())

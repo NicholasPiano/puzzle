@@ -135,6 +135,19 @@ class Marker(models.Model):
 
     return secondary_mask_set
 
+  def combined_mask(self):
+    # make zeros
+    black = np.zeros((self.series.rs,self.series.cs), dtype=float)
+
+    # add each mask based on its z compared to that of the marker
+    for mask in self.secondary_mask_set():
+      black += mask.load().astype(float) * 1.0/(1.0 + abs(m.z - mask.gon.z))
+
+    # non-zero mean threshold
+    black[black<np.ma.array(black, mask=black==0).mean()] = 0
+
+    return black
+
 class Mask(models.Model):
   # connections
   composite = models.ForeignKey(Composite, related_name='masks')
