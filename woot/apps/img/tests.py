@@ -1,10 +1,10 @@
-#woot.apps.img.tests
+# woot.apps.img.tests
 
-#django
+# django
 from django.test import TestCase
 
-#local
+# local
 
-#util
+# util
 
 ### Tests

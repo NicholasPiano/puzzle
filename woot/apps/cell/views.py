@@ -1,4 +1,4 @@
-# woot.apps.img.views
+# woot.apps.cell.views
 
 # django
 from django.http import HttpResponse

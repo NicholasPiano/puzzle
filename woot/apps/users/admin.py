@@ -1,18 +1,18 @@
-#woot.apps.users.admin
+# woot.apps.users.admin
 
-#django
+# django
 from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
-#local
+# local
 from apps.users.models import User
 
-#vars
+# vars
 
-#classes
+# classes
 class UserCreationForm(forms.ModelForm):
   """A form for creating new users. Includes all the required
   fields, plus a repeated password."""

@@ -1,4 +1,4 @@
-#puzzle.wsgi
+# puzzle.wsgi
 
 '''
 WSGI config for puzzle project.

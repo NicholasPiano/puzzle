@@ -1,11 +1,10 @@
-# woot.apps.users.tests
+# woot.apps.expt.tests
 
 # django
 from django.test import TestCase
 
 # local
 
-# vars
+# util
 
-# classes
-
+### Tests

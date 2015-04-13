@@ -1,21 +1,21 @@
-#woot.apps.users.views
+# woot.apps.users.views
 
-#django
+# django
 from django.http import HttpResponse
 from django.views.generic import View
 
-#local
+# local
 
 ### Views
 
-#methods
+# methods
 def my_view(request):
     if request.method == 'GET':
         # <view logic>
         return HttpResponse('result')
 
 
-#classes
+# classes
 ### https://docs.djangoproject.com/en/1.7/topics/class-based-views/intro/
 class MyView(View):
     def get(self, request):
