@@ -288,8 +288,6 @@ def mod_system_check(composite, mod_id, algorithm):
 
       combined_mask_sum = exposure.rescale_intensity(combined_mask_sum)
 
-      # print('############## #### #### #### #### #### RANGES: %d, %d - %d, %d' % (bf_z.min(), bf_z.max(), combined_mask_sum.min(), combined_mask_sum.max()))
-
       # - 3. alpha-ness is proportional to the value of the image.
       # bf_pil = Image.fromarray(np.dstack([bf_z*255,bf_z*255,bf_z*255,np.ones((composite.series.rs, composite.series.cs))*255]), mode='RGBA')
       # cms_pil = Image.fromarray(np.dstack([combined_mask_sum*255,combined_mask_sum*255,combined_mask_sum*255,combined_mask_sum*255]), mode='RGBA')
