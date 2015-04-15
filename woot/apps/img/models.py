@@ -37,6 +37,7 @@ class Gon(models.Model):
 
   # properties
   id_token = models.CharField(max_length=8, default='')
+  batch = models.IntegerField(default=0)
 
   # 1. origin
   r = models.IntegerField(default=0)

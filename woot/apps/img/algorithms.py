@@ -200,7 +200,6 @@ mod_step5_gfp_flat.description = 'Flatten gfp and blur slightly.'
 def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
   # paths
   template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
-  url = os.path.join(composite.experiment.cp_path, template.rv) # CP PATH
 
   # channels
   pmod_reduced_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'pmodreduced', mod_id))
@@ -209,6 +208,10 @@ def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
   # image sets
   pmod_set = composite.gons.filter(channel__name__contains='pmod-')
   bf_set = composite.gons.filter(channel__name='1')
+
+  # create batches
+  batch = 0
+  max_batch_size = 25
 
   # iterate over frames
   for t in range(composite.series.ts):
@@ -227,6 +230,14 @@ def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
       upper_z = z + 2 if z + 2 < composite.series.zs else composite.series.zs
 
       for sz in range(lower_z,upper_z):
+
+        # check batch and make folders, set url
+        if composite.gons.filter(channel=pmod_reduced_channel, batch=batch).count()==max_batch_size:
+          batch += 1
+
+        url = os.path.join(composite.experiment.cp_path, str(batch), template.rv) # CP PATH
+        if not os.path.exists(os.path.join(composite.experiment.cp_path, str(batch))):
+          os.mkdir(os.path.join(composite.experiment.cp_path, str(batch)))
 
         # pmod
         rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel)
