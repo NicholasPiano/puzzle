@@ -200,7 +200,6 @@ mod_step5_gfp_flat.description = 'Flatten gfp and blur slightly.'
 def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
   # paths
   template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
-  url = os.path.join(composite.experiment.cp_path, template.rv) # CP PATH
 
   # channels
   pmod_reduced_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'pmodreduced', mod_id))
@@ -209,6 +208,10 @@ def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
   # image sets
   pmod_set = composite.gons.filter(channel__name__contains='pmod-')
   bf_set = composite.gons.filter(channel__name='1')
+
+  # create batches
+  batch = 0
+  max_batch_size = 50
 
   # iterate over frames
   for t in range(composite.series.ts):
@@ -227,6 +230,17 @@ def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
       upper_z = z + 2 if z + 2 < composite.series.zs else composite.series.zs
 
       for sz in range(lower_z,upper_z):
+
+        # check batch and make folders, set url
+        if not os.path.exists(os.path.join(composite.experiment.cp_path, str(batch))):
+          os.mkdir(os.path.join(composite.experiment.cp_path, str(batch)))
+
+        if len(os.listdir(os.path.join(composite.experiment.cp_path, str(batch))))==max_batch_size:
+          batch += 1
+          if not os.path.exists(os.path.join(composite.experiment.cp_path, str(batch))):
+            os.mkdir(os.path.join(composite.experiment.cp_path, str(batch)))
+
+        url = os.path.join(composite.experiment.cp_path, str(batch), template.rv) # CP PATH
 
         # pmod
         rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel)
@@ -279,24 +293,20 @@ def mod_system_check(composite, mod_id, algorithm):
 
       # make array
       # - 1. bf image at z
-      bf_z = exposure.rescale_intensity(bf_gon.gons.get(z=z).load())
+      bf_z = exposure.rescale_intensity(bf_gon.gons.get(z=z).load() * 1.0)
 
       # - 2. the sum of all the combined masks at this z
       combined_mask_sum = np.zeros((composite.series.rs, composite.series.cs), dtype=float)
       for marker in composite.series.markers.filter(t=t, z=z):
-        combined_mask_sum += marker.combined_mask()
+        combined_mask_sum += exposure.rescale_intensity(marker.combined_mask()*1.0)
 
       combined_mask_sum = exposure.rescale_intensity(combined_mask_sum)
 
       # - 3. alpha-ness is proportional to the value of the image.
-      # bf_pil = Image.fromarray(np.dstack([bf_z*255,bf_z*255,bf_z*255,np.ones((composite.series.rs, composite.series.cs))*255]), mode='RGBA')
-      # cms_pil = Image.fromarray(np.dstack([combined_mask_sum*255,combined_mask_sum*255,combined_mask_sum*255,combined_mask_sum*255]), mode='RGBA')
-
-      # bf_pil.paste(cms_pil, (0,0), cms_pil)
+      alpha_stack = exposure.rescale_intensity(bf_z + combined_mask_sum*combined_mask_sum)
 
       # assign array
-      # system_check_gon.array = np.array(bf_pil)[:,:,0]
-      system_check_gon.array = combined_mask_sum.copy()
+      system_check_gon.array = alpha_stack.copy()
 
       # save gon and image
       system_check_gon.save_single(url, template, z)
