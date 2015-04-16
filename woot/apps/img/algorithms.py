@@ -211,7 +211,7 @@ def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
 
   # create batches
   batch = 0
-  max_batch_size = 50
+  max_batch_size = 100
 
   # iterate over frames
   for t in range(composite.series.ts):
@@ -276,7 +276,7 @@ def mod_system_check(composite, mod_id, algorithm):
   bf_set = composite.gons.filter(channel__name='1')
 
   # iterate over frames
-  for t in range(composite.series.ts):
+  for t in range(9, composite.series.ts):
     print('processing mod_system_check t%d...' % t)
 
     # 1. get
