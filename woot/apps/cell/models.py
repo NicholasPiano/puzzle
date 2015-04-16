@@ -144,6 +144,7 @@ class Marker(models.Model):
       black += mask.load().astype(float) * 1.0/(1.0 + abs(self.z - mask.gon.z))
 
     # non-zero mean threshold
+    print(np.ma.array(black, mask=black==0).mean())
     black[black<np.ma.array(black, mask=black==0).mean()] = 0
 
     return black
