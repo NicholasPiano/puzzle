@@ -336,9 +336,9 @@ def mod_region_img(composite, mod_id, algorithm):
 
     # make gon
     region_img_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=region_img_channel)
-    region_img_gon.set_origin(0, 0, z, t)
+    region_img_gon.set_origin(0, 0, middle_z, t)
     region_img_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
     region_img_gon.array = exposure.rescale_intensity(bf * 1.0)
-    region_img_gon.save_single(url, template, z)
+    region_img_gon.save_single(url, template, middle_z)
     region_img_gon.save()
