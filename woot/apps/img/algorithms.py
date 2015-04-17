@@ -322,6 +322,8 @@ def mod_region_img(composite, mod_id, algorithm):
 
   # image sets
   bf_set = composite.gons.filter(channel__name='1')
+  for bfs in bf_set:
+    print(bfs)
 
   # iterate over frames
   for t in range(composite.series.ts):
