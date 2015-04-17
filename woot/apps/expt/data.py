@@ -125,6 +125,7 @@ default_paths = {
   'mask':'img/mask/',
   'region':'img/region',
   'region_img':'img/region-img',
+  'region_gimp':'img/region-gimp',
   'plot':'plot/',
   'track':'track/',
   'data':'data/',
