@@ -327,7 +327,7 @@ def mod_region_img(composite, mod_id, algorithm):
   for t in range(composite.series.ts):
 
     # get middle z level
-    middle_z = int(composite.zs / 2.0)
+    middle_z = int(composite.series.zs / 2.0)
 
     # get single bf plane at z
     bf = bf_set.get(t=t, z=middle_z).load()
