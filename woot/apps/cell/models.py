@@ -77,7 +77,7 @@ class Track(models.Model):
   index = models.IntegerField(default=0)
 
   def create_cell(self):
-    pass
+    print(self.markers.count())
 
 class Marker(models.Model):
   # connections

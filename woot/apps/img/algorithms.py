@@ -276,7 +276,7 @@ def mod_system_check(composite, mod_id, algorithm):
   bf_set = composite.gons.filter(channel__name='1')
 
   # iterate over frames
-  for t in range(9, composite.series.ts):
+  for t in range(composite.series.ts):
     print('processing mod_system_check t%d...' % t)
 
     # 1. get
@@ -311,3 +311,32 @@ def mod_system_check(composite, mod_id, algorithm):
       # save gon and image
       system_check_gon.save_single(url, template, z)
       system_check_gon.save()
+
+def mod_region_img(composite, mod_id, algorithm):
+  # paths
+  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
+  url = os.path.join(composite.experiment.region_img_path, template.rv) # REGION IMG PATH
+
+  # channels
+  region_img_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'regionimg', mod_id))
+
+  # image sets
+  bf_set = composite.gons.filter(channel__name='1')
+
+  # iterate over frames
+  for t in range(composite.series.ts):
+
+    # get middle z level
+    middle_z = int(composite.zs / 2.0)
+
+    # get single bf plane at z
+    bf = bf_set.get(t=t, z=middle_z).load()
+
+    # make gon
+    region_img_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=region_img_channel)
+    region_img_gon.set_origin(0, 0, z, t)
+    region_img_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+
+    region_img_gon.array = exposure.rescale_intensity(bf * 1.0)
+    region_img_gon.save_single(url, template, z)
+    region_img_gon.save()
