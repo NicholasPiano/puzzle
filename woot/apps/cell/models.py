@@ -76,6 +76,9 @@ class Track(models.Model):
   track_id = models.IntegerField(default=0)
   index = models.IntegerField(default=0)
 
+  def create_cell(self):
+    pass
+
 class Marker(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='markers')
