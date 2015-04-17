@@ -322,18 +322,17 @@ def mod_region_img(composite, mod_id, algorithm):
 
   # image sets
   bf_set = composite.gons.filter(channel__name='1')
-  for bfs in bf_set:
-    print(bfs)
 
   # iterate over frames
   for t in range(composite.series.ts):
 
+    g = bf_set.get(t=t) # must get great gon first
+
     # get middle z level
     middle_z = int(composite.series.zs / 2.0)
-    print(middle_z)
 
     # get single bf plane at z
-    bf = bf_set.get(t=t, z=middle_z).load()
+    bf = g.gons.get(z=middle_z).load()
 
     # make gon
     region_img_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=region_img_channel)
