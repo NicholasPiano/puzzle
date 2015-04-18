@@ -46,7 +46,7 @@ class Command(BaseCommand):
 
           # 3. get or create gon only if path does not yet exist
           t = int(file_dict['t'])
-          if region_channel.paths.filter(t=t).count()>0:
+          if region_channel.paths.filter(t=t).count()==0:
             # make gon
             gon = series.gons.create(experiment=series.experiment, composite=composite, channel=region_channel)
             gon.set_origin(0,0,0,t)
