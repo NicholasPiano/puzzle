@@ -98,8 +98,8 @@ templates = {
     'rv':r'%s_s%s_ch-%s_t%s_z%s_cp-%s.tiff',
   },
   'region':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>.+)_t(?P<t>[0-9]+)_region\.(?P<extension>.+)$',
-    'rv':r'%s_s%s_ch%s_t%s_z%s_region.tiff',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>(?P<composite_id>[0-9A-Z]+)-(?P<mod>[a-z]+)-(?P<mod_id>[0-9A-Z]+))_t(?P<t>[0-9]+)_region\.(?P<extension>.+)$',
+    'rv':r'%s_s%s_ch-%s_t%s_z%s_region.tiff',
   },
   'mask':{
     'rx':r'^(?P<id_token>[A-Z0-9]{8})\.(?P<extension>.+)$',

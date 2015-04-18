@@ -11,7 +11,7 @@ from apps.img import algorithms
 # util
 import os
 import re
-from scipy.misc import imread, imsave
+from scipy.misc import imread, imsave, toimage
 import numpy as np
 
 ### Models

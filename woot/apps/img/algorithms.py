@@ -325,6 +325,7 @@ def mod_region_img(composite, mod_id, algorithm):
 
   # iterate over frames
   for t in range(composite.series.ts):
+    print('processing mod_region_img t%d...' % t)
 
     g = bf_set.get(t=t) # must get great gon first
 

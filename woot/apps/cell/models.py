@@ -150,7 +150,7 @@ class Marker(models.Model):
     black[self.r, self.c] = 1.0
 
     # non-zero mean threshold
-    black[black<np.ma.array(black, mask=black==0).mean()] = 0
+    # black[black<np.ma.array(black, mask=black==0).mean()] = 0
 
     return black
 
@@ -181,6 +181,7 @@ class Mask(models.Model):
   def load(self):
     # load gon
     array = self.gon.load()
+    array = (array / array.max() * (len(np.unique(array))-1)).astype(int) # rescale
     return self.from_image(array)
 
   def from_image(self, image):
