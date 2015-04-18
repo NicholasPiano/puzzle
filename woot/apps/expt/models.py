@@ -11,6 +11,7 @@ from apps.expt.util import generate_id_token
 import os
 import re
 from scipy.misc import imread, imsave
+import numpy as np
 
 ### Models
 class Experiment(models.Model):
