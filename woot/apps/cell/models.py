@@ -150,7 +150,7 @@ class Marker(models.Model):
     black[self.r, self.c] = 1.0
 
     # non-zero mean threshold
-    # black[black<np.ma.array(black, mask=black==0).mean()] = 0
+    black[black<np.ma.array(black, mask=black==0).mean()] = 0
 
     return black
 

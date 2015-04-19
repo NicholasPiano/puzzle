@@ -175,7 +175,7 @@ class Series(models.Model):
 
           # area
           # sum entire image
-          cell_instance.a = np.sum(combined_mask>combined_mask.mean())
+          cell_instance.a = np.sum(combined_mask>0)
 
           # region
           region_match = 0
