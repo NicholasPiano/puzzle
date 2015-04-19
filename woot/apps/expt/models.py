@@ -175,7 +175,8 @@ class Series(models.Model):
 
           # area
           # sum entire image
-          cell_instance.a = np.sum(combined_mask>0)
+          masked = np.ma.array(combined_mask, mask=combined_mask==0)
+          cell_instance.a = int(masked.sum() / masked.max())
 
           # region
           region_match = 0
@@ -184,7 +185,7 @@ class Series(models.Model):
             if np.any(np.bitwise_and(region_array, combined_mask>combined_mask.mean())):
               region_match = region.mask_id
 
-          cell_instance.region = region_match
+          cell_instance.region = self.vertical_sort_for_region_index(region_match)
 
           # velocity
           if previous_marker is None:

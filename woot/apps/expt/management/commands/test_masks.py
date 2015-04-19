@@ -20,12 +20,13 @@ class Command(BaseCommand):
 
   def handle(self, *args, **options):
     # get marker
-    marker = Marker.objects.get(pk=26)
+    marker = Marker.objects.get(pk=13)
 
     # get combiend mask
     combined_mask = marker.combined_mask()
 
-    print(np.sum(combined_mask>0) * marker.experiment.rmop * marker.experiment.cmop)
+    masked = np.ma.array(combined_mask, mask=combined_mask==0)
+    print(masked.sum() / masked.max())
 
-    plt.imshow(combined_mask)
-    plt.show()
+    # plt.imshow(combined_mask)
+    # plt.show()

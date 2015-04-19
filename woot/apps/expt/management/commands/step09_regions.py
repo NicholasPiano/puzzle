@@ -64,7 +64,7 @@ class Command(BaseCommand):
             gon.save_single(os.path.join(series.experiment.composite_path, cp_template.rv), cp_template, 0)
 
             for i, unique_id in enumerate([u for u in np.unique(region_array) if u>0]):
-              print('processing region path %s... %d masks' % (file_name, (i+1)) , end='\r')
+              print('processing region path %s... %d regions' % (file_name, (i+1)) , end='\r')
 
               # make mask
               mask_id = series.vertical_sort_for_region_index(unique_id)
@@ -81,4 +81,4 @@ class Command(BaseCommand):
               mask.cs = cs
               mask.save()
 
-            print('processing mask path %s... %d masks... done.' % (file_name, (i+1)) , end='\n')
+            print('processing region path %s... %d regions... done.' % (file_name, (i+1)) , end='\n')
