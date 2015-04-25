@@ -23,4 +23,5 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    
+    # for each series
+    # 1. for each folder in the cp directory, run cell profiler with the given pipeline and the mask folder as output

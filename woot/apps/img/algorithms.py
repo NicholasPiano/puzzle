@@ -232,15 +232,15 @@ def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
       for sz in range(lower_z,upper_z):
 
         # check batch and make folders, set url
-        if not os.path.exists(os.path.join(composite.experiment.cp_path, str(batch))):
-          os.mkdir(os.path.join(composite.experiment.cp_path, str(batch)))
+        if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))):
+          os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
 
-        if len(os.listdir(os.path.join(composite.experiment.cp_path, str(batch))))==max_batch_size:
+        if len(os.listdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))))==max_batch_size:
           batch += 1
-          if not os.path.exists(os.path.join(composite.experiment.cp_path, str(batch))):
-            os.mkdir(os.path.join(composite.experiment.cp_path, str(batch)))
+          if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))):
+            os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
 
-        url = os.path.join(composite.experiment.cp_path, str(batch), template.rv) # CP PATH
+        url = os.path.join(composite.experiment.cp_path, composite.series.name, str(batch), template.rv) # CP PATH
 
         # pmod
         rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel)
