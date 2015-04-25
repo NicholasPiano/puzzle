@@ -233,11 +233,13 @@ def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
 
         # check batch and make folders, set url
         if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))):
+          os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name))
           os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
 
         if len(os.listdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))))==max_batch_size:
           batch += 1
           if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))):
+            os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name))
             os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
 
         url = os.path.join(composite.experiment.cp_path, composite.series.name, str(batch), template.rv) # CP PATH
