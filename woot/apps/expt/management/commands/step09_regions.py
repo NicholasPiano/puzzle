@@ -66,7 +66,7 @@ class Command(BaseCommand):
 
             i=0
             if len(np.unique(region_array))>1:
-              for i, unique_id in enumerate([u for u in np.unique(region_array) if u>0]):
+              for i, unique_id in enumerate([u for u in np.unique(region_array) if u>0 and u<5]):
                 print('processing region path %s... %d regions' % (file_name, (i+1)) , end='\r')
 
                 # make mask
@@ -84,8 +84,6 @@ class Command(BaseCommand):
                 mask.cs = cs
                 mask.save()
 
-                print('processing region path %s... %d regions... done.' % (file_name, (i+1)) , end='\n')
-
             else:
 
               # make mask
@@ -99,4 +97,4 @@ class Command(BaseCommand):
               mask.cs = region_array.shape[1]
               mask.save()
 
-              print('processing region path %s... %d region... done.' % (file_name, 1) , end='\n')
+            print('processing region path %s... %d region... done.' % (file_name, (i+1)) , end='\n')
