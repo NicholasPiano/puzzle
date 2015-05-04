@@ -31,6 +31,7 @@ class _Region():
 ### Data
 experiments = (
   _Experiment(name='050714', rmop=0.5369, cmop=0.5369, zmop=1.482, tpf=10.7003),
+  _Experiment(name='050714-test', rmop=0.5369, cmop=0.5369, zmop=1.482, tpf=10.7003),
   _Experiment(name='190714', rmop=0.501, cmop=0.5015, zmop=1.482, tpf=9.7408),
   _Experiment(name='260714', rmop=0.5696074, cmop=0.5701647, zmop=1.482, tpf=7.6807),
   _Experiment(name='280614', rmop=0.7941950, cmop=0.7934188, zmop=1.482, tpf=10.665),
@@ -39,6 +40,9 @@ experiments = (
 series = (
   # 050714
   _Series(experiment='050714', name='13'),
+
+  # 050714
+  _Series(experiment='050714-test', name='13'),
 
   # 190714
   _Series(experiment='190714', name='12'),
@@ -55,6 +59,12 @@ series = (
 
 regions = (
   # 050714 - series 13
+  _Region(experiment='050714', series='13', name='medium', description='Bottom of the environment in the medium', index=1, vertical_sort_index=4),
+  _Region(experiment='050714', series='13', name='barrier-edge', description='Within one cell diameter of the barrier', index=2, vertical_sort_index=3),
+  _Region(experiment='050714', series='13', name='barrier', description='Within the barrier', index=3, vertical_sort_index=2),
+  _Region(experiment='050714', series='13', name='gel', description='Through the barrier in the gel region', index=4, vertical_sort_index=1),
+
+  # 050714-test - series 13
   _Region(experiment='050714', series='13', name='medium', description='Bottom of the environment in the medium', index=1, vertical_sort_index=4),
   _Region(experiment='050714', series='13', name='barrier-edge', description='Within one cell diameter of the barrier', index=2, vertical_sort_index=3),
   _Region(experiment='050714', series='13', name='barrier', description='Within the barrier', index=3, vertical_sort_index=2),
