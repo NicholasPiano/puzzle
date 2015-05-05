@@ -34,12 +34,10 @@ class Command(BaseCommand):
     region_match = 0
     for region in marker.track.composite.masks.filter(channel__name='regions', gon__t=marker.t).order_by('mask_id'):
       region_array = region.load()
-      plt.imshow(region_array)
-      plt.show()
-      plt.imshow(combined_mask>combined_mask.mean())
-      plt.show()
       if np.any(np.bitwise_and(region_array, combined_mask>combined_mask.mean())):
         region_match = region.mask_id
+
+      print(region_match)
 
     region = marker.series.vertical_sort_for_region_index(region_match)
     print(region)

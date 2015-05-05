@@ -179,11 +179,14 @@ class Series(models.Model):
           cell_instance.a = int(masked.sum() / masked.max())
 
           # region
-          region_match = 0
+          region_match = 1
           for region in track.composite.masks.filter(channel__name='regions', gon__t=marker.t).order_by('mask_id'):
             region_array = region.load()
             if np.any(np.bitwise_and(region_array, combined_mask>combined_mask.mean())):
               region_match = region.mask_id
+
+          # correct zeros
+          region_match = 1 if region_match < 1 else region_match
 
           cell_instance.region = self.vertical_sort_for_region_index(region_match)
 
