@@ -64,6 +64,9 @@ class CellInstance(models.Model):
   def line(self):
     return '%d,%d,%d,%d,%d,%f,%f,%d' % (self.cell.cell_id, self.t * self.experiment.tpf, self.r * self.experiment.rmop, self.c * self.experiment.cmop, self.z * self.experiment.zmop, self.velocity(), self.area(), self.region)
 
+  def raw_line(self):
+    return '%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n' % (self.cell.cell_id, self.t, self.r, self.c, self.z, self.vr, self.vc, self.vz, self.a, self.region)
+
 ### MARKERS
 class Track(models.Model):
   # connections
