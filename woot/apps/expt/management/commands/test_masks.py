@@ -37,5 +37,5 @@ class Command(BaseCommand):
       if np.any(np.bitwise_and(region_array, combined_mask>combined_mask.mean())):
         region_match = region.mask_id
 
-    region = self.vertical_sort_for_region_index(region_match)
+    region = marker.series.vertical_sort_for_region_index(region_match)
     print(region)
