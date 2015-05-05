@@ -32,7 +32,7 @@ class Command(BaseCommand):
 
     # region
     region_match = 0
-    for region in track.composite.masks.filter(channel__name='regions', gon__t=marker.t).order_by('mask_id'):
+    for region in marker.track.composite.masks.filter(channel__name='regions', gon__t=marker.t).order_by('mask_id'):
       region_array = region.load()
       if np.any(np.bitwise_and(region_array, combined_mask>combined_mask.mean())):
         region_match = region.mask_id
