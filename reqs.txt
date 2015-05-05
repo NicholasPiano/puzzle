@@ -1,40 +1,35 @@
-# Django
-django>=1.7
-
-# Python base libraries commonly used
-Pillow
-scipy
-pandas
-
-# Common Django reusable apps
-Sphinx
-
-# Mysql
---allow-external mysql-connector-python
-mysql-connector-python
-
-# Tasks
-amqp
-anyjson
-kombu
-billiard
-celery
-django-celery
-redis
-pytz
-
-# Static compression
-django-compressor
-
-# App specific settings
-django-appconf
-
-# Python 2 -> Python 3
-six
-
-# LESS and SASS
-# https://github.com/andreyfedoseev/django-static-precompiler
-
-# Debug toolbar
-django-debug-toolbar
-sqlparse
+Django==1.7.3
+Jinja2==2.7.3
+MarkupSafe==0.23
+Pillow==2.7.0
+Pygments==2.0.2
+Sphinx==1.2.3
+amqp==1.4.6
+anyjson==0.3.3
+beautifulsoup4==4.3.2
+billiard==3.3.0.19
+celery==3.1.17
+django-appconf==0.6
+django-celery==3.1.16
+django-compressor==1.4
+django-configurations==0.8
+django-debug-toolbar==1.2.2
+docutils==0.12
+html5lib==0.999
+kombu==3.0.24
+lxml==3.4.2
+matplotlib==1.4.2
+mysql-connector-python==2.0.2
+nose==1.3.4
+numpy==1.9.1
+pandas==0.15.2
+pyparsing==2.0.3
+python-dateutil==2.4.0
+pytz==2014.10
+redis==2.10.3
+scikit-image==0.11.2
+scipy==0.15.1
+six==1.9.0
+sqlparse==0.1.14
+tifffile==0.4
+xlrd==0.9.3
