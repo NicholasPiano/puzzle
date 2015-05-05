@@ -20,13 +20,22 @@ class Command(BaseCommand):
 
   def handle(self, *args, **options):
     # get marker
-    marker = Marker.objects.get(pk=13)
+    marker = Marker.objects.get(pk=986)
 
-    # get combiend mask
+    # load combined mask for marker
     combined_mask = marker.combined_mask()
 
+    # area
+    # sum entire image
     masked = np.ma.array(combined_mask, mask=combined_mask==0)
-    print(masked.sum() / masked.max())
+    # cell_instance.a = int(masked.sum() / masked.max())
 
-    # plt.imshow(combined_mask)
-    # plt.show()
+    # region
+    region_match = 0
+    for region in track.composite.masks.filter(channel__name='regions', gon__t=marker.t).order_by('mask_id'):
+      region_array = region.load()
+      if np.any(np.bitwise_and(region_array, combined_mask>combined_mask.mean())):
+        region_match = region.mask_id
+
+    region = self.vertical_sort_for_region_index(region_match)
+    print(region)
