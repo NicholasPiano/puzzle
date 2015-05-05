@@ -37,9 +37,7 @@ class Command(BaseCommand):
         if series.name==file_dict['series']:
 
           # 1. get current composite, channel
-          print(file_dict['composite_id'])
-          composite = series.composites.get(id_token=file_dict['composite_id'])
-          channel = composite.channels.get(name=file_dict['channel'])
+          composite = series.composites.get()
           region_template = composite.templates.get(name='region')
           cp_template = composite.templates.get(name='composite')
 
@@ -50,9 +48,9 @@ class Command(BaseCommand):
           t = int(file_dict['t'])
           if region_channel.paths.filter(t=t).count()==0:
             # make gon
-            # gon = series.gons.create(experiment=series.experiment, composite=composite, channel=region_channel)
-            # gon.set_origin(0,0,0,t)
-            # gon.set_extent(series.rs, series.cs, 1)
+            gon = series.gons.create(experiment=series.experiment, composite=composite, channel=region_channel)
+            gon.set_origin(0,0,0,t)
+            gon.set_extent(series.rs, series.cs, 1)
 
             # open file and get split into masks
             region_array = tiff.imread(os.path.join(series.experiment.region_path, file_name))
@@ -62,40 +60,39 @@ class Command(BaseCommand):
             region_array = (region_array / region_array.max() * (len(np.unique(region_array))-1)).astype(int) # rescale
 
             # save gon image from modified gimp regions
-            # gon.array = region_array.copy()
-            # gon.save_single(os.path.join(series.experiment.composite_path, cp_template.rv), cp_template, 0)
+            gon.array = region_array.copy()
+            gon.save_single(os.path.join(series.experiment.composite_path, cp_template.rv), cp_template, 0)
 
-            i=0
             if len(np.unique(region_array))>1:
               for i, unique_id in enumerate([u for u in np.unique(region_array) if u>0 and u<5]):
                 print('processing region path %s... %d regions' % (file_name, (i+1)) , end='\r')
 
                 # make mask
                 mask_id = series.vertical_sort_for_region_index(unique_id)
-                # mask = gon.masks.create(composite=composite, channel=region_channel, mask_id=mask_id)
+                mask = gon.masks.create(composite=composite, channel=region_channel, mask_id=mask_id)
 
                 # cut
                 unique_image = np.zeros(region_array.shape)
                 unique_image[region_array==mask_id] = 1
                 cut, (r,c,rs,cs) = cut_to_black(unique_image)
 
-                # mask.r = r
-                # mask.c = c
-                # mask.rs = rs
-                # mask.cs = cs
-                # mask.save()
+                mask.r = r
+                mask.c = c
+                mask.rs = rs
+                mask.cs = cs
+                mask.save()
 
             else:
 
               # make mask
               mask_id = 1
-              # mask = gon.masks.create(composite=composite, channel=region_channel, mask_id=mask_id)
+              mask = gon.masks.create(composite=composite, channel=region_channel, mask_id=mask_id)
 
               # cut
-              # mask.r = 0
-              # mask.c = 0
-              # mask.rs = region_array.shape[0]
-              # mask.cs = region_array.shape[1]
-              # mask.save()
+              mask.r = 0
+              mask.c = 0
+              mask.rs = region_array.shape[0]
+              mask.cs = region_array.shape[1]
+              mask.save()
 
             print('processing region path %s... %d region... done.' % (file_name, (i+1)) , end='\n')

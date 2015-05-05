@@ -65,10 +65,10 @@ regions = (
   _Region(experiment='050714', series='13', name='gel', description='Through the barrier in the gel region', index=4, vertical_sort_index=1),
 
   # 050714-test - series 13
-  _Region(experiment='050714', series='13', name='medium', description='Bottom of the environment in the medium', index=1, vertical_sort_index=4),
-  _Region(experiment='050714', series='13', name='barrier-edge', description='Within one cell diameter of the barrier', index=2, vertical_sort_index=3),
-  _Region(experiment='050714', series='13', name='barrier', description='Within the barrier', index=3, vertical_sort_index=2),
-  _Region(experiment='050714', series='13', name='gel', description='Through the barrier in the gel region', index=4, vertical_sort_index=1),
+  _Region(experiment='050714-test', series='13', name='medium', description='Bottom of the environment in the medium', index=1, vertical_sort_index=4),
+  _Region(experiment='050714-test', series='13', name='barrier-edge', description='Within one cell diameter of the barrier', index=2, vertical_sort_index=3),
+  _Region(experiment='050714-test', series='13', name='barrier', description='Within the barrier', index=3, vertical_sort_index=2),
+  _Region(experiment='050714-test', series='13', name='gel', description='Through the barrier in the gel region', index=4, vertical_sort_index=1),
 
   # 190714 - series 12
   _Region(experiment='190714', series='12', name='medium', description='Bottom of the environment in the medium', index=1, vertical_sort_index=4),
