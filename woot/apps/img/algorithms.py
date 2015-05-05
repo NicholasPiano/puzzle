@@ -232,15 +232,19 @@ def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
       for sz in range(lower_z,upper_z):
 
         # check batch and make folders, set url
-        if not os.path.exists(os.path.join(composite.experiment.cp_path, str(batch))):
-          os.mkdir(os.path.join(composite.experiment.cp_path, str(batch)))
+        if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))):
+          if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name)):
+            os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name))
+          os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
 
-        if len(os.listdir(os.path.join(composite.experiment.cp_path, str(batch))))==max_batch_size:
+        if len(os.listdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))))==max_batch_size:
           batch += 1
-          if not os.path.exists(os.path.join(composite.experiment.cp_path, str(batch))):
-            os.mkdir(os.path.join(composite.experiment.cp_path, str(batch)))
+          if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))):
+            if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name)):
+              os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name))
+            os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
 
-        url = os.path.join(composite.experiment.cp_path, str(batch), template.rv) # CP PATH
+        url = os.path.join(composite.experiment.cp_path, composite.series.name, str(batch), template.rv) # CP PATH
 
         # pmod
         rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel)
@@ -276,7 +280,7 @@ def mod_system_check(composite, mod_id, algorithm):
   bf_set = composite.gons.filter(channel__name='1')
 
   # iterate over frames
-  for t in range(9, composite.series.ts):
+  for t in range(composite.series.ts):
     print('processing mod_system_check t%d...' % t)
 
     # 1. get
@@ -311,3 +315,35 @@ def mod_system_check(composite, mod_id, algorithm):
       # save gon and image
       system_check_gon.save_single(url, template, z)
       system_check_gon.save()
+
+def mod_region_img(composite, mod_id, algorithm):
+  # paths
+  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
+  url = os.path.join(composite.experiment.region_img_path, template.rv) # REGION IMG PATH
+
+  # channels
+  region_img_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'regionimg', mod_id))
+
+  # image sets
+  bf_set = composite.gons.filter(channel__name='1')
+
+  # iterate over frames
+  for t in range(composite.series.ts):
+    print('processing mod_region_img t%d...' % t)
+
+    g = bf_set.get(t=t) # must get great gon first
+
+    # get middle z level
+    middle_z = int(composite.series.zs / 2.0)
+
+    # get single bf plane at z
+    bf = g.gons.get(z=middle_z).load()
+
+    # make gon
+    region_img_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=region_img_channel)
+    region_img_gon.set_origin(0, 0, middle_z, t)
+    region_img_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+
+    region_img_gon.array = exposure.rescale_intensity(bf * 1.0)
+    region_img_gon.save_single(url, template, middle_z)
+    region_img_gon.save()

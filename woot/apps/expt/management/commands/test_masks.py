@@ -3,8 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
 #local
-from apps.img.models import Series
-from apps.img.settings import *
+from apps.cell.models import Marker
 
 #util
 import os
@@ -20,4 +19,14 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    pass
+    # get marker
+    marker = Marker.objects.get(pk=13)
+
+    # get combiend mask
+    combined_mask = marker.combined_mask()
+
+    masked = np.ma.array(combined_mask, mask=combined_mask==0)
+    print(masked.sum() / masked.max())
+
+    # plt.imshow(combined_mask)
+    # plt.show()

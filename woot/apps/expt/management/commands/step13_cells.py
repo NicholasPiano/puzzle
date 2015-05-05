@@ -22,16 +22,6 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    out = '/Volumes/TRANSPORT/data/puzzle/050714/img/output/'
-
-    # 1. get composite
-    c = Composite.objects.get()
-
-    # 2. get marker
-    for m in c.markers.all():
-
-      # 3. get masks
-      black = m.combined_mask()
-
-      plt.imshow(black)
-      plt.savefig(os.path.join(out, 'mask_%d' % m.pk))
+    for series in Series.objects.all():
+      if series.cells.count()==0:
+        series.create_cells()

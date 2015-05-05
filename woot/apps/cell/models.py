@@ -77,7 +77,7 @@ class Track(models.Model):
   index = models.IntegerField(default=0)
 
   def create_cell(self):
-    pass
+    print(self.markers.count())
 
 class Marker(models.Model):
   # connections
@@ -166,7 +166,7 @@ class Mask(models.Model):
   # 1. origin
   r = models.IntegerField(default=0)
   c = models.IntegerField(default=0)
-  # z = models.IntegerField(default=0)
+  z = models.IntegerField(default=0)
 
   # 2. extent
   rs = models.IntegerField(default=-1)
@@ -181,6 +181,7 @@ class Mask(models.Model):
   def load(self):
     # load gon
     array = self.gon.load()
+    array = (array / array.max() * (len(np.unique(array))-1)).astype(int) # rescale
     return self.from_image(array)
 
   def from_image(self, image):
@@ -242,11 +243,3 @@ class Mask(models.Model):
       return [peaks[index]]
     else:
       return peaks
-
-class MaskProperty(models.Model):
-  # connections
-  mask = models.ForeignKey(Mask, related_name='properties')
-
-  # properties
-  name = models.CharField(max_length=255)
-  value = models.FloatField(default=0.0)
