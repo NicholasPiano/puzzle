@@ -39,7 +39,7 @@ class Command(BaseCommand):
         pipeline = os.path.join(series.experiment.pipeline_path, os.listdir(series.experiment.pipeline_path)[0])
 
         # run command
-        cmd = '/Applications/CellProfiler.app/Contents/MacOS/CellProfiler -c -r -i {} -o {} -p {} -L DEBUG'.format(batch_path, output_path, pipeline)
+        cmd = '/Applications/CellProfiler.app/Contents/MacOS/CellProfiler -c -r -i {} -o {} -p {}'.format(batch_path, output_path, pipeline)
         subprocess.call(cmd, shell=True)
 
         # wait for output
