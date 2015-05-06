@@ -6,11 +6,13 @@ from django.db import models
 # local
 from apps.expt.models import Experiment, Series
 from apps.img.models import Composite, Channel, Gon
+from apps.img.util import *
 
 # util
 import numpy as np
 from scipy.ndimage.morphology import binary_dilation as dilate
 from scipy.signal import find_peaks_cwt as find_peaks
+import matplotlib.pyplot as plt
 
 ### Models
 ### REALITY
@@ -56,7 +58,7 @@ class CellInstance(models.Model):
   vz = models.IntegerField(default=0)
 
   def velocity(self):
-    return ((self.vr * self.experiment.rmop)**2 + (self.vc * self.experiment.cmop)**2 + (self.vz * self.experiment.zmop)**2)**0.5 / self.experiment.tpf
+    return ((self.vr * self.experiment.rmop)**2 + (self.vc * self.experiment.cmop)**2)**0.5 / self.experiment.tpf
 
   def area(self):
     return self.a * self.experiment.rmop * self.experiment.cmop
@@ -141,27 +143,72 @@ class Marker(models.Model):
 
     return secondary_mask_set
 
-  def combined_mask(self):
-    # make zeros
-    black = np.zeros((self.series.rs,self.series.cs), dtype=float)
-
-    # add each mask based on its z compared to that of the marker
-    for mask in self.secondary_mask_set():
-      black += mask.load().astype(float) * 1.0/(1.0 + abs(self.z - mask.gon.z))
-
-    # add marker
-    black[self.r, self.c] = 1.0
-
-    # non-zero mean threshold
-    black[black<np.ma.array(black, mask=black==0).mean()] = 0
-
-    return black
+  # def combined_mask(self):
+  #   # make zeros
+  #   black = np.zeros((self.series.rs,self.series.cs), dtype=float)
+  #
+  #   # add each mask based on its z compared to that of the marker
+  #   for mask in self.secondary_mask_set():
+  #     black += mask.load().astype(float) * 1.0/(1.0 + abs(self.z - mask.gon.z))
+  #
+  #   # add marker
+  #   black[self.r, self.c] = 1.0
+  #
+  #   # non-zero mean threshold
+  #   black[black<np.ma.array(black, mask=black==0).mean()] = 0
+  #
+  #   return black
 
   def combined_mask(self):
     # blank image
+    black = np.zeros((self.series.rs,self.series.cs), dtype=float)
 
+    # get bf and pmod from cp
+    pmod_mask_set = self.composite.gons.filter(channel__name='pmodreduced', t=self.t)
+    bf_mask_set = self.composite.gons.filter(channel__name='bfreduced', t=self.t)
 
-    # 
+    # iterate through z, loading images
+    for z in [pmod.z for pmod in pmod_mask_set.order_by('z')]:
+
+      z_black = np.zeros((self.series.rs,self.series.cs), dtype=float)
+
+      # load images
+      pmod = pmod_mask_set.get(z=z)
+      p = pmod.load()
+
+      bf = bf_mask_set.get(z=z)
+      b = bf.load()
+
+      # loop through masks, get mask id, and overlap marker with box
+      for pmod_mask in pmod.masks.all():
+        if box_overlaps_marker(pmod_mask, self):
+          if mask_overlaps_marker(p==pmod_mask.mask_id, self):
+            z_black += 10 * (p==pmod_mask.mask_id).astype(int)
+
+      for bf_mask in bf.masks.all():
+        if box_overlaps_marker(bf_mask, self):
+          if mask_overlaps_marker(b==bf_mask.mask_id, self):
+            z_black += 10 * (b==bf_mask.mask_id).astype(int)
+
+      # add all masks that overlap with new combined mask
+      combined_mask = (z_black > 0).copy()
+
+      for pmod_mask in pmod.masks.all():
+        if box_overlaps_mask(pmod_mask, combined_mask):
+          if mask_overlaps_mask(p==pmod_mask.mask_id, combined_mask):
+            z_black += p==pmod_mask.mask_id
+
+      for bf_mask in bf.masks.all():
+        if box_overlaps_mask(bf_mask, combined_mask):
+          if mask_overlaps_mask(b==bf_mask.mask_id, combined_mask):
+            z_black += b==bf_mask.mask_id
+
+      black += z_black
+
+    black[black<nonzero_mean(black)] = 0
+
+    plt.imshow(black)
+    plt.show()
 
 class Mask(models.Model):
   # connections
@@ -197,41 +244,6 @@ class Mask(models.Model):
     mask = np.zeros(image.shape, dtype=bool)
     mask[image==self.mask_id] = True
     return mask
-
-  # 3. tests
-  def box_overlaps_marker(self, marker):
-    # box boundaries a0, a1
-    # marker coordinate b
-    # test a0 < b < a1
-    return self.r < marker.r and self.r + self.rs > marker.r and self.c < marker.c and self.c + self.cs > marker.c
-
-  def self_overlaps_marker(self, marker):
-    # test marker point is true in loaded mask
-    return self.load()[marker.r, marker.c]
-
-  def box_overlaps_box(self, mask):
-    # one of the corners of one of the boxes must be within the other box, so test all 8 corners
-    edge1 = self.r < mask.r
-    edge2 = self.r + self.rs > mask.r + mask.rs
-    edge3 = self.c < mask.c
-    edge4 = self.c + self.cs > mask.c + mask.cs
-
-    return not edge1 and not edge2 and not edge3 and not edge4
-
-  def self_overlaps_mask(self, mask):
-    self_int_array = self.load().astype(int)
-    mask_int_array = mask.load().astype(int)
-
-    s = self_int_array + mask_int_array
-    return np.any(s==2) # doubled up areas of overlap
-
-  def self_is_adjacent_to_mask(self, mask):
-    # test for overlap of dilated masks
-    self_dilated_int_array = dilate(self.load().astype(int))
-    mask_dilated_int_array = dilate(mask.load().astype(int))
-
-    s = self_int_array + mask_int_array
-    return np.any(s==2) # doubled up areas of overlap
 
   def find_z_from_image(self, image, z_select=None): # image will most likely be smoothed gfp
     # 1. load self

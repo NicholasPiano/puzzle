@@ -21,7 +21,20 @@ class Command(BaseCommand):
   def handle(self, *args, **options):
     # details
 
-    for c in Cell.objects.all():
-      plt.plot([ci.t for ci in c.cell_instances.order_by('t')],[ci.z for ci in c.cell_instances.order_by('t')])
+    speeds = {}
+    for ci in CellInstance.objects.all():
+      if ci.region in speeds:
+        speeds[ci.region].append(ci.velocity())
+      else:
+        speeds[ci.region] = [ci.velocity()]
 
-    plt.show()
+    for key, value in speeds.items():
+      print(key, np.mean(value))
+
+    # total displacement over total time
+      # for each cell
+      # total displacement in region over total region time
+
+    # absolute magnitude of average velocity
+
+    # 
