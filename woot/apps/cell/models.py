@@ -157,6 +157,12 @@ class Marker(models.Model):
 
     return black
 
+  def combined_mask(self):
+    # blank image
+
+
+    # 
+
 class Mask(models.Model):
   # connections
   composite = models.ForeignKey(Composite, related_name='masks')
