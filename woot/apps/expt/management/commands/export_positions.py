@@ -4,6 +4,7 @@ from django.conf import settings
 
 #local
 from apps.expt.models import Series
+from apps.cells.models import Marker
 
 #util
 import os
