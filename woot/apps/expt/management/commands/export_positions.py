@@ -47,7 +47,7 @@ class Command(BaseCommand):
 
             # region
             region_gon = series.composites.get().channels.get(name='regions').gons.get(t=marker.t)
-            regions = region_gon.load()
+            regions = np.squeeze(region_gon.load())
 
             region_matches = [1]
             for region_mask in region_gon.masks.all():
