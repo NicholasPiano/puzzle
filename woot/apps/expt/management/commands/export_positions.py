@@ -25,7 +25,7 @@ class Command(BaseCommand):
       # data output folder
       output_path = os.path.join(series.experiment.data_path, '{}_s{}.csv'.format(series.experiment.name, series.name))
 
-      with open(output_path) as output:
+      with open(output_path, 'w+') as output:
 
         output.write('cell, t, row, column, v_row, v_column, region\n')
 
