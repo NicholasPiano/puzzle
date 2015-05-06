@@ -25,33 +25,38 @@ class Command(BaseCommand):
       # data output folder
       output_path = os.path.join(series.experiment.data_path, '{}_s{}.csv'.format(series.experiment.name, series.name))
 
-      # with open(output_path) as output:
+      with open(output_path) as output:
 
-      # loop through tracks to calculate velocity on the fly
-      for track in series.tracks.all():
-        previous_marker = None
+        output.write('cell, t, row, column, v_row, v_column, region\n')
 
-        for marker in track.markers.order_by('t'):
+        all_m = max([marker.pk for marker in Marker.objects.filter(track__channel__name='0')])
 
-          # velocity
-          vr = 0 if previous_marker is None else marker.r - previous_marker.r
-          vc = 0 if previous_marker is None else marker.c - previous_marker.c
+        # loop through tracks to calculate velocity on the fly
+        for track in series.tracks.filter(channel__name='0'):
+          previous_marker = None
 
-          previous_marker = marker
+          for marker in track.markers.order_by('t'):
+            print(marker.pk, all_m)
 
-          # region
-          region_gon = series.composites.get().channels.get(name='regions').gons.get(t=marker.t)
-          regions = region_gon.load()
+            # velocity
+            vr = 0 if previous_marker is None else marker.r - previous_marker.r
+            vc = 0 if previous_marker is None else marker.c - previous_marker.c
 
-          region_matches = [1]
-          for region_mask in region_gon.masks.all():
+            previous_marker = marker
 
-            # load image
-            mask = dilate(region_gon.array == np.unique(region_gon.array)[region_mask.mask_id], iterations=6)
+            # region
+            region_gon = series.composites.get().channels.get(name='regions').gons.get(t=marker.t)
+            regions = region_gon.load()
 
-            if mask[marker.r, marker.c]:
-              region_matches.append(series.vertical_sort_for_region_index(region_mask.mask_id))
+            region_matches = [1]
+            for region_mask in region_gon.masks.all():
 
-          # line
-          line = '{},{},{},{},{},{},{}\n'.format(track.track_id, marker.t, marker.r, marker.c, vr, vc, max(region_matches))
-          print(line)
+              # load image
+              mask = dilate(region_gon.array == np.unique(region_gon.array)[region_mask.mask_id], iterations=6)
+
+              if mask[marker.r, marker.c]:
+                region_matches.append(series.vertical_sort_for_region_index(region_mask.mask_id))
+
+            # line
+            line = '{},{},{},{},{},{},{}\n'.format(track.track_id, marker.t, marker.r, marker.c, vr, vc, max(region_matches))
+            output.write(line)
