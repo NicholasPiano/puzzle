@@ -47,13 +47,15 @@ class Command(BaseCommand):
 
             # region
             region_gon = series.composites.get().channels.get(name='regions').gons.get(t=marker.t)
-            regions = np.squeeze(region_gon.load())
+            regions = region_gon.load()
 
             region_matches = [1]
             for region_mask in region_gon.masks.all():
 
               # load image
               mask = dilate(region_gon.array == np.unique(region_gon.array)[region_mask.mask_id], iterations=6)
+
+              print(mask[marker.r, marker.c].shape)
 
               if mask[marker.r, marker.c]:
                 region_matches.append(series.vertical_sort_for_region_index(region_mask.mask_id))
