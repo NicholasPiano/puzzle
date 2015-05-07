@@ -151,59 +151,6 @@ class Series(models.Model):
     region = list(filter(lambda x: x.experiment==self.experiment.name and x.series==self.name and x.index==index, regions))[0]
     return region.vertical_sort_index
 
-  def create_cells(self):
-    # make one cell for each track
-    for track in self.tracks.all():
-      if self.cells.filter(cell_id=track.track_id).count()==0:
-        cell = self.cells.create(experiment=self.experiment, cell_id=track.track_id)
-
-        # for each marker in the track, build its combined mask and get the area from that. Get velocity from previous marker
-        previous_marker = None
-        for marker in track.markers.order_by('t'):
-
-          # create cell instance
-          cell_instance = cell.cell_instances.create(experiment=cell.experiment, series=cell.series)
-
-          # position
-          cell_instance.r = marker.r
-          cell_instance.c = marker.c
-          cell_instance.z = marker.z
-          cell_instance.t = marker.t
-
-          # load combined mask for marker
-          combined_mask = marker.combined_mask()
-
-          # area
-          # sum entire image
-          masked = np.ma.array(combined_mask, mask=combined_mask==0)
-          cell_instance.a = int(masked.sum() / masked.max())
-
-          # region
-          region_match = 1
-          for region in track.composite.masks.filter(channel__name='regions', gon__t=marker.t).order_by('mask_id'):
-            region_array = region.load()
-            if np.any(np.bitwise_and(region_array, combined_mask>combined_mask.mean())):
-              region_match = region.mask_id
-
-          # correct zeros
-          region_match = 1 if region_match < 1 else region_match
-
-          cell_instance.region = self.vertical_sort_for_region_index(region_match)
-
-          # velocity
-          if previous_marker is None:
-            cell_instance.vr = 0
-            cell_instance.vc = 0
-            cell_instance.vz = 0
-          else:
-            cell_instance.vr = marker.r - previous_marker.r
-            cell_instance.vc = marker.c - previous_marker.c
-            cell_instance.vz = marker.z - previous_marker.z
-
-          previous_marker = marker
-
-          cell_instance.save()
-
 class Channel(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='channels')

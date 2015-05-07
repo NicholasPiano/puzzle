@@ -90,46 +90,6 @@ class Gon(models.Model):
     self.array = np.dstack(self.array).squeeze() # remove unnecessary dimensions
     return self.array
 
-  def save_paths(self, url, template):
-    if self.array is not None and len(self.array.shape)==3:
-      for z in range(self.zs):
-        # array
-        array = self.array[:,:,z]
-
-        # path
-        path_url = url % (self.experiment.name, self.series.name, self.channel.name, self.t_str(), self.z_str(z))
-        file_name = template.rv % (self.experiment.name, self.series.name, self.channel.name, self.t_str(), self.z_str(z))
-        self.paths.create(composite=self.composite, channel=self.channel, template=template, url=path_url, file_name=file_name, t=self.t, z=z)
-
-        # save
-        imsave(path_url, array)
-
-  def save_single(self, url, template, z):
-    if self.array is not None:
-
-      # path
-      path_url = url % (self.experiment.name, self.series.name, self.channel.name, self.t_str(), self.z_str(z))
-      file_name = template.rv % (self.experiment.name, self.series.name, self.channel.name, self.t_str(), self.z_str(z))
-      self.paths.create(composite=self.composite, channel=self.channel, template=template, url=path_url, file_name=file_name, t=self.t, z=z)
-
-      # save
-      imsave(path_url, self.array)
-
-  def split(self):
-    ''' If the gon is 3D, make 2D slices into gons. '''
-
-    if self.zs>1 and self.gons.count()==0:
-      for path in self.paths.all():
-        # gon
-        gon = self.gons.create(experiment=self.experiment, series=self.series, channel=self.channel)
-        gon.set_origin(0,0,path.z,path.t)
-        gon.set_extent(self.rs, self.cs, 1)
-        gon.paths.create(composite=path.composite, channel=path.channel, template=path.template, url=path.url, file_name=path.file_name, t=path.t, z=path.z)
-
-  def duplicate(self):
-    ''' If the gon is 2D, make a 3D gon with paths along with 2D slices. '''
-    pass
-
 class Channel(models.Model):
   # connections
   composite = models.ForeignKey(Composite, related_name='channels')
@@ -140,34 +100,6 @@ class Channel(models.Model):
   # methods
   def __str__(self):
     return '%s > %s' % (self.composite.id_token, self.name)
-
-  def masks_overlap_with_marker(self, marker):
-    box_overlap = []
-    for mask in self.masks.filter(gon__t=marker.t):
-      if mask.box_overlaps_marker(marker):
-        box_overlap.append(mask)
-
-    mask_overlap = []
-    for mask in box_overlap:
-      if mask.self_overlaps_marker(marker):
-        mask_overlap.append(mask)
-
-    return mask_overlap
-
-  def masks_overlap_with_mask(self, query_mask):
-    box_overlap = []
-    for mask in self.masks.filter(gon__t=query_mask.gon.t):
-      if mask.box_overlaps_box(query_mask):
-        box_overlap.append(mask)
-
-    mask_overlap = []
-    for mask in box_overlap:
-      if mask.self_overlaps_mask(query_mask):
-        mask_overlap.append(mask)
-
-    # print('channel: %s - boxes: %d/%d, masks: %d/%d' % (str(self), len(box_overlap), self.masks.filter(gon__t=query_mask.gon.t).count(), len(mask_overlap), len(box_overlap)))
-
-    return mask_overlap
 
 class Template(models.Model):
   # connections
