@@ -1,30 +1,36 @@
-#django
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
+# expt.command: step14_export
 
-#local
-from apps.expt.models import Series
-from apps.cell.models import CellInstance
+# django
 
-#util
-import os
-import re
-import numpy as np
-from scipy.misc import imsave
-import matplotlib.pyplot as plt
+# local
+
+# util
 
 ### Command
 class Command(BaseCommand):
+  option_list = BaseCommand.option_list + (
+
+    make_option('--name', # option that will appear in cmd
+      action='store', # no idea
+      dest='name', # refer to this in options variable
+      default='050714-test', # some default
+      help='Path to scan for images' # who cares
+    ),
+
+  )
 
   args = ''
   help = ''
 
   def handle(self, *args, **options):
-    for series in Series.objects.all():
-      output_filename = os.path.join(series.experiment.data_path, 'output_{}_s{}.csv'.format(series.experiment.name, series.name))
+    '''
+    1. What does this script do?
+    2. What data structures are input?
+    3. What data structures are output?
+    4. Is this stage repeated/one-time?
 
-      with open(output_filename, 'w') as output_file:
-        output_file.write('cell_id, t, row, column, Z, row_velocity, column_velocity, Z_velocity, area, region\n')
-        for cell_instance in CellInstance.objects.order_by('t', 'cell__cell_id'):
-          line = cell_instance.raw_line()
-          output_file.write(line)
+    Steps:
+
+    1.
+
+    '''

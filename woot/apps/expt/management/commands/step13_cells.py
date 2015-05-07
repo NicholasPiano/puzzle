@@ -1,27 +1,36 @@
-#django
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
+# expt.command: step13_cells
 
-#local
-from apps.expt.models import Series
-from apps.expt.data import *
-from apps.expt.util import generate_id_token
-from apps.img.models import Composite
+# django
 
-#util
-import os
-import re
-import numpy as np
-from scipy.misc import imsave
-import matplotlib.pyplot as plt
+# local
+
+# util
 
 ### Command
 class Command(BaseCommand):
+  option_list = BaseCommand.option_list + (
+
+    make_option('--name', # option that will appear in cmd
+      action='store', # no idea
+      dest='name', # refer to this in options variable
+      default='050714-test', # some default
+      help='Path to scan for images' # who cares
+    ),
+
+  )
 
   args = ''
   help = ''
 
   def handle(self, *args, **options):
-    for series in Series.objects.all():
-      if series.cells.count()==0:
-        series.create_cells()
+    '''
+    1. What does this script do?
+    2. What data structures are input?
+    3. What data structures are output?
+    4. Is this stage repeated/one-time?
+
+    Steps:
+
+    1.
+
+    '''
