@@ -74,8 +74,6 @@ class Track(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='tracks')
   series = models.ForeignKey(Series, related_name='tracks')
-  composite = models.ForeignKey(Composite, related_name='tracks')
-  channel = models.ForeignKey(Channel, related_name='tracks')
 
   # properties
   track_id = models.IntegerField(default=0)
@@ -88,8 +86,6 @@ class Marker(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='markers')
   series = models.ForeignKey(Series, related_name='markers')
-  composite = models.ForeignKey(Composite, related_name='markers')
-  channel = models.ForeignKey(Channel, related_name='markers')
   track = models.ForeignKey(Track, related_name='markers')
 
   # properties
