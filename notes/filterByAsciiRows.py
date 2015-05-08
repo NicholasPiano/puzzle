@@ -15,7 +15,7 @@ def is_ascii(s):
 ### STEP 1: ANALYSE WORKBOOK
 
 workbook = open_workbook(filename=source,encoding_override="cp1252")
-print 'file %s loaded.' % source
+print 'file {} loaded..format(source)
 
 sheet1 = workbook.sheet_by_index(0)
 
@@ -52,7 +52,7 @@ print 'nonAsciiRows:', len(nonAsciiRows)
 output1 = 'Nigeria_locations_ascii_rows.xlsx' 
 output2 = 'Nigeria_locations_NON_ascii_rows.xlsx'
 
-print 'writing ascii rows to %s' % output1
+print 'writing ascii rows to {}.format(output1)
 
 wb1 = Workbook(output1)
 sh1 = wb1.add_worksheet()
@@ -73,7 +73,7 @@ for rowNumber in asciiRows:
   newRowNumber += 1
   
 
-print 'writing NON ascii rows to %s' % output2
+print 'writing NON ascii rows to {}.format(output2)
 
 wb2 = Workbook(output2)
 sh2 = wb2.add_worksheet()

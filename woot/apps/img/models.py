@@ -25,7 +25,7 @@ class Composite(models.Model):
 
   # methods
   def __str__(self):
-    return '%s, %s > %s' % (self.experiment.name, self.series.name, self.id_token)
+    return '{}, {} > {}'.format(self.experiment.name, self.series.name, self.id_token)
 
 class Gon(models.Model):
   # connections
@@ -55,7 +55,7 @@ class Gon(models.Model):
 
   # methods
   def __str__(self):
-    return '%s > (%s, %d, %d, %d, %d),(%d, %d, %d)' % (self.composite.id_token, self.channel.name, self.r, self.c ,self.z, self.t, self.rs, self.cs, self.zs)
+    return '{} > ({}, %d, %d, %d, %d),(%d, %d, %d)'.format(self.composite.id_token, self.channel.name, self.r, self.c ,self.z, self.t, self.rs, self.cs, self.zs)
 
   def set_origin(self, r, c, z, t):
     self.r = r
@@ -99,7 +99,7 @@ class Channel(models.Model):
 
   # methods
   def __str__(self):
-    return '%s > %s' % (self.composite.id_token, self.name)
+    return '{} > {}'.format(self.composite.id_token, self.name)
 
 class Template(models.Model):
   # connections
@@ -112,7 +112,7 @@ class Template(models.Model):
 
   # methods
   def __str__(self):
-    return '%s: %s' % (self.name, self.rx)
+    return '{}: {}'.format(self.name, self.rx)
 
   def match(self, string):
     return re.match(self.rx, string)
@@ -135,7 +135,7 @@ class Path(models.Model):
 
   # methods
   def __str__(self):
-    return '%s: %s' % (self.composite.id_token, self.file_name)
+    return '{}: {}'.format(self.composite.id_token, self.file_name)
 
   def load(self):
     return imread(self.url)

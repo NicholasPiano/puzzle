@@ -23,11 +23,11 @@ def mod_step2_tracking(composite, mod_id, algorithm):
   url = os.path.join(composite.experiment.tracking_path, template.rv) # TRACKING DIRECTORY
 
   # channel
-  tracking_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'tracking', mod_id))
+  tracking_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'tracking', mod_id))
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('processing mod_step2_tracking t%d...' % t)
+    print('processing mod_step2_tracking t%d...'.format(t))
 
     # 1. get
     bf_gon = bf_set.get(t=t)
@@ -67,11 +67,11 @@ def mod_step5_pmod(composite, mod_id, algorithm):
   url = os.path.join(composite.experiment.composite_path, template.rv) # COMPOSITE DIRECTORY
 
   # channel
-  channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'pmod', mod_id))
+  channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'pmod', mod_id))
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('processing mod_step5_pmod t%d...' % t)
+    print('processing mod_step5_pmod t%d...'.format(t))
     # 1. get
     bf_gon = bf_set.get(t=t)
     bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
@@ -107,15 +107,15 @@ def mod_step5_reduced(composite, mod_id, algorithm):
   url = os.path.join(composite.experiment.cp_path, template.rv) # CP PATH
 
   # channels
-  pmod_reduced_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'pmodreduced', mod_id))
-  primary_reduced_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'primaryreduced', mod_id))
+  pmod_reduced_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'pmodreduced', mod_id))
+  primary_reduced_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'primaryreduced', mod_id))
 
   # image sets
   pmod_set = composite.gons.filter(channel__name__contains='pmod-')
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('processing mod_step5_reduced t%d...' % t)
+    print('processing mod_step5_reduced t%d...'.format(t))
 
     # 1. get
     pmod_gon = pmod_set.get(t=t)
@@ -171,11 +171,11 @@ def mod_step5_gfp_flat(composite, mod_id, algorithm):
   url = os.path.join(composite.experiment.cp_path, template.rv) # CP DIRECTORY
 
   # channel
-  channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'pmodgfpflat', mod_id))
+  channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'pmodgfpflat', mod_id))
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('processing mod_step5_gfp_flat t%d...' % t)
+    print('processing mod_step5_gfp_flat t%d...'.format(t))
     # 1. get
 
     gfp_gon = gfp_set.get(t=t)
@@ -202,8 +202,8 @@ def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
   template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
 
   # channels
-  pmod_reduced_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'pmodreduced', mod_id))
-  bf_reduced_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'bfreduced', mod_id))
+  pmod_reduced_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'pmodreduced', mod_id))
+  bf_reduced_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'bfreduced', mod_id))
 
   # image sets
   pmod_set = composite.gons.filter(channel__name__contains='pmod-')
@@ -215,7 +215,7 @@ def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('processing mod_step5_bf_gfp_reduced t%d...' % t)
+    print('processing mod_step5_bf_gfp_reduced t%d...'.format(t))
 
     # 1. get
     pmod_gon = pmod_set.get(t=t)
@@ -274,14 +274,14 @@ def mod_system_check(composite, mod_id, algorithm):
   url = os.path.join(composite.experiment.composite_path, template.rv) # CP PATH
 
   # channels
-  system_check_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'systemcheck', mod_id))
+  system_check_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'systemcheck', mod_id))
 
   # image sets
   bf_set = composite.gons.filter(channel__name='1')
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('processing mod_system_check t%d...' % t)
+    print('processing mod_system_check t%d...'.format(t))
 
     # 1. get
     bf_gon = bf_set.get(t=t)
@@ -322,14 +322,14 @@ def mod_region_img(composite, mod_id, algorithm):
   url = os.path.join(composite.experiment.region_img_path, template.rv) # REGION IMG PATH
 
   # channels
-  region_img_channel = composite.channels.create(name='%s-%s-%s' % (composite.id_token, 'regionimg', mod_id))
+  region_img_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'regionimg', mod_id))
 
   # image sets
   bf_set = composite.gons.filter(channel__name='1')
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('processing mod_region_img t%d...' % t)
+    print('processing mod_region_img t%d...'.format(t))
 
     g = bf_set.get(t=t) # must get great gon first
 

@@ -136,7 +136,7 @@ class Series(models.Model):
 
   # methods
   def __str__(self):
-    return '%s > %s'%(self.experiment.name, self.name)
+    return '{} > {}'%(self.experiment.name, self.name)
 
   def prototype(self):
     return filter(lambda x: x.name==self.name and x.experiment==self.experiment.name, series)[0]
@@ -166,7 +166,7 @@ class Series(models.Model):
         gon.set_extent(self.rs, self.cs, self.zs)
 
         for z in range(self.zs):
-          print('creating composite... processing channel %s, t%d, z%d' % (channel.name, t, z))
+          print('creating composite... processing channel {}, t%d, z%d'.format(channel.name, t, z))
 
           # path
           path = path_set.get(channel=channel, t=t, z=z)
@@ -207,7 +207,7 @@ class Template(models.Model):
 
   # methods
   def __str__(self):
-    return '%s: %s' % (self.name, self.rx)
+    return '{}: {}'.format(self.name, self.rx)
 
   def match(self, string):
     return re.match(self.rx, string)
@@ -230,7 +230,7 @@ class Path(models.Model):
 
   # methods
   def __str__(self):
-    return '%s: %s' % (self.experiment.name, self.url)
+    return '{}: {}'.format(self.experiment.name, self.url)
 
   def load(self):
     return imread(self.url)

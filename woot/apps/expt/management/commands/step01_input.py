@@ -92,19 +92,19 @@ class Command(BaseCommand):
                 for i, file_name in enumerate(img_files):
 
                   path, path_created = expt.get_or_create_path(series, root, file_name)
-                  print('finding new image files in {}: ({}/{}) {} ...path {}'.format(root, i+1, number_img_files, file_name, 'created.' if path_created else 'already exists.'), end=('\n' if i==number_img_files-1 else '\r'))
+                  print('finding new image files in {}: ({}/{}) {} ...path {}''.format(root, i+1, number_img_files, file_name, 'created.' if path_created else 'already exists.'), end=('\n' if i==number_img_files-1 else '\r'))
 
               else:
-                print('no files found in {}'.format(root))
+                print('no files found in {}''.format(root))
 
           else:
-            print('series exists: {}.{}'.format(expt_name, series_name))
+            print('series exists: {}.{}''.format(expt_name, series_name))
 
         else:
-          print('not a valid series: {}.{}'.format(expt_name, series_name))
+          print('not a valid series: {}.{}''.format(expt_name, series_name))
 
       else:
-        print('experiment exists: {}'.format(expt_name))
+        print('experiment exists: {}''.format(expt_name))
 
     else:
-      print('experiment not in base folder: {}'.format(base_path))
+      print('experiment not in base folder: {}''.format(base_path))

@@ -139,19 +139,23 @@ allowed_data_extensions = (
 templates = {
   'source':{
     'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)\.(?P<extension>.+)$',
-    'rv':r'%s_s%s_ch%s_t%s_z%s.tiff',
+    'rv':r'{}_s{}_ch{}_t{}_z{}.tiff',
   },
+  'region':{
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)\.(?P<extension>.+)$',
+    'rv':r'{}_s{}_ch{}_t{}.tiff',
+  }
   'cp':{
     'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>)_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)_cp-(?P<secondary_channel>.+)\.(?P<extension>.+)$',
-    'rv':r'%s_s%s_ch-%s_t%s_z%s_cp-%s.tiff',
+    'rv':r'{}_s{}_ch-{}_t{}_z{}_cp-{}.tiff',
   },
   'mask':{
     'rx':r'^(?P<id_token>[A-Z0-9]{8})\.(?P<extension>.+)$',
-    'rv':r'%s.tiff',
+    'rv':r'{}.tiff',
   },
   'track':{
     'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_n(?P<index>[0-9]+)\.xls$',
-    'rv':r'%s_s%s_%s.xls',
+    'rv':r'{}_s{}_{}.xls',
   },
 }
 
