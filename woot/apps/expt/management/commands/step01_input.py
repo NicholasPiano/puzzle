@@ -1,12 +1,17 @@
 # expt.command: step01_input
 
 # django
+from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
 # local
 from apps.expt.models import Experiment
+from apps.expt.data import *
 
 # util
+import os
+import re
+from optparse import make_option
 
 ### Command
 class Command(BaseCommand):
@@ -14,14 +19,14 @@ class Command(BaseCommand):
 
     make_option('--expt', # option that will appear in cmd
       action='store', # no idea
-      dest='name', # refer to this in options variable
+      dest='expt', # refer to this in options variable
       default='050714-test', # some default
       help='Name of the experiment to import' # who cares
     ),
 
     make_option('--series', # option that will appear in cmd
       action='store', # no idea
-      dest='name', # refer to this in options variable
+      dest='series', # refer to this in options variable
       default='13', # some default
       help='Name of the series' # who cares
     ),
@@ -67,8 +72,8 @@ class Command(BaseCommand):
       # 2. create new experiment
       expt, expt_created = Experiment.objects.get_or_create(name=expt_name)
 
-      if expt_created:
-        expt.make_paths(base_path)
+      if expt_created or expt.paths.filter(series__name=series_name).count()==0:
+        expt.make_paths(os.path.join(base_path, expt_name))
         expt.get_metadata()
 
         # 3. create new series
@@ -79,7 +84,18 @@ class Command(BaseCommand):
 
             # 4. for each path in the expt folder, create new path if the series matches.
             for root in expt.img_roots():
-              print(root)
+
+              img_files = [f for f in os.listdir(root) if os.path.splitext(f)[1] in allowed_img_extensions]
+              number_img_files = len(img_files)
+
+              if number_img_files>0:
+                for i, file_name in enumerate(img_files):
+
+                  path, path_created = expt.get_or_create_path(series, root, file_name)
+                  print('finding new image files in {}: ({}/{}) {} ...path {}'.format(root, i+1, number_img_files, file_name, 'created.' if path_created else 'already exists.'), end=('\n' if i==number_img_files-1 else '\r'))
+
+              else:
+                print('no files found in {}'.format(root))
 
           else:
             print('series exists: {}.{}'.format(expt_name, series_name))

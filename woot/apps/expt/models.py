@@ -53,6 +53,7 @@ class Experiment(models.Model):
     self.region_path = os.path.join(self.base_path, default_paths['region']) # result of step 5
     self.cp_path = os.path.join(self.base_path, default_paths['cp']) # step 8 -> step 10
     self.mask_path = os.path.join(self.base_path, default_paths['mask']) # result of step 10 -> step 11
+    self.sub_mask_path = os.path.join(self.base_path, default_paths['sub_mask']) # result of step 11
 
     self.output_path = os.path.join(self.base_path, default_paths['output'])
     self.plot_path = os.path.join(self.base_path, default_paths['plot'])
@@ -62,7 +63,7 @@ class Experiment(models.Model):
 
     self.save()
 
-    for path in [self.tracking_path, self.composite_path, self.region_img_path, self.region_path, self.cp_path, self.mask_path, self.output_path, self.plot_path, self.track_path, self.data_path, self.pipeline_path]:
+    for path in [self.tracking_path, self.composite_path, self.region_img_path, self.region_path, self.cp_path, self.mask_path, self.sub_mask_path, self.output_path, self.plot_path, self.track_path, self.data_path, self.pipeline_path]:
       if not os.path.exists(path):
         os.makedirs(path)
 
@@ -79,7 +80,7 @@ class Experiment(models.Model):
 
     # templates
     for name, template in templates.items():
-      self.templates.create(name=name, rx=template['rx'], rv=template['rv'])
+      self.templates.get_or_create(name=name, rx=template['rx'], rv=template['rv'])
 
     self.save()
 
@@ -88,6 +89,37 @@ class Experiment(models.Model):
 
   def img_roots(self):
     return [self.img_path, self.tracking_path, self.composite_path, self.region_img_path, self.region_path, self.cp_path, self.mask_path]
+
+  def get_or_create_path(self, series, root, file_name):
+
+    # match template
+    match_template = None
+    for template in self.templates.all():
+      match_template = template.match(file_name)
+
+    if match_template is not None:
+
+      # metadata
+      metadata = match_template.dict(file_name)
+
+      if series.name == metadata['series']:
+        # channel
+        channel, channel_created = self.experiment.channels.get_or_create(name=metadata['channel'])
+
+        # path
+        path, created = self.paths.get_or_create(series=series, template=match_template, channel=channel, url=os.path.join(root, string), file_name=string)
+        if created:
+          path.t = int(metadata['t'])
+          path.z = int(metadata['z'])
+          path.save()
+
+        return path, created
+
+      else:
+        return None, False
+
+    else:
+      return None, False
 
 class Series(models.Model):
   # connections
@@ -182,25 +214,6 @@ class Template(models.Model):
 
   def dict(self, string):
     return self.match(string).groupdict()
-
-  def get_or_create_path(self, root, string):
-    # metadata
-    metadata = self.dict(string)
-
-    # series
-    series, series_created = self.experiment.series.get_or_create(name=metadata['series'])
-
-    # channel
-    channel, channel_created = self.experiment.channels.get_or_create(name=metadata['channel'])
-
-    # path
-    path, created = self.paths.get_or_create(experiment=self.experiment, series=series, channel=channel, url=os.path.join(root, string), file_name=string)
-    if created:
-      path.t = int(metadata['t'])
-      path.z=int(metadata['z'])
-      path.save()
-
-    return path, created
 
 class Path(models.Model):
   # connections
