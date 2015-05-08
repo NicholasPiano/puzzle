@@ -90,6 +90,25 @@ class Gon(models.Model):
     self.array = np.dstack(self.array).squeeze() # remove unnecessary dimensions
     return self.array
 
+  def save_array(self, root, template):
+    # 1. iterate through planes in bulk
+    # 2. for each plane, save plane based on root, template
+    # 3. create path with url and add to gon
+
+    file_name = template.rv.format(self.experiment.name, self.series.name, self.channel.name, self.t, '{}')
+    url = os.path.join(root, file_name)
+
+    if len(self.array.shape)==2:
+      imsave(url.format(self.z), self.array)
+      self.paths.create(composite=self.composite, channel=self.channel, template=template, url=url.format(self.z), file_name=file_name.format(self.z), t=self.t, z=self.z)
+
+    else:
+      for z in range(self.array.shape[2]):
+        plane = self.array[:,:,z].copy()
+
+        imsave(file_name.format(z+self.z), plane) # z level is offset by that of original gon.
+        self.paths.create(composite=self.composite, channel=self.channel, template=template, url=url.format(self.z), file_name=file_name.format(self.z), t=self.t, z=z+self.z)
+
 class Channel(models.Model):
   # connections
   composite = models.ForeignKey(Composite, related_name='channels')

@@ -14,20 +14,19 @@ import matplotlib.cm as cm
 
 # methods
 ### STEP 2: Generate images for
-def mod_step2_tracking(composite, mod_id, algorithm):
+def mod_step02_tracking(composite, mod_id, algorithm):
   bf_set = composite.gons.filter(channel__name='1')
   gfp_set = composite.gons.filter(channel__name='0')
 
-  # paths
-  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
-  url = os.path.join(composite.experiment.tracking_path, template.rv) # TRACKING DIRECTORY
+  # template
+  template = composite.templates.get(name='source') # SOURCE TEMPLATE
 
   # channel
-  tracking_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'tracking', mod_id))
+  tracking_channel = composite.channels.create(name='trackingimg')
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('processing mod_step2_tracking t%d...'.format(t))
+    print('step02 | processing mod_step02_tracking t{}...'.format(t), end='\r')
 
     # 1. get
     bf_gon = bf_set.get(t=t)
@@ -40,8 +39,6 @@ def mod_step2_tracking(composite, mod_id, algorithm):
     # 2. calculations
     gfp_smooth = gf(gfp, sigma=2)
     gfp_smooth = np.sum(gfp_smooth, axis=2) / 14.0 # completely arbitrary factor
-    # gfp_reduced_glow = gfp_smooth * gfp_smooth
-    # gfp_reduced_glow = np.sum(gfp_reduced_glow, axis=2)
 
     product = bf + gfp_smooth # superimposes the (slightly) smoothed gfp onto the bright field.
 
@@ -52,10 +49,10 @@ def mod_step2_tracking(composite, mod_id, algorithm):
 
     tracking_gon.array = product
 
-    tracking_gon.save_single(url, template, 0)
+    tracking_gon.save_array(composite.experiment.tracking_path, template)
     tracking_gon.save()
 
-mod_step2_tracking.description = ''
+mod_step02_tracking.description = ''
 
 ### STEP 5: combine channels - FAILED: too many images
 def mod_step5_pmod(composite, mod_id, algorithm):
