@@ -115,7 +115,7 @@ class Experiment(models.Model):
             path.z = int(metadata['z'])
           path.save()
 
-        return path, created, 'created.'
+        return path, created, 'created.' if created else 'already exists.'
 
       else:
         return None, False, 'does not match series.'
