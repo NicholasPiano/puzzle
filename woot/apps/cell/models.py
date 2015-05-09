@@ -4,7 +4,7 @@
 from django.db import models
 
 # local
-from apps.expt.models import Experiment, Series
+from apps.expt.models import Experiment, Series, Region
 from apps.img.models import Composite, Channel, Gon
 from apps.img.util import *
 
@@ -31,6 +31,7 @@ class CellInstance(models.Model):
   experiment = models.ForeignKey(Experiment, related_name='cell_instances')
   series = models.ForeignKey(Series, related_name='cell_instances')
   cell = models.ForeignKey(Cell, related_name='cell_instances')
+  region = models.ForeignKey(Region, related_name='cell_instances')
 
   # properties
   r = models.IntegerField(default=0)
@@ -39,7 +40,6 @@ class CellInstance(models.Model):
   t = models.IntegerField(default=0)
 
   a = models.IntegerField(default=0)
-  region = models.IntegerField(default=0)
 
   vr = models.IntegerField(default=0)
   vc = models.IntegerField(default=0)
@@ -64,6 +64,7 @@ class Marker(models.Model):
   experiment = models.ForeignKey(Experiment, related_name='markers')
   series = models.ForeignKey(Series, related_name='markers')
   track = models.ForeignKey(Track, related_name='markers')
+  region = models.ForeignKey(Region, related_name='markers')
 
   # properties
   r = models.IntegerField(default=0)
@@ -95,3 +96,13 @@ class Mask(models.Model):
   cs = models.IntegerField(default=-1)
 
   # methods
+  def set_origin(self, r, c, z):
+    self.r = r
+    self.c = c
+    self.z = z
+    self.save()
+
+  def set_extent(self, rs, cs):
+    self.rs = rs
+    self.cs = cs
+    self.save()

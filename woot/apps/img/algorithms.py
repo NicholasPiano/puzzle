@@ -1,16 +1,15 @@
 # apps.img.algorithms
 
 # local
-
+from apps.img.util import cut_to_black
+from apps.expt.util import generate_id_token
 
 # util
 import os
 from scipy.ndimage.filters import gaussian_filter as gf
 from skimage import exposure
 import numpy as np
-from scipy.misc import imsave
-from PIL import Image
-import matplotlib.cm as cm
+from scipy.ndimage.measurements import label
 
 # methods
 ### STEP 2: Generate images for tracking
@@ -22,7 +21,7 @@ def mod_step02_tracking(composite, mod_id, algorithm):
   template = composite.templates.get(name='source') # SOURCE TEMPLATE
 
   # channel
-  tracking_channel = composite.channels.create(name='-trackingimg')
+  tracking_channel, tracking_channel_created = composite.channels.get_or_create(name='-trackingimg')
 
   # iterate over frames
   for t in range(composite.series.ts):
@@ -43,7 +42,7 @@ def mod_step02_tracking(composite, mod_id, algorithm):
     product = bf + gfp_smooth # superimposes the (slightly) smoothed gfp onto the bright field.
 
     # pmod
-    tracking_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=tracking_channel)
+    tracking_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=tracking_channel, template=template)
     tracking_gon.set_origin(0, 0, 0, t)
     tracking_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
@@ -63,7 +62,7 @@ def mod_step03_pmod(composite, mod_id, algorithm):
   template = composite.templates.get(name='source') # SOURCE TEMPLATE
 
   # channel
-  channel = composite.channels.create(name='-pmod')
+  channel, channel_created = composite.channels.get_or_create(name='-pmod')
 
   # iterate over frames
   for t in range(composite.series.ts):
@@ -83,7 +82,7 @@ def mod_step03_pmod(composite, mod_id, algorithm):
     product = bf * gfp_smooth
 
     # 3. output
-    gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel)
+    gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel, template=template)
     gon.set_origin(bf_gon.r, bf_gon.c, bf_gon.z, bf_gon.t)
     gon.set_extent(bf_gon.rs, bf_gon.cs, bf_gon.zs)
 
@@ -102,7 +101,7 @@ def mod_step04_region_img(composite, mod_id, algorithm):
   template = composite.templates.get(name='source') # SOURCE TEMPLATE
 
   # channel
-  channel = composite.channels.create(name='-regionimg')
+  channel, channel_created = composite.channels.get_or_create(name='-regionimg')
 
   # iterate over frames
   for t in range(composite.series.ts):
@@ -113,7 +112,7 @@ def mod_step04_region_img(composite, mod_id, algorithm):
     bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
 
     # 3. output
-    gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel)
+    gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel, template=template)
     gon.set_origin(bf_gon.r, bf_gon.c, 0, bf_gon.t)
     gon.set_extent(bf_gon.rs, bf_gon.cs, bf_gon.zs)
 
@@ -129,8 +128,8 @@ def mod_step08_reduced(composite, mod_id, algorithm):
   template = composite.templates.get(name='source') # SOURCE TEMPLATE
 
   # channels
-  pmod_reduced_channel = composite.channels.create(name='-pmodreduced')
-  bf_reduced_channel = composite.channels.create(name='-bfreduced')
+  pmod_reduced_channel, pmod_reduced_channel_created = composite.channels.get_or_create(name='-pmodreduced')
+  bf_reduced_channel, bf_reduced_channel_created = composite.channels.get_or_create(name='-bfreduced')
 
   # image sets
   pmod_set = composite.gons.filter(channel__name='-pmod')
@@ -171,7 +170,7 @@ def mod_step08_reduced(composite, mod_id, algorithm):
 
         # pmod
         if pmod_reduced_channel.paths.filter(z=sz).count()==0:
-          rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel)
+          rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel, template=template)
           rpmod_gon.set_origin(0, 0, sz, t)
           rpmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
@@ -182,7 +181,7 @@ def mod_step08_reduced(composite, mod_id, algorithm):
 
         # bf
         if bf_reduced_channel.paths.filter(z=sz).count()==0:
-          rbf_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=bf_reduced_channel)
+          rbf_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=bf_reduced_channel, template=template)
           rbf_gon.set_origin(0, 0, sz, t)
           rbf_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
@@ -193,50 +192,64 @@ def mod_step08_reduced(composite, mod_id, algorithm):
 
 mod_step08_reduced.description = 'Include bf channel to aid recognition'
 
-def mod_system_check(composite, mod_id, algorithm):
+def mod_step09_regions(composite, mod_id, algorithm):
   # paths
-  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
-  url = os.path.join(composite.experiment.composite_path, template.rv) # CP PATH
+  template = composite.templates.get(name='region') # REGION TEMPLATE
+  mask_template = composite.templates.get(name='mask')
 
-  # channels
-  system_check_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'systemcheck', mod_id))
+  # get region img set that has the region template
+  region_img_set = composite.gons.filter(channel__name='-regionimg', template__name='region')
 
-  # image sets
-  bf_set = composite.gons.filter(channel__name='1')
+  # channel
+  region_channel, region_channel_created = composite.channels.get_or_create(name='-regions')
 
-  # iterate over frames
+  # iterate
   for t in range(composite.series.ts):
-    print('processing mod_system_check t%d...'.format(t))
+    region_img = region_img_set.get(t=t)
 
-    # 1. get
-    bf_gon = bf_set.get(t=t)
+    # for each image, determine unique values of labelled array
+    # make gon with label array and save
 
-    # 2. for each unique z value of the markers, make a gon and add it to the pmod_reduced channel
-    marker_z_values = list(np.unique([marker.z for marker in composite.series.markers.filter(t=t)]))
+    region_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=region_channel, template=template)
+    region_gon.set_origin(0, 0, 0, t)
+    region_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
-    for z in marker_z_values:
-      # make new gon
-      system_check_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=system_check_channel)
-      system_check_gon.set_origin(0, 0, z, t)
-      system_check_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+    # modify image
+    region_array = region_img.load()
+    region_array = region_array[:,:,0]
+    region_array[region_array>0] = 1
+    region_array, n = label(region_array)
 
-      # make array
-      # - 1. bf image at z
-      bf_z = exposure.rescale_intensity(bf_gon.gons.get(z=z).load() * 1.0)
+    region_gon.array = region_array.copy()
+    region_gon.save_array(composite.experiment.mask_path, template)
 
-      # - 2. the sum of all the combined masks at this z
-      combined_mask_sum = np.zeros((composite.series.rs, composite.series.cs), dtype=float)
-      for marker in composite.series.markers.filter(t=t, z=z):
-        combined_mask_sum += exposure.rescale_intensity(marker.combined_mask()*1.0)
+    for unique_value in [u for u in np.unique(region_array) if u>0]:
+      # 1. cut image to single value
+      unique_image = np.zeros(region_array.shape)
+      unique_image[region_array==unique_value] = 1
+      cut, (r,c,rs,cs) = cut_to_black(unique_image)
 
-      combined_mask_sum = exposure.rescale_intensity(combined_mask_sum)
+      # 2. make gon with cut image and associate to gon
+      gon = region_gon.gons.create(experiment=composite.experiment, series=composite.series, channel=region_channel, template=mask_template)
+      gon.id_token = generate_id_token('img','Gon')
+      gon.set_origin(r,c,0,t)
+      gon.set_extent(rs,cs,1)
 
-      # - 3. alpha-ness is proportional to the value of the image.
-      alpha_stack = exposure.rescale_intensity(bf_z + combined_mask_sum*combined_mask_sum)
+      gon.array = cut.copy()
 
-      # assign array
-      system_check_gon.array = alpha_stack.copy()
+      gon.save_mask(composite.experiment.sub_mask_path)
+      gon.save()
 
-      # save gon and image
-      system_check_gon.save_single(url, template, z)
-      system_check_gon.save()
+      # 3. make mask with cut image and associate to gon2
+      mask = region_gon.masks.create(composite=composite, channel=region_channel, mask_id=unique_value)
+      mask.set_origin(r,c,0)
+      mask.set_extent(rs,cs)
+
+mod_step09_regions.description = 'Convert gimp images into binary masks'
+
+def mod_step11_masks(composite, mod_id, algorithm):
+  # templates
+  cp_template = composite.templates.get(name='cp')
+  mask_template = composite.templates.get(name='mask')
+
+  # mask directory

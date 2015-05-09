@@ -27,6 +27,7 @@ class Experiment(models.Model):
   region_path = models.CharField(max_length=255)
   cp_path = models.CharField(max_length=255)
   mask_path = models.CharField(max_length=255)
+  sub_mask_path = models.CharField(max_length=255)
 
   output_path = models.CharField(max_length=255)
   plot_path = models.CharField(max_length=255)
@@ -174,10 +175,11 @@ class Series(models.Model):
             # path
             path = path_set.get(channel=channel, t=t, z=z)
             template = composite.templates.get(name=path.template.name)
+            gon.template = template
             gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=z)
 
             # sub gon
-            sub_gon = self.gons.create(experiment=self.experiment, gon=gon, channel=composite_channel)
+            sub_gon = self.gons.create(experiment=self.experiment, gon=gon, channel=composite_channel, template=template)
             sub_gon.set_origin(0,0,z,t)
             sub_gon.set_extent(self.rs, self.cs, 1)
             sub_gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=z)
@@ -189,11 +191,12 @@ class Series(models.Model):
         else: # disfuse gon structure (reduced, regions)
           for path in path_set:
             print('step01 | composing {} series {}... channel {} t{} z{}'.format(self.experiment.name, self.name, channel.name, t, path.z), end='\r')
-            gon = self.gons.create(experiment=self.experiment, composite=composite, channel=composite_channel)
+
+            template = composite.templates.get(name=path.template.name)
+            gon = self.gons.create(experiment=self.experiment, composite=composite, channel=composite_channel, template=template)
             gon.set_origin(0,0,0,t)
             gon.set_extent(self.rs, self.cs, 1)
 
-            template = composite.templates.get(name=path.template.name)
             gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=z)
 
             gon.save()

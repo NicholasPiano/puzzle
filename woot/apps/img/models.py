@@ -34,6 +34,7 @@ class Gon(models.Model):
   composite = models.ForeignKey(Composite, related_name='gons', null=True)
   channel = models.ForeignKey('Channel', related_name='gons')
   gon = models.ForeignKey('self', related_name='gons', null=True)
+  template = models.ForeignKey('Template', related_name='gons', null=True)
 
   # properties
   id_token = models.CharField(max_length=8, default='')
@@ -107,7 +108,7 @@ class Gon(models.Model):
         self.paths.create(composite=self.composite, channel=self.channel, template=template, url=url.format(self.z), file_name=file_name.format(self.z), t=self.t, z=z+self.z)
 
         # create gons
-        gon = self.gons.create(experiment=self.composite.experiment, series=self.composite.series, channel=self.channel)
+        gon = self.gons.create(experiment=self.composite.experiment, series=self.composite.series, channel=self.channel, template=template)
         gon.set_origin(self.r, self.c, z, self.t)
         gon.set_extent(self.rs, self.cs, 1)
 
@@ -115,6 +116,16 @@ class Gon(models.Model):
 
         gon.save_array(self.experiment.composite_path, template)
         gon.save()
+
+  def load_mask(self):
+    pass
+
+  def save_mask(self, root):
+    template = self.gon.composite.templates.get(name='mask')
+    file_name = template.rv.format(self.id_token)
+    url = os.path.join(root, file_name)
+    imsave(url, self.array)
+    self.paths.create(composite=self.gon.composite, channel=self.channel, template=template, url=url, file_name=file_name, t=self.t, z=self.z)
 
 class Channel(models.Model):
   # connections
