@@ -124,16 +124,16 @@ def mod_step04_region_img(composite, mod_id, algorithm):
 
 mod_step04_region_img.description = 'Raw brightfield image at the centre of the environment'
 
-def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
+def mod_step08_reduced(composite, mod_id, algorithm):
   # paths
-  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
+  template = composite.templates.get(name='source') # SOURCE TEMPLATE
 
   # channels
-  pmod_reduced_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'pmodreduced', mod_id))
-  bf_reduced_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'bfreduced', mod_id))
+  pmod_reduced_channel = composite.channels.create(name='-pmodreduced')
+  bf_reduced_channel = composite.channels.create(name='-bfreduced')
 
   # image sets
-  pmod_set = composite.gons.filter(channel__name__contains='pmod-')
+  pmod_set = composite.gons.filter(channel__name='-pmod')
   bf_set = composite.gons.filter(channel__name='1')
 
   # create batches
@@ -142,7 +142,7 @@ def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('processing mod_step5_bf_gfp_reduced t%d...'.format(t))
+    print('step08 | processing mod_step08_reduced t{}...'.format(t), end='\n' if t==composite.series.ts-1 else '\r')
 
     # 1. get
     pmod_gon = pmod_set.get(t=t)
@@ -160,40 +160,38 @@ def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
 
         # check batch and make folders, set url
         if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))):
-          if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name)):
-            os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name))
-          os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
+          os.makedirs(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
 
         if len(os.listdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))))==max_batch_size:
           batch += 1
           if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))):
-            if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name)):
-              os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name))
-            os.mkdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
+            os.makedirs(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
 
-        url = os.path.join(composite.experiment.cp_path, composite.series.name, str(batch), template.rv) # CP PATH
+        root = os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)) # CP PATH
 
         # pmod
-        rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel)
-        rpmod_gon.set_origin(0, 0, sz, t)
-        rpmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+        if pmod_reduced_channel.paths.filter(z=sz).count()==0:
+          rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel)
+          rpmod_gon.set_origin(0, 0, sz, t)
+          rpmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
-        rpmod_gon.array = pmod_gon.gons.get(z=sz).load()
+          rpmod_gon.array = pmod_gon.gons.get(z=sz).load()
 
-        rpmod_gon.save_single(url, template, sz)
-        rpmod_gon.save()
+          rpmod_gon.save_array(root, template)
+          rpmod_gon.save()
 
-        # markers
-        rbf_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=bf_reduced_channel)
-        rbf_gon.set_origin(0, 0, sz, t)
-        rbf_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+        # bf
+        if bf_reduced_channel.paths.filter(z=sz).count()==0:
+          rbf_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=bf_reduced_channel)
+          rbf_gon.set_origin(0, 0, sz, t)
+          rbf_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
-        rbf_gon.array = bf_gon.gons.get(z=sz).load()
+          rbf_gon.array = bf_gon.gons.get(z=sz).load()
 
-        rbf_gon.save_single(url, template, sz)
-        rbf_gon.save()
+          rbf_gon.save_array(root, template)
+          rbf_gon.save()
 
-mod_step5_bf_gfp_reduced.description = 'Include bf channel to aid recognition'
+mod_step08_reduced.description = 'Include bf channel to aid recognition'
 
 def mod_system_check(composite, mod_id, algorithm):
   # paths
@@ -242,35 +240,3 @@ def mod_system_check(composite, mod_id, algorithm):
       # save gon and image
       system_check_gon.save_single(url, template, z)
       system_check_gon.save()
-
-def mod_region_img(composite, mod_id, algorithm):
-  # paths
-  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
-  url = os.path.join(composite.experiment.region_img_path, template.rv) # REGION IMG PATH
-
-  # channels
-  region_img_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'regionimg', mod_id))
-
-  # image sets
-  bf_set = composite.gons.filter(channel__name='1')
-
-  # iterate over frames
-  for t in range(composite.series.ts):
-    print('processing mod_region_img t%d...'.format(t))
-
-    g = bf_set.get(t=t) # must get great gon first
-
-    # get middle z level
-    middle_z = int(composite.series.zs / 2.0)
-
-    # get single bf plane at z
-    bf = g.gons.get(z=middle_z).load()
-
-    # make gon
-    region_img_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=region_img_channel)
-    region_img_gon.set_origin(0, 0, middle_z, t)
-    region_img_gon.set_extent(composite.series.rs, composite.series.cs, 1)
-
-    region_img_gon.array = exposure.rescale_intensity(bf * 1.0)
-    region_img_gon.save_single(url, template, middle_z)
-    region_img_gon.save()

@@ -54,9 +54,6 @@ class Gon(models.Model):
   array = None
 
   # methods
-  def __str__(self):
-    return '{} > ({}, %d, %d, %d, %d),(%d, %d, %d)'.format(self.composite.id_token, self.channel.name, self.r, self.c ,self.z, self.t, self.rs, self.cs, self.zs)
-
   def set_origin(self, r, c, z, t):
     self.r = r
     self.c = c
@@ -108,6 +105,16 @@ class Gon(models.Model):
 
         imsave(url.format(z+self.z), plane) # z level is offset by that of original gon.
         self.paths.create(composite=self.composite, channel=self.channel, template=template, url=url.format(self.z), file_name=file_name.format(self.z), t=self.t, z=z+self.z)
+
+        # create gons
+        gon = self.gons.create(experiment=self.composite.experiment, series=self.composite.series, channel=self.channel)
+        gon.set_origin(self.r, self.c, z, self.t)
+        gon.set_extent(self.rs, self.cs, 1)
+
+        gon.array = plane.copy().squeeze()
+
+        gon.save_array(self.experiment.composite_path, template)
+        gon.save()
 
 class Channel(models.Model):
   # connections
