@@ -106,7 +106,7 @@ class Gon(models.Model):
       for z in range(self.array.shape[2]):
         plane = self.array[:,:,z].copy()
 
-        imsave(file_name.format(z+self.z), plane) # z level is offset by that of original gon.
+        imsave(url.format(z+self.z), plane) # z level is offset by that of original gon.
         self.paths.create(composite=self.composite, channel=self.channel, template=template, url=url.format(self.z), file_name=file_name.format(self.z), t=self.t, z=z+self.z)
 
 class Channel(models.Model):

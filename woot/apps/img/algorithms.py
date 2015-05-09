@@ -13,7 +13,7 @@ from PIL import Image
 import matplotlib.cm as cm
 
 # methods
-### STEP 2: Generate images for
+### STEP 2: Generate images for tracking
 def mod_step02_tracking(composite, mod_id, algorithm):
   bf_set = composite.gons.filter(channel__name='1')
   gfp_set = composite.gons.filter(channel__name='0')
@@ -22,7 +22,7 @@ def mod_step02_tracking(composite, mod_id, algorithm):
   template = composite.templates.get(name='source') # SOURCE TEMPLATE
 
   # channel
-  tracking_channel = composite.channels.create(name='trackingimg')
+  tracking_channel = composite.channels.create(name='-trackingimg')
 
   # iterate over frames
   for t in range(composite.series.ts):
@@ -54,21 +54,20 @@ def mod_step02_tracking(composite, mod_id, algorithm):
 
 mod_step02_tracking.description = ''
 
-### STEP 5: combine channels - FAILED: too many images
-def mod_step5_pmod(composite, mod_id, algorithm):
+### STEP 3: combine channels for recognition
+def mod_step03_pmod(composite, mod_id, algorithm):
   bf_set = composite.gons.filter(channel__name='1')
   gfp_set = composite.gons.filter(channel__name='0')
 
-  # paths
-  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
-  url = os.path.join(composite.experiment.composite_path, template.rv) # COMPOSITE DIRECTORY
+  # template
+  template = composite.templates.get(name='source') # SOURCE TEMPLATE
 
   # channel
-  channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'pmod', mod_id))
+  channel = composite.channels.create(name='-pmod')
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('processing mod_step5_pmod t%d...'.format(t))
+    print('step03 | processing mod_step03_pmod t{}...'.format(t), end='\r')
     # 1. get
     bf_gon = bf_set.get(t=t)
     bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
@@ -90,109 +89,40 @@ def mod_step5_pmod(composite, mod_id, algorithm):
 
     gon.array = product
 
-    gon.save_paths(url, template)
-    gon.split()
+    gon.save_array(composite.experiment.composite_path, template)
 
     gon.save()
 
-mod_step5_pmod.description = 'Scale portions of the brightfield using the gfp density.'
+mod_step03_pmod.description = 'Scale portions of the brightfield using the gfp density.'
 
-### STEP 5: only relevant z levels - FAILED: inconsistent recognition
-def mod_step5_reduced(composite, mod_id, algorithm):
-  # paths
-  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
-  url = os.path.join(composite.experiment.cp_path, template.rv) # CP PATH
+def mod_step04_region_img(composite, mod_id, algorithm):
+  bf_set = composite.gons.filter(channel__name='1')
 
-  # channels
-  pmod_reduced_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'pmodreduced', mod_id))
-  primary_reduced_channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'primaryreduced', mod_id))
-
-  # image sets
-  pmod_set = composite.gons.filter(channel__name__contains='pmod-')
-
-  # iterate over frames
-  for t in range(composite.series.ts):
-    print('processing mod_step5_reduced t%d...'.format(t))
-
-    # 1. get
-    pmod_gon = pmod_set.get(t=t)
-
-    markers = composite.series.markers.filter(t=t)
-
-    # 2. for each unique z value of the markers, make a gon and add it to the pmod_reduced channel
-    marker_z_values = list(np.unique([marker.z for marker in markers]))
-
-    for z in marker_z_values:
-      # save z range
-      lower_z = z - 1 if z - 1 >= 0 else 0
-      upper_z = z + 2 if z + 2 < composite.series.zs else composite.series.zs
-
-      for sz in range(lower_z,upper_z):
-
-        # pmod
-        rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel)
-        rpmod_gon.set_origin(0, 0, 0, t)
-        rpmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
-
-        rpmod_gon.array = pmod_gon.gons.get(z=sz).load()
-
-        rpmod_gon.save_single(url, template, sz)
-        rpmod_gon.save()
-
-        # markers
-        rprimary_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=primary_reduced_channel)
-        rprimary_gon.set_origin(0, 0, 0, t)
-        rprimary_gon.set_extent(composite.series.rs, composite.series.cs, 1)
-
-        # make black field
-        markers_z = markers.filter(z__gte=lower_z, z__lt=upper_z)
-        b = np.zeros((composite.series.rs, composite.series.cs), dtype='uint8')
-
-        for marker in markers_z:
-          b[marker.r-1:marker.r+1, marker.c-1:marker.c+1] = 255
-
-        rprimary_gon.array = b
-
-        rprimary_gon.save_single(url, template, sz)
-        rprimary_gon.save()
-
-mod_step5_reduced.description = ''
-
-### STEP 5: flatten gfp for masks - FAILED: bad recognition
-def mod_step5_gfp_flat(composite, mod_id, algorithm):
-
-  gfp_set = composite.gons.filter(channel__name='0')
-
-  # paths
-  template = composite.templates.get(name='composite') # COMPOSITE TEMPLATE
-  url = os.path.join(composite.experiment.cp_path, template.rv) # CP DIRECTORY
+  # template
+  template = composite.templates.get(name='source') # SOURCE TEMPLATE
 
   # channel
-  channel = composite.channels.create(name='{}-{}-{}'.format(composite.id_token, 'pmodgfpflat', mod_id))
+  channel = composite.channels.create(name='-regionimg')
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('processing mod_step5_gfp_flat t%d...'.format(t))
+    print('step03 | processing mod_step04_region_img t{}...'.format(t), end='\r')
     # 1. get
-
-    gfp_gon = gfp_set.get(t=t)
-    gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
-
-    # 2. calculations
-    gfp_smooth = exposure.rescale_intensity(gf(gfp, sigma=2))
-    # gfp_reduced_glow = gfp_smooth * gfp_smooth
+    bf_great_gon = bf_set.get(t=t)
+    bf_gon = bf_great_gon.gons.get(z=int(bf_great_gon.zs / 2.0))
+    bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
 
     # 3. output
     gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel)
-    gon.set_origin(gfp_gon.r, gfp_gon.c, gfp_gon.z, gfp_gon.t)
-    gon.set_extent(gfp_gon.rs, gfp_gon.cs, 1)
+    gon.set_origin(bf_gon.r, bf_gon.c, 0, bf_gon.t)
+    gon.set_extent(bf_gon.rs, bf_gon.cs, bf_gon.zs)
 
-    gon.array = np.sum(gfp_smooth, axis=2)
-    gon.save_single(url, template, 0)
+    gon.array = bf
 
+    gon.save_array(composite.experiment.region_img_path, template)
     gon.save()
 
-mod_step5_gfp_flat.description = 'Flatten gfp and blur slightly.'
+mod_step04_region_img.description = 'Raw brightfield image at the centre of the environment'
 
 def mod_step5_bf_gfp_reduced(composite, mod_id, algorithm):
   # paths
