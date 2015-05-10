@@ -59,5 +59,5 @@ class Command(BaseCommand):
                 region_matches.append(series.vertical_sort_for_region_index(region_mask.mask_id))
 
             # line
-            line = '{},{},{},{},{},{},{}\n'.format(track.track_id, marker.t, marker.r, marker.c, vr, vc, max(region_matches))
+            line = '{},{},{},{},{},{},{}\n'.format(track.track_id, marker.t, marker.r, marker.c, marker.z, vr, vc, max(region_matches))
             output.write(line)
