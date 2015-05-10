@@ -169,7 +169,7 @@ def mod_step08_reduced(composite, mod_id, algorithm):
         root = os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)) # CP PATH
 
         # pmod
-        if pmod_reduced_channel.paths.filter(z=sz).count()==0:
+        if pmod_reduced_channel.paths.filter(t=t, z=sz).count()==0:
           rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel, template=template)
           rpmod_gon.set_origin(0, 0, sz, t)
           rpmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
@@ -180,7 +180,7 @@ def mod_step08_reduced(composite, mod_id, algorithm):
           rpmod_gon.save()
 
         # bf
-        if bf_reduced_channel.paths.filter(z=sz).count()==0:
+        if bf_reduced_channel.paths.filter(t=t, z=sz).count()==0:
           rbf_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=bf_reduced_channel, template=template)
           rbf_gon.set_origin(0, 0, sz, t)
           rbf_gon.set_extent(composite.series.rs, composite.series.cs, 1)

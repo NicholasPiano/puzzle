@@ -84,9 +84,9 @@ class Command(BaseCommand):
             line = line.split('\t')
 
             # details
-            track_id = int(line[1])
-            r = int(line[4])
-            c = int(line[3])
+            track_id = int(float(line[1]))
+            r = int(float(line[4]))
+            c = int(float(line[3]))
             t = int(line[2]) - 1
 
             if track_id in tracks:
