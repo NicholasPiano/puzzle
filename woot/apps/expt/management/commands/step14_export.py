@@ -1,20 +1,32 @@
-# expt.command: step14_export
+# expt.command: step11_reduced
 
 # django
+from django.core.management.base import BaseCommand, CommandError
 
 # local
+from apps.expt.models import Series
 
 # util
+import os
+import numpy as np
+from optparse import make_option
 
 ### Command
 class Command(BaseCommand):
   option_list = BaseCommand.option_list + (
 
-    make_option('--name', # option that will appear in cmd
+    make_option('--expt', # option that will appear in cmd
       action='store', # no idea
-      dest='name', # refer to this in options variable
+      dest='expt', # refer to this in options variable
       default='050714-test', # some default
-      help='Path to scan for images' # who cares
+      help='Name of the experiment to import' # who cares
+    ),
+
+    make_option('--series', # option that will appear in cmd
+      action='store', # no idea
+      dest='series', # refer to this in options variable
+      default='13', # some default
+      help='Name of the series' # who cares
     ),
 
   )
@@ -25,12 +37,27 @@ class Command(BaseCommand):
   def handle(self, *args, **options):
     '''
     1. What does this script do?
+    > Use masks to build up larger masks surrounding markers
+
     2. What data structures are input?
+    > Mask, Gon
+
     3. What data structures are output?
+    > Channel, Gon, Mask
+
     4. Is this stage repeated/one-time?
+    > Repeated
 
     Steps:
 
-    1.
+    1. load mask gons
+    2. stack vertically in single array
 
     '''
+
+    series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
+
+    cells = series.cells.all():
+
+    for cell in cells:
+      print(cell.raw_line())
