@@ -60,4 +60,5 @@ class Command(BaseCommand):
     cells = series.cells.all()
 
     for cell in cells:
-      print(cell.raw_line())
+      for cell_instance in cell.cell_instances.all():
+        print(cell_instance.raw_line())
