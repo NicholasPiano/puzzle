@@ -57,8 +57,10 @@ class Command(BaseCommand):
 
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
 
-    cells = series.cells.all()
+    output_file = os.path.join(series.experiment.data_path, 'output_{}_s{}.csv'.format(series.experiment.name, series.name))
 
-    for cell in cells:
-      for cell_instance in cell.cell_instances.all():
-        print(cell_instance.raw_line())
+    with open(output_file, 'w+') as f:
+      f.write('exp,series,cell,region,t,r,c,z\n')
+      for cell in series.cells.all():
+        for cell_instance in cell.cell_instances.all():
+          f.write(cell_instance.raw_line())

@@ -48,7 +48,7 @@ class CellInstance(models.Model):
 
   # methods
   def raw_line(self):
-    return '{},{},{},{},{},{},{},{}'.format(self.experiment.name, self.series.name, self.cell.pk, self.region.index, self.t, self.r, self.c, self.z)
+    return '{},{},{},{},{},{},{},{}\n'.format(self.experiment.name, self.series.name, self.cell.pk, self.region.index, self.t, self.r, self.c, self.z)
 
 ### MARKERS
 class Track(models.Model):
