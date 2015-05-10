@@ -86,42 +86,44 @@ class Command(BaseCommand):
       for m, marker in enumerate(series.markers.filter(t=t)):
         # print('step 13 | t={}, marker {}/{}'.format(t, m+1, series.markers.filter(t=t).count()))
         # cut stack to a column on the marker centre
-        column = stack[marker.r, marker.c, :]
-
-        cell_mask = np.zeros((series.rs, series.cs))
-        for i,mask_id in enumerate(column):
-          if mask_id!=0:
-
-            mask = stack[:,:,i]!=mask_id
-
-            for j,mask_id in enumerate(column):
-              if mask_id!=0:
-                masked = np.ma.array(stack[:,:,j], mask=mask, fill_value=0)
-
-                for unique_value in [u for u in np.unique(masked.filled()) if u>0]:
-
-                  cell_mask += (stack[:,:,j]==unique_value) * 1.0 # add modifier based on height difference here
-
-        cell_mask[cell_mask<cell_mask.max()-cell_mask.max()/3.0] = 0
+        # column = stack[marker.r, marker.c, :]
+        #
+        # cell_mask = np.zeros((series.rs, series.cs))
+        # for i,mask_id in enumerate(column):
+        #   if mask_id!=0:
+        #
+        #     mask = stack[:,:,i]!=mask_id
+        #
+        #     for j,mask_id in enumerate(column):
+        #       if mask_id!=0:
+        #         masked = np.ma.array(stack[:,:,j], mask=mask, fill_value=0)
+        #
+        #         for unique_value in [u for u in np.unique(masked.filled()) if u>0]:
+        #
+        #           cell_mask += (stack[:,:,j]==unique_value) * 1.0 # add modifier based on height difference here
+        #
+        # cell_mask[cell_mask<cell_mask.max()-cell_mask.max()/3.0] = 0
 
         # make new cell, cell_instance
         cell, cell_created = series.cells.get_or_create(experiment=series.experiment, cell_id=marker.track.track_id, cell_index=marker.track.index)
         cell_instance = cell.cell_instances.create(experiment=series.experiment, series=series)
 
         # area
-        cell_instance.a = (cell_mask>0).sum()
+        # cell_instance.a = (cell_mask>0).sum()
 
         # centre of mass
-        (r, c) = cm(cell_mask)
-        cell_instance.r = r
-        cell_instance.c = c
+        # (r, c) = cm(cell_mask)
+        cell_instance.r = marker.r
+        cell_instance.c = marker.c
         cell_instance.z = marker.z
         cell_instance.t = marker.t
 
         # region
-        region_query = regions[r,c]
-        print(region_query)
-        print(region_dict[region_query])
+        region_query = regions[marker.r,marker.c]
+        offset = 1
+        while region_query==0:
+          region_query = regions[marker.r,marker.c+offset]
+          offset += 1
         region = series.vertical_sort_for_region_index(region_dict[region_query])
         cell_instance.region = series.regions.get(index=region)
         cell_instance.save()
