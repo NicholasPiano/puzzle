@@ -98,7 +98,7 @@ class Gon(models.Model):
 
     if len(self.array.shape)==2:
       imsave(url.format(self.z), self.array)
-      self.paths.create(composite=self.composite, channel=self.channel, template=template, url=url.format(self.z), file_name=file_name.format(self.z), t=self.t, z=self.z)
+      self.paths.create(composite=self.composite if self.composite is not None else self.gon.composite, channel=self.channel, template=template, url=url.format(self.z), file_name=file_name.format(self.z), t=self.t, z=self.z)
 
     else:
       for z in range(self.array.shape[2]):

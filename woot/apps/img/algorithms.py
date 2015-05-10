@@ -252,4 +252,23 @@ def mod_step11_masks(composite, mod_id, algorithm):
   cp_template = composite.templates.get(name='cp')
   mask_template = composite.templates.get(name='mask')
 
-  # mask directory
+  # mask img set
+  mask_gon_set = composite.gons.filter(channel__name__in=['pmodreduced','bfreduced'], template__name='cp')
+
+  for mask_gon in mask_gon_set:
+    # load and get unique values
+    mask_array = mask_gon.load()
+
+    # unique
+    for unique_value in [u for u in np.unique(mask_array) if u>0]:
+      print('step11 | processing mod_step11_masks... {}: {} masks'.format(mask_gon.paths.get().file_name, unique_value), end='\r')
+
+      # 1. cut image to single value
+      unique_image = np.zeros(mask_array.shape)
+      unique_image[mask_array==unique_value] = 1
+      cut, (r,c,rs,cs) = cut_to_black(unique_image)
+
+      # 3. make mask with cut image and associate to gon2
+      mask = mask_gon.masks.create(composite=composite, channel=mask_gon.channel, mask_id=unique_value)
+      mask.set_origin(r,c,mask_gon.z)
+      mask.set_extent(rs,cs)

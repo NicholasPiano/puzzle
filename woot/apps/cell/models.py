@@ -31,7 +31,7 @@ class CellInstance(models.Model):
   experiment = models.ForeignKey(Experiment, related_name='cell_instances')
   series = models.ForeignKey(Series, related_name='cell_instances')
   cell = models.ForeignKey(Cell, related_name='cell_instances')
-  region = models.ForeignKey(Region, related_name='cell_instances')
+  region = models.ForeignKey(Region, related_name='cell_instances', null=True)
 
   # properties
   r = models.IntegerField(default=0)
@@ -64,7 +64,7 @@ class Marker(models.Model):
   experiment = models.ForeignKey(Experiment, related_name='markers')
   series = models.ForeignKey(Series, related_name='markers')
   track = models.ForeignKey(Track, related_name='markers')
-  region = models.ForeignKey(Region, related_name='markers')
+  region = models.ForeignKey(Region, related_name='markers', null=True)
 
   # properties
   r = models.IntegerField(default=0)

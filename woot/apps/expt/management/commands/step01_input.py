@@ -123,7 +123,14 @@ class Command(BaseCommand):
         else:
           print('step01 | {} series {} already composed.'.format(expt.name, series.name))
 
-        # set regions
+        # 7. add to composite
+        print('step01 | checking for additions to current composite...')
+
+        # get current composite id
+
+        # compose channels
+
+        # 8. set regions
         print('step01 | creating regions for {} series {}... '.format(expt.name, series.name), end='\r')
         for region_prototype in list(filter(lambda rp: rp.experiment==expt.name and rp.series==series.name, regions)):
           region, region_created = series.regions.get_or_create(experiment=expt, name=region_prototype.name)

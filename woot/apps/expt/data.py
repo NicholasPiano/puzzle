@@ -144,9 +144,9 @@ templates = {
   'region':{
     'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch(?P<channel>.+)_t(?P<t>[0-9]+)\.(?P<extension>.+)$',
     'rv':r'{}_s{}_ch{}_t{}.tiff',
-  },  
+  },
   'cp':{
-    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>)_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)_cp-(?P<secondary_channel>.+)\.(?P<extension>.+)$',
+    'rx':r'^(?P<experiment>.+)_s(?P<series>.+)_ch-(?P<channel>.+)_t(?P<t>[0-9]+)_z(?P<z>[0-9]+)_cp-(?P<secondary_channel>.+)\.(?P<extension>.+)$',
     'rv':r'{}_s{}_ch-{}_t{}_z{}_cp-{}.tiff',
   },
   'mask':{
