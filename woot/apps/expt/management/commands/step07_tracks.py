@@ -87,7 +87,7 @@ class Command(BaseCommand):
             track_id = int(float(line[1]))
             r = int(float(line[4]))
             c = int(float(line[3]))
-            t = int(line[2]) - 1
+            t = int(float(line[2])) - 1
 
             if track_id in tracks:
               tracks[track_id].append((r,c,t))
