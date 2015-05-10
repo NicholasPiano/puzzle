@@ -272,3 +272,6 @@ def mod_step11_masks(composite, mod_id, algorithm):
       mask = mask_gon.masks.create(composite=composite, channel=mask_gon.channel, mask_id=unique_value)
       mask.set_origin(r,c,mask_gon.z)
       mask.set_extent(rs,cs)
+
+def mod_step13_cell_masks(composite, mod_id, algorithm):
+  pass

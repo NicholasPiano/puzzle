@@ -23,6 +23,7 @@ class Cell(models.Model):
 
   # properties
   cell_id = models.IntegerField(default=0)
+  cell_index = models.IntegerField(default=0)
 
   # methods
 
