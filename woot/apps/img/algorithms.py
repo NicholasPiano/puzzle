@@ -206,7 +206,11 @@ def mod_step09_regions(composite, mod_id, algorithm):
   # iterate
   for t in range(composite.series.ts):
     print(t)
-    region_img = region_img_set.get(t=t)
+    region_img = region_img_set.filter(t=t)
+    if region_img == []:
+      region_img = region_img_set.get(t=t-1)
+    else:
+      region_img = region_img_set.get(t=t)
 
     # for each image, determine unique values of labelled array
     # make gon with label array and save
