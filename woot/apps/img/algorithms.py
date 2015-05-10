@@ -198,7 +198,7 @@ def mod_step09_regions(composite, mod_id, algorithm):
   mask_template = composite.templates.get(name='mask')
 
   # get region img set that has the region template
-  region_img_set = composite.gons.filter(channel__name='-regionimg', template__name='region')
+  region_img_set = composite.gons.filter(channel__name='-9T16N7NH-regionimg-D478KI0H', template__name='region')
 
   # channel
   region_channel, region_channel_created = composite.channels.get_or_create(name='-regions')
