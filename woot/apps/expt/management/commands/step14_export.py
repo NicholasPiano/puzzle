@@ -57,7 +57,7 @@ class Command(BaseCommand):
 
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
 
-    cells = series.cells.all():
+    cells = series.cells.all()
 
     for cell in cells:
       print(cell.raw_line())
