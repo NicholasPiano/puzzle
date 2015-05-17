@@ -61,26 +61,26 @@ class Command(BaseCommand):
     '''
 
     # 1. get experiment
-    expt = Experiment.objects.get(name=options['expt'])
-    series = expt.series.get(name=options['series'])
+    experiment = Experiment.objects.get(name=options['experiment'])
+    series = experiment.series.get(name=options['series'])
 
     # 2. list files in track directory
-    file_list = [file_name for file_name in os.listdir(expt.track_path) if '.xls' in file_name]
+    file_list = [file_name for file_name in os.listdir(experiment.track_path) if '.xls' in file_name]
 
     for file_name in file_list:
       # get template
-      template = expt.templates.get(name='track')
+      template = experiment.templates.get(name='track')
 
       # check series name and load
       dict = template.dict(file_name)
       if dict['series']==series.name:
-        with open(os.path.join(expt.track_path, file_name), 'rb') as track_file:
+        with open(os.path.join(experiment.track_path, file_name), 'rb') as track_file:
 
           tracks = {} # stores list of tracks that can then be put into the database
 
           lines = track_file.read().decode('mac-roman').split('\n')[1:-1]
           for i, line in enumerate(lines): # omit title line and final blank line
-            print('step07 | reading tracks and markers from {} for {}.{}: ({}/{})'.format(file_name, expt.name, series.name, i+1, len(lines)), end='\n' if i==len(lines)-1 else '\r')
+            print('step07 | reading tracks and markers from {} for {}.{}: ({}/{})'.format(file_name, experiment.name, series.name, i+1, len(lines)), end='\n' if i==len(lines)-1 else '\r')
             line = line.split('\t')
 
             # details
@@ -96,7 +96,7 @@ class Command(BaseCommand):
 
           for track_id, markers in tracks.items():
             track_index = series.tracks.filter(track_id=track_id).count()
-            track, track_created = series.tracks.get_or_create(experiment=expt, series=series, track_id=track_id, index=track_index)
+            track, track_created = series.tracks.get_or_create(experiment=experiment, series=series, track_id=track_id, index=track_index)
 
             if track_created:
               for marker in markers:

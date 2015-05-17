@@ -85,18 +85,36 @@ class Experiment(models.Model):
 
     self.save()
 
-  def allowed_series(self, series_name):
+  def is_allowed_series(self, series_name):
     return (series_name in [s.name for s in filter(lambda x: x.experiment==self.name, series)])
 
   def img_roots(self):
     return [self.img_path, self.tracking_path, self.composite_path, self.region_img_path, self.region_path, self.cp_path, self.mask_path]
 
-  def get_or_create_path(self, series, root, file_name):
+  def path_matches_series(self, path, series_name):
 
     # match template
     match_template = None
     for template in self.templates.all():
-      match_template = template if template.match(file_name) is not None else match_template
+      match_template = template if template.match(path) is not None else match_template
+
+    if match_template is not None:
+
+      # metadata
+      metadata = match_template.dict(path)
+
+      return series_name == metadata['series']
+
+    else:
+      return False
+
+  def get_or_create_path(self, series, root, file_name, template=None):
+
+    # match template
+    match_template = template
+    if match_template is None:
+      for template in self.templates.all():
+        match_template = template if template.match(file_name) is not None else match_template
 
     if match_template is not None:
 
@@ -146,15 +164,19 @@ class Series(models.Model):
   def compose(self):
 
     # composite
-    composite = self.composites.create(experiment=self.experiment, id_token=generate_id_token('img', 'Composite'))
+    composite, composite_created = self.composites.get_or_create(experiment=self.experiment)
 
     # templates
     for template in self.experiment.templates.all():
-      composite.templates.create(name=template.name, rx=template.rx, rv=template.rv)
+      composite_template, composite_template_created = composite.templates.get_or_create(name=template.name)
+      if composite_template_created:
+        composite_template.rx = template.rx
+        composite_template.rv = template.rv
+        composite_template.save()
 
     # iterate over paths
     for channel in self.experiment.channels.all():
-      composite_channel = composite.channels.create(name=channel.name)
+      composite_channel, composite_channel_created = composite.channels.get_or_create(name=channel.name)
 
       for t in range(self.ts):
 
@@ -165,24 +187,29 @@ class Series(models.Model):
         if path_set.count()==self.zs:
 
           # gon
-          gon = self.gons.create(experiment=self.experiment, composite=composite, channel=composite_channel)
-          gon.set_origin(0,0,0,t)
-          gon.set_extent(self.rs, self.cs, self.zs)
+          gon, gon_created = self.gons.get_or_create(experiment=self.experiment, composite=composite, channel=composite_channel, t=t)
+          if gon_created:
+            gon.set_origin(0,0,0,t)
+            gon.set_extent(self.rs, self.cs, self.zs)
 
           for z in range(self.zs):
-            print('step01 | composing {} series {}... channel-{} t{} z{}'.format(self.experiment.name, self.name, channel.name, t, z), end='\r')
 
             # path
             path = path_set.get(channel=channel, t=t, z=z)
             template = composite.templates.get(name=path.template.name)
             gon.template = template
-            gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=z)
+            gon.paths.get_or_create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=z)
 
             # sub gon
-            sub_gon = self.gons.create(experiment=self.experiment, gon=gon, channel=composite_channel, template=template)
-            sub_gon.set_origin(0,0,z,t)
-            sub_gon.set_extent(self.rs, self.cs, 1)
-            sub_gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=z)
+            sub_gon, sub_gon_created = self.gons.get_or_create(experiment=self.experiment, gon=gon, channel=composite_channel, template=template, t=t, z=z)
+            if sub_gon_created:
+              print('step01 | composing {} series {}... channel {} t{} z{}... created.           '.format(self.experiment.name, self.name, channel.name, t, z), end='\r')
+              sub_gon.set_origin(0,0,z,t)
+              sub_gon.set_extent(self.rs, self.cs, 1)
+              sub_gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=z)
+
+            else:
+              print('step01 | composing {} series {}... channel {} t{} z{}... already exists.'.format(self.experiment.name, self.name, channel.name, t, z), end='\r')
 
             sub_gon.save()
 
@@ -193,11 +220,12 @@ class Series(models.Model):
             print('step01 | composing {} series {}... channel {} t{} z{}'.format(self.experiment.name, self.name, channel.name, t, path.z), end='\r')
 
             template = composite.templates.get(name=path.template.name)
-            gon = self.gons.create(experiment=self.experiment, composite=composite, channel=composite_channel, template=template)
-            gon.set_origin(0,0,path.z,t)
-            gon.set_extent(self.rs, self.cs, 1)
+            gon, gon_created = self.gons.get_or_create(experiment=self.experiment, composite=composite, channel=composite_channel, template=template, t=t, z=path.z)
+            if gon_created:
+              gon.set_origin(0,0,path.z,t)
+              gon.set_extent(self.rs, self.cs, 1)
 
-            gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=path.z)
+              gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=path.z)
 
             gon.save()
 

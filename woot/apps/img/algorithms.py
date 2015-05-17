@@ -25,31 +25,35 @@ def mod_step02_tracking(composite, mod_id, algorithm):
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('step02 | processing mod_step02_tracking t{}...'.format(t), end='\r')
+    # 1. check if exists
+    tracking_gon, tracking_gon_created = composite.gons.get_or_create(experiment=composite.experiment, series=composite.series, channel=tracking_channel, template=template, t=t)
+    if tracking_gon_created:
+      print('step02 | processing mod_step02_tracking t{}... created.               '.format(t), end='\r')
+      tracking_gon.set_origin(0, 0, 0, t)
+      tracking_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
-    # 1. get
-    bf_gon = bf_set.get(t=t)
-    bf_gon = bf_gon.gons.get(z=int(bf_gon.zs/2.0))
-    bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
+      # 2. get components
+      bf_gon = bf_set.get(t=t)
+      bf_gon = bf_gon.gons.get(z=int(bf_gon.zs/2.0))
+      bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
 
-    gfp_gon = gfp_set.get(t=t)
-    gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+      gfp_gon = gfp_set.get(t=t)
+      gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
 
-    # 2. calculations
-    gfp_smooth = gf(gfp, sigma=2)
-    gfp_smooth = np.sum(gfp_smooth, axis=2) / 14.0 # completely arbitrary factor
+      # 3. calculations
+      gfp_smooth = gf(gfp, sigma=2)
+      gfp_smooth = np.sum(gfp_smooth, axis=2) / 14.0 # completely arbitrary factor
 
-    product = bf + gfp_smooth # superimposes the (slightly) smoothed gfp onto the bright field.
+      product = bf + gfp_smooth # superimposes the (slightly) smoothed gfp onto the bright field.
 
-    # pmod
-    tracking_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=tracking_channel, template=template)
-    tracking_gon.set_origin(0, 0, 0, t)
-    tracking_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+      # 4. save array
+      tracking_gon.array = product
 
-    tracking_gon.array = product
+      tracking_gon.save_array(composite.experiment.tracking_path, template)
+      tracking_gon.save()
 
-    tracking_gon.save_array(composite.experiment.tracking_path, template)
-    tracking_gon.save()
+    else:
+      print('step02 | processing mod_step02_tracking t{}... already exists.'.format(t), end='\r')
 
 mod_step02_tracking.description = ''
 
@@ -66,31 +70,37 @@ def mod_step03_pmod(composite, mod_id, algorithm):
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('step03 | processing mod_step03_pmod t{}...'.format(t), end='\r')
-    # 1. get
-    bf_gon = bf_set.get(t=t)
-    bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
 
-    gfp_gon = gfp_set.get(t=t)
-    gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+    # 1. check if exists
+    pmod_gon, pmod_gon_created = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel, template=template, t=t, z=z)
 
-    # 2. calculations
-    gfp_smooth = exposure.rescale_intensity(gf(gfp, sigma=5)) / 2.0
-    # gfp_reduced_glow = gfp_smooth * gfp_smooth
+    if pmod_gon_created:
+      print('step03 | processing mod_step03_pmod t{}... created.             '.format(t), end='\r')
+      pmod_gon.set_origin(bf_gon.r, bf_gon.c, bf_gon.z, bf_gon.t)
+      pmod_gon.set_extent(bf_gon.rs, bf_gon.cs, bf_gon.zs)
 
-    # product = gfp_reduced_glow * bf
-    product = bf * gfp_smooth
+      # 2. get components
+      bf_gon = bf_set.get(t=t)
+      bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
 
-    # 3. output
-    gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel, template=template)
-    gon.set_origin(bf_gon.r, bf_gon.c, bf_gon.z, bf_gon.t)
-    gon.set_extent(bf_gon.rs, bf_gon.cs, bf_gon.zs)
+      gfp_gon = gfp_set.get(t=t)
+      gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
 
-    gon.array = product
+      # 3. calculations
+      gfp_smooth = exposure.rescale_intensity(gf(gfp, sigma=5)) / 2.0
+      # gfp_reduced_glow = gfp_smooth * gfp_smooth
 
-    gon.save_array(composite.experiment.composite_path, template)
+      # product = gfp_reduced_glow * bf
+      product = bf * gfp_smooth
 
-    gon.save()
+      # 4. save array
+      pmod_gon.array = product
+
+      pmod_gon.save_array(composite.experiment.composite_path, template)
+      pmod_gon.save()
+
+    else:
+      print('step03 | processing mod_step03_pmod t{}... already exists.'.format(t), end='\r')
 
 mod_step03_pmod.description = 'Scale portions of the brightfield using the gfp density.'
 
@@ -105,21 +115,30 @@ def mod_step04_region_img(composite, mod_id, algorithm):
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('step03 | processing mod_step04_region_img t{}...'.format(t), end='\r')
-    # 1. get
-    bf_great_gon = bf_set.get(t=t)
-    bf_gon = bf_great_gon.gons.get(z=int(bf_great_gon.zs / 2.0))
-    bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
 
-    # 3. output
-    gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel, template=template)
-    gon.set_origin(bf_gon.r, bf_gon.c, 0, bf_gon.t)
-    gon.set_extent(bf_gon.rs, bf_gon.cs, bf_gon.zs)
+    # 1. check if exists
+    region_img_gon, region_img_gon_created = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel, template=template, t=t)
+    if region_img_gon_created:
+      print('step03 | processing mod_step04_region_img t{}... created.              '.format(t), end='\r')
+      region_img_gon.set_origin(bf_gon.r, bf_gon.c, 0, bf_gon.t)
+      region_img_gon.set_extent(bf_gon.rs, bf_gon.cs, bf_gon.zs)
 
-    gon.array = bf
+      # 2. get components
+      bf_great_gon = bf_set.get(t=t)
+      bf_gon = bf_great_gon.gons.get(z=int(bf_great_gon.zs / 2.0))
+      bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
 
-    gon.save_array(composite.experiment.region_img_path, template)
-    gon.save()
+      # 3. calculations
+      # None
+
+      # 4. save array
+      region_img_gon.array = bf
+
+      region_img_gon.save_array(composite.experiment.region_img_path, template)
+      region_img_gon.save()
+
+    else:
+      print('step03 | processing mod_step04_region_img t{}... already exists.'.format(t), end='\r')
 
 mod_step04_region_img.description = 'Raw brightfield image at the centre of the environment'
 
