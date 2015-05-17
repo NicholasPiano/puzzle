@@ -89,7 +89,7 @@ class Experiment(models.Model):
     return (series_name in [s.name for s in filter(lambda x: x.experiment==self.name, series)])
 
   def img_roots(self):
-    return [self.img_path, self.tracking_path, self.composite_path, self.region_img_path, self.region_path, self.cp_path, self.mask_path]
+    return [self.img_path, self.tracking_path, self.composite_path, self.region_img_path, self.region_path, self.mask_path]
 
   def path_matches_series(self, path, series_name):
 

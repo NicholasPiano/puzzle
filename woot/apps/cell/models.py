@@ -26,6 +26,20 @@ class Cell(models.Model):
   cell_index = models.IntegerField(default=0)
 
   # methods
+  def calculate_velocities(self):
+    previous_cell_instance = None
+    for cell_instance in self.cell_instances.order_by('t'):
+      if previous_cell_instance is None:
+        cell_instance.vr = 0
+        cell_instance.vc = 0
+        cell_instance.vz = 0
+      else:
+        cell_instance.vr = cell_instance.r - previous_cell_instance.r
+        cell_instance.vc = cell_instance.c - previous_cell_instance.c
+        cell_instance.vz = cell_instance.z - previous_cell_instance.z
+
+      cell_instance.save()
+      previous_cell_instance = cell_instance
 
 class CellInstance(models.Model):
   # connections
@@ -47,8 +61,35 @@ class CellInstance(models.Model):
   vz = models.IntegerField(default=0)
 
   # methods
+  def R(self):
+    return self.r*self.experiment.rmop
+
+  def C(self):
+    return self.c*self.experiment.cmop
+
+  def Z(self):
+    return self.z*self.experiment.zmop
+
+  def T(self):
+    return self.t*self.experiment.tpf
+
+  def VR(self):
+    return self.vr*self.experiment.rmop / self.experiment.tpf
+
+  def VC(self):
+    return self.vc*self.experiment.cmop / self.experiment.tpf
+
+  def VZ(self):
+    return self.vz*self.experiment.zmop / self.experiment.tpf
+
+  def A(self):
+    return self.a*self.experiment.rmop*self.experiment.cmop
+
   def raw_line(self):
-    return '{},{},{},{},{},{},{},{}\n'.format(self.experiment.name, self.series.name, self.cell.pk, self.region.index, self.t, self.r, self.c, self.z)
+    return '{},{},{},{},{},{},{},{},{}\n'.format(self.experiment.name, self.series.name, self.cell.pk, self.region.index, self.t, self.r, self.c, self.z, self.a)
+
+  def line(self):
+    return '{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(self.experiment.name, self.series.name, self.cell.pk, self.region.index, self.T(), self.R(), self.C(), self.Z(), self.VR(), self.VC(), self.VZ(), self.A())
 
 ### MARKERS
 class Track(models.Model):

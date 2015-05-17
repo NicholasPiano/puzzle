@@ -61,7 +61,7 @@ class Command(BaseCommand):
     '''
 
     # 1. get experiment
-    experiment = Experiment.objects.get(name=options['experiment'])
+    experiment = Experiment.objects.get(name=options['expt'])
     series = experiment.series.get(name=options['series'])
 
     # 2. list files in track directory

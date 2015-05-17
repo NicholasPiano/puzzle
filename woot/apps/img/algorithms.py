@@ -72,15 +72,15 @@ def mod_step03_pmod(composite, mod_id, algorithm):
   for t in range(composite.series.ts):
 
     # 1. check if exists
-    pmod_gon, pmod_gon_created = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel, template=template, t=t, z=z)
+    pmod_gon, pmod_gon_created = composite.gons.get_or_create(experiment=composite.experiment, series=composite.series, channel=channel, template=template, t=t)
 
     if pmod_gon_created:
+      bf_gon = bf_set.get(t=t)
       print('step03 | processing mod_step03_pmod t{}... created.             '.format(t), end='\r')
       pmod_gon.set_origin(bf_gon.r, bf_gon.c, bf_gon.z, bf_gon.t)
       pmod_gon.set_extent(bf_gon.rs, bf_gon.cs, bf_gon.zs)
 
       # 2. get components
-      bf_gon = bf_set.get(t=t)
       bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
 
       gfp_gon = gfp_set.get(t=t)
@@ -100,7 +100,7 @@ def mod_step03_pmod(composite, mod_id, algorithm):
       pmod_gon.save()
 
     else:
-      print('step03 | processing mod_step03_pmod t{}... already exists.'.format(t), end='\r')
+      print('step03 | processing mod_step03_pmod t{}... already exists.        '.format(t), end='\r')
 
 mod_step03_pmod.description = 'Scale portions of the brightfield using the gfp density.'
 
@@ -217,16 +217,14 @@ def mod_step09_regions(composite, mod_id, algorithm):
   mask_template = composite.templates.get(name='mask')
 
   # get region img set that has the region template
-  region_img_set = composite.gons.filter(channel__name='-9T16N7NH-regionimg-D478KI0H', template__name='region')
+  region_img_set = composite.gons.filter(channel__name='-regionimg', template__name='region')
 
   # channel
   region_channel, region_channel_created = composite.channels.get_or_create(name='-regions')
 
   # iterate
   for t in range(composite.series.ts):
-    print(t)
     region_img = region_img_set.filter(t=t)
-    print(region_img)
     if region_img.count()==0:
       region_img = region_img_set.get(t=t-1)
     else:
@@ -286,7 +284,7 @@ def mod_step11_masks(composite, mod_id, algorithm):
 
     # unique
     for unique_value in [u for u in np.unique(mask_array) if u>0]:
-      print('step11 | processing mod_step11_masks... {}: {} masks'.format(mask_gon.paths.get().file_name, unique_value), end='\r')
+      print('step11 | processing mod_step11_masks... {}: {} masks   '.format(mask_gon.paths.get().file_name, unique_value), end='\r')
 
       # 1. cut image to single value
       unique_image = np.zeros(mask_array.shape)
