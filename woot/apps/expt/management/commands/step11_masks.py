@@ -63,7 +63,7 @@ class Command(BaseCommand):
 
     # input
     input_path = series.experiment.mask_path
-    
+
     img_files = [f for f in os.listdir(input_path) if os.path.splitext(f)[1] in allowed_img_extensions]
     for i, file_name in enumerate(img_files):
       path, path_created, path_message = series.experiment.get_or_create_path(series, input_path, file_name)
@@ -89,7 +89,6 @@ class Command(BaseCommand):
           gon.set_extent(series.rs, series.cs, 1)
 
           gon.paths.create(composite=composite, channel=composite_channel, template=template, url=path.url, file_name=path.file_name, t=t, z=path.z)
-          gon.template = template
           gon.save()
 
     # 2. Call mask mod
