@@ -282,7 +282,7 @@ def mod_step11_masks(composite, mod_id, algorithm):
     smooth_gfp = gf(exposure.rescale_intensity(gfp_gon.load() * 1.0), sigma=3)
 
     # mask img set
-    mask_gon_set = composite.gons.filter(channel__name__in=['pmodreduced','bfreduced'], template__name='cp', t=t)
+    mask_gon_set = composite.gons.filter(channel__name__in=['bfreduced'], template__name='cp', t=t)
 
     for mask_gon in mask_gon_set:
       # load and get unique values
@@ -293,8 +293,7 @@ def mod_step11_masks(composite, mod_id, algorithm):
         print('step11 | processing mod_step11_masks... {}: {} masks   '.format(mask_gon.paths.get().file_name, unique_value), end='\r')
 
         # 1. cut image to single value
-        unique_image = np.zeros(mask_array.shape)
-        unique_image[mask_array==unique_value] = 1
+        unique_image = mask_array==unique_value
         cut, (r,c,rs,cs) = cut_to_black(unique_image)
 
         # smaller masked gfp array
@@ -316,3 +315,12 @@ def mod_step11_masks(composite, mod_id, algorithm):
 
 def mod_step13_cell_masks(composite, mod_id, algorithm):
   pass
+
+  # access cell profiler output file and associate lines with masks
+  lines = []
+  input_path = os.path.join(composite.experiment.mask_path, composite.series.name, 'MaskedBf.csv')
+  with open(input_path) as csv:
+    all_lines = csv.readlines()
+    header = all_lines[0]
+    for line in all_lines[1:]:
+      lines.append(line.split(','))

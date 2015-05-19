@@ -1,4 +1,4 @@
-# expt.command: step11_reduced
+# expt.command: step10_cp
 
 # django
 from django.core.management.base import BaseCommand, CommandError
@@ -6,17 +6,12 @@ from django.core.management.base import BaseCommand, CommandError
 # local
 from apps.expt.models import Series
 from apps.expt.util import *
-from apps.expt.data import *
-from apps.img.util import nonzero_mean
+from apps.expt.data import allowed_img_extensions
 
 # util
 import os
-import numpy as np
+import subprocess
 from optparse import make_option
-import matplotlib.pyplot as plt
-from scipy.ndimage.measurements import center_of_mass as cm
-from scipy.ndimage.morphology import distance_transform_edt as dt
-from scipy.ndimage.morphology import binary_erosion as be
 
 ### Command
 class Command(BaseCommand):
@@ -44,24 +39,41 @@ class Command(BaseCommand):
   def handle(self, *args, **options):
     '''
     1. What does this script do?
-    > Use masks to build up larger masks surrounding markers
+    > Remotely run CellProfiler using a command line. I want to pretend that I am simply modding the images and creating a new channel.
 
     2. What data structures are input?
-    > Mask, Gon
+    > CP Pipeline file, Channel
 
     3. What data structures are output?
-    > Channel, Gon, Mask
+    > Nothing
 
     4. Is this stage repeated/one-time?
-    > Repeated
+    > One-time per pipeline
 
     Steps:
 
-    1. load mask gons
-    2. stack vertically in single array
+    1. Search in pathfor batches
+    2. For each batch, run command
 
     '''
-    series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
-    composite = series.composites.get()
 
-    
+    # 1. get path and batches
+    series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
+
+    # output
+    output_path = os.path.join(series.experiment.mask_path, series.name)
+
+    if not os.path.exists(output_path):
+      os.mkdir(output_path)
+
+    series_cp_path = os.path.join(series.experiment.cp_path, series.name)
+    for batch_number in os.listdir(series_cp_path):
+      # cell profiler input path
+      batch_path = os.path.join(series_cp_path, batch_number)
+
+      # pipeline path
+      pipeline = os.path.join(series.experiment.pipeline_path, '.cppipe')
+
+      # run command
+      cmd = '/Applications/CellProfiler.app/Contents/MacOS/CellProfiler -c -r -i {} -o {} -p {}'.format(batch_path, output_path, pipeline)
+      subprocess.call(cmd, shell=True)

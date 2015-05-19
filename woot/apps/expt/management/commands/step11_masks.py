@@ -62,7 +62,7 @@ class Command(BaseCommand):
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
 
     # input
-    input_path = series.experiment.mask_path
+    input_path = os.path.join(series.experiment.mask_path, series.name)
 
     img_files = [f for f in os.listdir(input_path) if os.path.splitext(f)[1] in allowed_img_extensions]
     for i, file_name in enumerate(img_files):
