@@ -57,6 +57,53 @@ def mod_step02_tracking(composite, mod_id, algorithm):
 
 mod_step02_tracking.description = ''
 
+### STEP 3: combine channels for recognition
+def mod_step03_pmod(composite, mod_id, algorithm):
+  bf_set = composite.gons.filter(channel__name='1')
+  gfp_set = composite.gons.filter(channel__name='0')
+
+  # template
+  template = composite.templates.get(name='source') # SOURCE TEMPLATE
+
+  # channel
+  channel, channel_created = composite.channels.get_or_create(name='-pmod')
+
+  # iterate over frames
+  for t in range(composite.series.ts):
+
+    # 1. check if exists
+    pmod_gon, pmod_gon_created = composite.gons.get_or_create(experiment=composite.experiment, series=composite.series, channel=channel, template=template, t=t)
+
+    if pmod_gon_created:
+      bf_gon = bf_set.get(t=t)
+      print('step03 | processing mod_step03_pmod t{}... created.             '.format(t), end='\r')
+      pmod_gon.set_origin(bf_gon.r, bf_gon.c, bf_gon.z, bf_gon.t)
+      pmod_gon.set_extent(bf_gon.rs, bf_gon.cs, bf_gon.zs)
+
+      # 2. get components
+      bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
+
+      gfp_gon = gfp_set.get(t=t)
+      gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+
+      # 3. calculations
+      gfp_smooth = exposure.rescale_intensity(gf(gfp, sigma=5)) / 2.0
+      # gfp_reduced_glow = gfp_smooth * gfp_smooth
+
+      # product = gfp_reduced_glow * bf
+      product = bf * gfp_smooth
+
+      # 4. save array
+      pmod_gon.array = product
+
+      pmod_gon.save_array(composite.experiment.composite_path, template)
+      pmod_gon.save()
+
+    else:
+      print('step03 | processing mod_step03_pmod t{}... already exists.        '.format(t), end='\r')
+
+mod_step03_pmod.description = 'Scale portions of the brightfield using the gfp density.'
+
 def mod_step04_region_img(composite, mod_id, algorithm):
   bf_set = composite.gons.filter(channel__name='1')
 
@@ -100,11 +147,11 @@ def mod_step08_reduced(composite, mod_id, algorithm):
   template = composite.templates.get(name='source') # SOURCE TEMPLATE
 
   # channels
-  # pmod_reduced_channel, pmod_reduced_channel_created = composite.channels.get_or_create(name='-pmodreduced')
+  pmod_reduced_channel, pmod_reduced_channel_created = composite.channels.get_or_create(name='-pmodreduced')
   bf_reduced_channel, bf_reduced_channel_created = composite.channels.get_or_create(name='-bfreduced')
 
   # image sets
-  # pmod_set = composite.gons.filter(channel__name='-pmod')
+  pmod_set = composite.gons.filter(channel__name='-pmod')
   bf_set = composite.gons.filter(channel__name='1')
 
   # create batches
@@ -116,7 +163,7 @@ def mod_step08_reduced(composite, mod_id, algorithm):
     print('step08 | processing mod_step08_reduced t{}...'.format(t), end='\n' if t==composite.series.ts-1 else '\r')
 
     # 1. get
-    # pmod_gon = pmod_set.get(t=t)
+    pmod_gon = pmod_set.get(t=t)
     bf_gon = bf_set.get(t=t)
 
     # 2. for each unique z value of the markers, make a gon and add it to the pmod_reduced channel
@@ -141,15 +188,15 @@ def mod_step08_reduced(composite, mod_id, algorithm):
         root = os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)) # CP PATH
 
         # pmod
-        # if pmod_reduced_channel.paths.filter(t=t, z=sz).count()==0:
-        #   rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel, template=template)
-        #   rpmod_gon.set_origin(0, 0, sz, t)
-        #   rpmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
-        #
-        #   rpmod_gon.array = pmod_gon.gons.get(z=sz).load()
-        #
-        #   rpmod_gon.save_array(root, template)
-        #   rpmod_gon.save()
+        if pmod_reduced_channel.paths.filter(t=t, z=sz).count()==0:
+          rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel, template=template)
+          rpmod_gon.set_origin(0, 0, sz, t)
+          rpmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+
+          rpmod_gon.array = pmod_gon.gons.get(z=sz).load()
+
+          rpmod_gon.save_array(root, template)
+          rpmod_gon.save()
 
         # bf
         if bf_reduced_channel.paths.filter(t=t, z=sz).count()==0:
