@@ -139,6 +139,33 @@ class Mask(models.Model):
   rs = models.IntegerField(default=-1)
   cs = models.IntegerField(default=-1)
 
+  # 3. gfp
+  max_z = models.IntegerField(default=0)
+  mean = models.FloatField(default=0.0)
+  std = models.FloatField(default=0.0)
+
+  # 4. cell profiler
+  ImageNumber = models.IntegerField(default=0)
+  ObjectNumber = models.IntegerField(default=0)
+  AreaShape_Area = models.IntegerField(default=0)
+  AreaShape_Center_X = models.FloatField(default=0.0)
+  AreaShape_Center_Y = models.FloatField(default=0.0)
+  AreaShape_Compactness = models.FloatField(default=0.0)
+  AreaShape_Eccentricity = models.FloatField(default=0.0)
+  AreaShape_EulerNumber = models.FloatField(default=0.0)
+  AreaShape_Extent = models.FloatField(default=0.0)
+  AreaShape_FormFactor = models.FloatField(default=0.0)
+  AreaShape_MajorAxisLength = models.FloatField(default=0.0)
+  AreaShape_MaximumRadius = models.FloatField(default=0.0)
+  AreaShape_MeanRadius = models.FloatField(default=0.0)
+  AreaShape_MedianRadius = models.FloatField(default=0.0)
+  AreaShape_MinorAxisLength = models.FloatField(default=0.0)
+  AreaShape_Orientation = models.FloatField(default=0.0)
+  AreaShape_Perimeter = models.FloatField(default=0.0)
+  AreaShape_Solidity = models.FloatField(default=0.0)
+  Location_Center_X = models.FloatField(default=0.0)
+  Location_Center_Y = models.FloatField(default=0.0)
+
   # methods
   def set_origin(self, r, c, z):
     self.r = r
@@ -149,4 +176,10 @@ class Mask(models.Model):
   def set_extent(self, rs, cs):
     self.rs = rs
     self.cs = cs
+    self.save()
+
+  def set_gfp(self, max_z, mean, std):
+    self.max_z = max_z
+    self.mean = mean
+    self.std = std
     self.save()

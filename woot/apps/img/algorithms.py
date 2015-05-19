@@ -57,53 +57,6 @@ def mod_step02_tracking(composite, mod_id, algorithm):
 
 mod_step02_tracking.description = ''
 
-### STEP 3: combine channels for recognition
-def mod_step03_pmod(composite, mod_id, algorithm):
-  bf_set = composite.gons.filter(channel__name='1')
-  gfp_set = composite.gons.filter(channel__name='0')
-
-  # template
-  template = composite.templates.get(name='source') # SOURCE TEMPLATE
-
-  # channel
-  channel, channel_created = composite.channels.get_or_create(name='-pmod')
-
-  # iterate over frames
-  for t in range(composite.series.ts):
-
-    # 1. check if exists
-    pmod_gon, pmod_gon_created = composite.gons.get_or_create(experiment=composite.experiment, series=composite.series, channel=channel, template=template, t=t)
-
-    if pmod_gon_created:
-      bf_gon = bf_set.get(t=t)
-      print('step03 | processing mod_step03_pmod t{}... created.             '.format(t), end='\r')
-      pmod_gon.set_origin(bf_gon.r, bf_gon.c, bf_gon.z, bf_gon.t)
-      pmod_gon.set_extent(bf_gon.rs, bf_gon.cs, bf_gon.zs)
-
-      # 2. get components
-      bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
-
-      gfp_gon = gfp_set.get(t=t)
-      gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
-
-      # 3. calculations
-      gfp_smooth = exposure.rescale_intensity(gf(gfp, sigma=5)) / 2.0
-      # gfp_reduced_glow = gfp_smooth * gfp_smooth
-
-      # product = gfp_reduced_glow * bf
-      product = bf * gfp_smooth
-
-      # 4. save array
-      pmod_gon.array = product
-
-      pmod_gon.save_array(composite.experiment.composite_path, template)
-      pmod_gon.save()
-
-    else:
-      print('step03 | processing mod_step03_pmod t{}... already exists.        '.format(t), end='\r')
-
-mod_step03_pmod.description = 'Scale portions of the brightfield using the gfp density.'
-
 def mod_step04_region_img(composite, mod_id, algorithm):
   bf_set = composite.gons.filter(channel__name='1')
 
@@ -117,7 +70,7 @@ def mod_step04_region_img(composite, mod_id, algorithm):
   for t in range(composite.series.ts):
 
     # 1. check if exists
-    region_img_gon, region_img_gon_created = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=channel, template=template, t=t)
+    region_img_gon, region_img_gon_created = composite.gons.get_or_create(experiment=composite.experiment, series=composite.series, channel=channel, template=template, t=t)
     if region_img_gon_created:
       print('step03 | processing mod_step04_region_img t{}... created.              '.format(t), end='\r')
       region_img_gon.set_origin(bf_gon.r, bf_gon.c, 0, bf_gon.t)
@@ -147,11 +100,11 @@ def mod_step08_reduced(composite, mod_id, algorithm):
   template = composite.templates.get(name='source') # SOURCE TEMPLATE
 
   # channels
-  pmod_reduced_channel, pmod_reduced_channel_created = composite.channels.get_or_create(name='-pmodreduced')
+  # pmod_reduced_channel, pmod_reduced_channel_created = composite.channels.get_or_create(name='-pmodreduced')
   bf_reduced_channel, bf_reduced_channel_created = composite.channels.get_or_create(name='-bfreduced')
 
   # image sets
-  pmod_set = composite.gons.filter(channel__name='-pmod')
+  # pmod_set = composite.gons.filter(channel__name='-pmod')
   bf_set = composite.gons.filter(channel__name='1')
 
   # create batches
@@ -163,7 +116,7 @@ def mod_step08_reduced(composite, mod_id, algorithm):
     print('step08 | processing mod_step08_reduced t{}...'.format(t), end='\n' if t==composite.series.ts-1 else '\r')
 
     # 1. get
-    pmod_gon = pmod_set.get(t=t)
+    # pmod_gon = pmod_set.get(t=t)
     bf_gon = bf_set.get(t=t)
 
     # 2. for each unique z value of the markers, make a gon and add it to the pmod_reduced channel
@@ -188,15 +141,15 @@ def mod_step08_reduced(composite, mod_id, algorithm):
         root = os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)) # CP PATH
 
         # pmod
-        if pmod_reduced_channel.paths.filter(t=t, z=sz).count()==0:
-          rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel, template=template)
-          rpmod_gon.set_origin(0, 0, sz, t)
-          rpmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
-
-          rpmod_gon.array = pmod_gon.gons.get(z=sz).load()
-
-          rpmod_gon.save_array(root, template)
-          rpmod_gon.save()
+        # if pmod_reduced_channel.paths.filter(t=t, z=sz).count()==0:
+        #   rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel, template=template)
+        #   rpmod_gon.set_origin(0, 0, sz, t)
+        #   rpmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+        #
+        #   rpmod_gon.array = pmod_gon.gons.get(z=sz).load()
+        #
+        #   rpmod_gon.save_array(root, template)
+        #   rpmod_gon.save()
 
         # bf
         if bf_reduced_channel.paths.filter(t=t, z=sz).count()==0:
@@ -275,26 +228,44 @@ def mod_step11_masks(composite, mod_id, algorithm):
   cp_template = composite.templates.get(name='cp')
   mask_template = composite.templates.get(name='mask')
 
-  # mask img set
-  mask_gon_set = composite.gons.filter(channel__name__in=['pmodreduced','bfreduced'], template__name='cp')
+  for t in range(composite.series.ts):
 
-  for mask_gon in mask_gon_set:
-    # load and get unique values
-    mask_array = mask_gon.load()
+    # get gfp
+    gfp_gon = composite.gons.get(channel__name='0', t=t)
+    smooth_gfp = gf(exposure.rescale_intensity(gfp_gon.load() * 1.0), sigma=3)
 
-    # unique
-    for unique_value in [u for u in np.unique(mask_array) if u>0]:
-      print('step11 | processing mod_step11_masks... {}: {} masks   '.format(mask_gon.paths.get().file_name, unique_value), end='\r')
+    # mask img set
+    mask_gon_set = composite.gons.filter(channel__name__in=['pmodreduced','bfreduced'], template__name='cp', t=t)
 
-      # 1. cut image to single value
-      unique_image = np.zeros(mask_array.shape)
-      unique_image[mask_array==unique_value] = 1
-      cut, (r,c,rs,cs) = cut_to_black(unique_image)
+    for mask_gon in mask_gon_set:
+      # load and get unique values
+      mask_array = mask_gon.load()
 
-      # 3. make mask with cut image and associate to gon2
-      mask = mask_gon.masks.create(composite=composite, channel=mask_gon.channel, mask_id=unique_value)
-      mask.set_origin(r,c,mask_gon.z)
-      mask.set_extent(rs,cs)
+      # unique
+      for unique_value in [u for u in np.unique(mask_array) if u>0]:
+        print('step11 | processing mod_step11_masks... {}: {} masks   '.format(mask_gon.paths.get().file_name, unique_value), end='\r')
+
+        # 1. cut image to single value
+        unique_image = np.zeros(mask_array.shape)
+        unique_image[mask_array==unique_value] = 1
+        cut, (r,c,rs,cs) = cut_to_black(unique_image)
+
+        # smaller masked gfp array
+        mini_masked_array = np.ma.array(smooth_gfp[r:r+rs, c:c+cs, :], mask=np.dstack([np.invert(cut)]*smooth_gfp.shape[2]), fill_value=0)
+
+        # squeeze into column
+        column = np.sum(np.sum(mini_masked_array.filled(), axis=0), axis=0)
+
+        # details
+        max_z = np.argmax(column)
+        mean = np.mean(column)
+        std = np.std(column)
+
+        # 3. make mask with cut image and associate to gon2
+        mask = mask_gon.masks.create(composite=composite, channel=mask_gon.channel, mask_id=unique_value)
+        mask.set_origin(r,c,mask_gon.z)
+        mask.set_extent(rs,cs)
+        mask.set_gfp(max_z, mean, std)
 
 def mod_step13_cell_masks(composite, mod_id, algorithm):
   pass
