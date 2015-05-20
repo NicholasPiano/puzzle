@@ -235,6 +235,9 @@ class Series(models.Model):
     region = list(filter(lambda x: x.experiment==self.experiment.name and x.series==self.name and x.index==index, regions))[0]
     return region.vertical_sort_index
 
+  def shape(self):
+    return (self.rs, self.cs)
+
 class Channel(models.Model):
   # connections
   experiment = models.ForeignKey(Experiment, related_name='channels')
