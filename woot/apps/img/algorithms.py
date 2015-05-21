@@ -324,3 +324,41 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
     header = all_lines[0]
     for line in all_lines[1:]:
       lines.append(line.split(','))
+
+def mod_gfp_smooth_sum(composite, mod_id, algorithm):
+
+  bf_set = composite.gons.filter(channel__name='1')
+  gfp_set = composite.gons.filter(channel__name='0')
+
+  # template
+  template = composite.templates.get(name='source') # SOURCE TEMPLATE
+
+  # channel
+  tracking_channel, tracking_channel_created = composite.channels.get_or_create(name='-trackingimg')
+
+  # iterate over frames
+  for t in range(composite.series.ts):
+
+    tracking_gon, tracking_gon_created = composite.gons.get_or_create(experiment=composite.experiment, series=composite.series, channel=tracking_channel, template=template, t=t)
+    tracking_gon.set_origin(0, 0, 0, t)
+    tracking_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+
+    # 2. get components
+    bf_gon = bf_set.get(t=t)
+    bf_gon = bf_gon.gons.get(z=int(bf_gon.zs/2.0))
+    bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
+
+    gfp_gon = gfp_set.get(t=t)
+    gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+
+    # 3. calculations
+    gfp_smooth = gf(gfp, sigma=2)
+    gfp_smooth = np.sum(gfp_smooth, axis=2) / 14.0 # completely arbitrary factor
+
+    product = bf + gfp_smooth # superimposes the (slightly) smoothed gfp onto the bright field.
+
+    # 4. save array
+    tracking_gon.array = product
+
+    tracking_gon.save_array(composite.experiment.tracking_path, template)
+    tracking_gon.save()
