@@ -90,8 +90,17 @@ class Command(BaseCommand):
       for z in range(series.zs):
         # full_mask = np.zeros(series.shape(), dtype=int)
         mask_set = list(composite.masks.filter(max_z=z, gon__t=t, gon__channel__name='bfreduced'))
-        for mask in mask_set:
-          print(mask.pk)
+        # for mask in mask_set:
+          # print(mask.pk)
           # full_mask += (slice(pk=mask.gon.pk)==mask.mask_id).astype(int)
 
         # imsave(os.path.join(series.experiment.output_path, 'level_{}.tiff'.format(z)), full_mask)
+
+      # markers
+      for marker in series.markers.filter(t=t):
+        mask_set = list(composite.masks.filter(max_z=marker.z, gon__t=t, gon__channel__name='bfreduced'))
+        full_mask = np.zeros(series.shape(), dtype=float)
+        for mask in mask_set:
+          if ((marker.r - mask.r)**2 + (marker.c - mask.c)**2)**(0.5) < 20:
+            full_mask += (slice(pk=mask.gon.pk)==mask.mask_id).astype(float)
+        imsave(os.path.join(series.experiment.output_path, 'marker_{}.tiff'.format(marker.pk)), full_mask)
