@@ -235,8 +235,11 @@ class Series(models.Model):
     region = list(filter(lambda x: x.experiment==self.experiment.name and x.series==self.name and x.index==index, regions))[0]
     return region.vertical_sort_index
 
-  def shape(self):
-    return (self.rs, self.cs)
+  def shape(self, d=2):
+    if d!=3:
+      return (self.rs, self.cs)
+    else:
+      return (self.rs, self.cs, self.zs)
 
 class Channel(models.Model):
   # connections

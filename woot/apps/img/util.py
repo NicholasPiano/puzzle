@@ -59,6 +59,16 @@ def nonzero_mean(img):
   masked = np.ma.array(img, mask=mask)
   return masked.mean()
 
+
+def nonzero_mean_thresholded_binary(img):
+  nzm = nonzero_mean(img)
+  return (img>nzm).copy()
+
+def nonzero_mean_thresholded_preserve(img):
+  nzm = nonzero_mean(img)
+  img[img<nzm] = 0
+  return img.copy()
+
 # for point, distance in spiral(centre=marker.centre(), direction='+r', gap=1, steps=10):
 
 # def sign(i):
