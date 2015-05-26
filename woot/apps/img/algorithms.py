@@ -282,7 +282,7 @@ def mod_step11_masks(composite, mod_id, algorithm):
     smooth_gfp = gf(exposure.rescale_intensity(gfp_gon.load() * 1.0), sigma=3)
 
     # mask img set
-    mask_gon_set = composite.gons.filter(channel__name__in=['bfreduced'], template__name='cp', t=t)
+    mask_gon_set = composite.gons.filter(channel__name__in=['bfreduced','pmodreduced'], template__name='cp', t=t)
 
     for mask_gon in mask_gon_set:
       # load and get unique values
@@ -314,16 +314,76 @@ def mod_step11_masks(composite, mod_id, algorithm):
         mask.set_gfp(max_z, mean, std)
 
 def mod_step13_cell_masks(composite, mod_id, algorithm):
-  pass
+  # paths
+  template = composite.templates.get(name='mask') # SOURCE TEMPLATE
 
-  # access cell profiler output file and associate lines with masks
-  lines = []
-  input_path = os.path.join(composite.experiment.mask_path, composite.series.name, 'MaskedBf.csv')
-  with open(input_path) as csv:
-    all_lines = csv.readlines()
-    header = all_lines[0]
-    for line in all_lines[1:]:
-      lines.append(line.split(','))
+  # create batches
+  batch = 0
+  max_batch_size = 100
+
+  # iterate over frames
+  for t in range(composite.series.ts):
+    print('step13 | processing mod_step13_cell_masks t{}...'.format(t), end='\n' if t==composite.series.ts-1 else '\r')
+
+    # one mask for each marker
+    markers = composite.series.markers.filter(t=t)
+
+    # 1. get masks
+    pmodreduced_gon_set = composite.gons.filter(channel__name__in=['pmodreduced'], t=t)
+    bfreduced_gon_set = composite.gons.filter(channel__name__in=['bfreduced'], t=t)
+
+    bulk = create_bulk_from_image_set(mask_gon_set)
+
+    for marker in markers:
+      # get primary mask
+      print(marker.pk)
+
+      # get secondary mask
+
+
+      # # check batch and make folders, set url
+      # if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))):
+      #   os.makedirs(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
+      #
+      # if len(os.listdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))))==max_batch_size:
+      #   batch += 1
+      #   if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))):
+      #     os.makedirs(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
+      #
+      # root = os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)) # CP PATH
+      #
+      # # pmod
+      # if pmod_reduced_channel.paths.filter(t=t, z=sz).count()==0:
+      #   rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel, template=template)
+      #   rpmod_gon.set_origin(0, 0, sz, t)
+      #   rpmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+      #
+      #   rpmod_gon.array = pmod_gon.gons.get(z=sz).load()
+      #
+      #   rpmod_gon.save_array(root, template)
+      #   rpmod_gon.save()
+
+          # for t in range(1):
+          #   mask_gon_set = composite.gons.filter(channel__name__in=['bfreduced', 'pmodreduced'], t=t)
+          #
+          #   bulk = create_bulk_from_image_set(mask_gon_set)
+          #
+          #   # [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37, 40, 43, 46]
+          #
+          #   marker = series.markers.get(pk=1)
+          #   mask_uids = [(i, uid) for i,uid in enumerate(bulk.gon_stack[marker.r,marker.c,:]) if uid>0]
+          #   blank = np.zeros(series.shape(), dtype=int)
+          #
+          #   for i,uid in mask_uids:
+          #     gon_pk = bulk.rv[i]
+          #     mask = composite.masks.get(gon__pk=gon_pk, mask_id=uid)
+          #
+          #     mask_array = (bulk.slice(pk=mask.gon.pk)==mask.mask_id).astype(int)
+          #
+          #     blank += mask_array
+          #
+          #   plt.imshow(blank)
+          #   plt.show()
 
 def mod_gfp_smooth_sum(composite, mod_id, algorithm):
 

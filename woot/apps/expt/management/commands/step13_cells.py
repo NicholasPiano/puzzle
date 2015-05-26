@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 from apps.expt.models import Series
 from apps.expt.util import *
 from apps.expt.data import *
-from apps.img.util import nonzero_mean, cut_to_black
+from apps.img.util import nonzero_mean, cut_to_black, create_bulk_from_image_set
 
 # util
 import os
@@ -62,45 +62,14 @@ class Command(BaseCommand):
     2. stack vertically in single array
 
     '''
-    series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
-    composite = series.composites.get()
 
-    for t in range(1):
-      # load entire set of mask gons as 3D box with accessor dictionary
-      mask_gon_stack = None
-      mask_accessor_dict = {}
+    # 1. select composite
+    composite = Composite.objects.get(experiment__name=options['expt'], series__name=options['series'])
 
-      mask_gon_set = composite.gons.filter(channel__name='bfreduced', t=t)
+    # 2. Call pmod mod
+    mod = composite.mods.create(id_token=generate_id_token('img', 'Mod'), algorithm='mod_step13_cell_masks')
 
-      for i, mask_gon in enumerate(mask_gon_set):
-        m = mask_gon.load()
-        mask_accessor_dict[mask_gon.pk] = i
-        if mask_gon_stack is None:
-          mask_gon_stack = m
-        else:
-          mask_gon_stack = np.dstack([mask_gon_stack, m])
-
-      def slice(z=None, pk=None):
-        if z is None:
-          return mask_gon_stack[:,:,mask_accessor_dict[pk]]
-        else:
-          return mask_gon_stack[:,:,mask_accessor_dict[mask_gon_set.get(z=z).pk]]
-
-      # to access a single mask in the bulk, need (gon.pk or gon.z, unique_id)
-      for z in range(series.zs):
-        # full_mask = np.zeros(series.shape(), dtype=int)
-        mask_set = list(composite.masks.filter(max_z=z, gon__t=t, gon__channel__name='bfreduced'))
-        # for mask in mask_set:
-          # print(mask.pk)
-          # full_mask += (slice(pk=mask.gon.pk)==mask.mask_id).astype(int)
-
-        # imsave(os.path.join(series.experiment.output_path, 'level_{}.tiff'.format(z)), full_mask)
-
-      # markers
-      for marker in series.markers.filter(t=t):
-        mask_set = list(composite.masks.filter(max_z=marker.z, gon__t=t, gon__channel__name='bfreduced'))
-        full_mask = np.zeros(series.shape(), dtype=float)
-        for mask in mask_set:
-          if ((marker.r - mask.r)**2 + (marker.c - mask.c)**2)**(0.5) < 20:
-            full_mask += (slice(pk=mask.gon.pk)==mask.mask_id).astype(float)
-        imsave(os.path.join(series.experiment.output_path, 'marker_{}.tiff'.format(marker.pk)), full_mask)
+    # 3. Run mod
+    print('step13 | processing mod_step13_cell_masks...', end='\r')
+    mod.run()
+    print('step13 | processing mod_step13_cell_masks... done.'

@@ -66,13 +66,13 @@ class Command(BaseCommand):
     if not os.path.exists(output_path):
       os.mkdir(output_path)
 
-    series_cp_path = os.path.join(series.experiment.cp_path, series.name)
+    series_cp_path = os.path.join(series.experiment.cp2_path, series.name)
     for batch_number in os.listdir(series_cp_path):
       # cell profiler input path
       batch_path = os.path.join(series_cp_path, batch_number)
 
       # pipeline path
-      pipeline = os.path.join(series.experiment.pipeline_path, '.cppipe')
+      pipeline = os.path.join(series.experiment.pipeline_path, 'cell_mask_v0.1.cppipe')
 
       # run command
       cmd = '/Applications/CellProfiler.app/Contents/MacOS/CellProfiler -c -r -i {} -o {} -p {}'.format(batch_path, output_path, pipeline)

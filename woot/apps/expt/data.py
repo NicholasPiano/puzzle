@@ -169,6 +169,7 @@ default_paths = {
   'cp':'img/cp/',
   'mask':'img/mask/',
   'sub_mask':'img/sub-mask/',
+  'cp2':'img/cp2/',
 
   'output':'img/output/',
   'plot':'plot/',

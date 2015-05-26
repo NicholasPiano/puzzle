@@ -63,7 +63,7 @@ class Command(BaseCommand):
 
     # input
     input_path = os.path.join(series.experiment.mask_path, series.name)
-
+    
     img_files = [f for f in os.listdir(input_path) if os.path.splitext(f)[1] in allowed_img_extensions]
     for i, file_name in enumerate(img_files):
       path, path_created, path_message = series.experiment.get_or_create_path(series, input_path, file_name)

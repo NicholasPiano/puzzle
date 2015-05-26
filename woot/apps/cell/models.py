@@ -60,6 +60,28 @@ class CellInstance(models.Model):
   vc = models.IntegerField(default=0)
   vz = models.IntegerField(default=0)
 
+  # 4. cell profiler
+  ImageNumber = models.IntegerField(default=0)
+  ObjectNumber = models.IntegerField(default=0)
+  AreaShape_Area = models.IntegerField(default=0)
+  AreaShape_Center_X = models.FloatField(default=0.0)
+  AreaShape_Center_Y = models.FloatField(default=0.0)
+  AreaShape_Compactness = models.FloatField(default=0.0)
+  AreaShape_Eccentricity = models.FloatField(default=0.0)
+  AreaShape_EulerNumber = models.FloatField(default=0.0)
+  AreaShape_Extent = models.FloatField(default=0.0)
+  AreaShape_FormFactor = models.FloatField(default=0.0)
+  AreaShape_MajorAxisLength = models.FloatField(default=0.0)
+  AreaShape_MaximumRadius = models.FloatField(default=0.0)
+  AreaShape_MeanRadius = models.FloatField(default=0.0)
+  AreaShape_MedianRadius = models.FloatField(default=0.0)
+  AreaShape_MinorAxisLength = models.FloatField(default=0.0)
+  AreaShape_Orientation = models.FloatField(default=0.0)
+  AreaShape_Perimeter = models.FloatField(default=0.0)
+  AreaShape_Solidity = models.FloatField(default=0.0)
+  Location_Center_X = models.FloatField(default=0.0)
+  Location_Center_Y = models.FloatField(default=0.0)
+
   # methods
   def R(self):
     return self.r*self.experiment.rmop
@@ -143,28 +165,6 @@ class Mask(models.Model):
   max_z = models.IntegerField(default=0)
   mean = models.FloatField(default=0.0)
   std = models.FloatField(default=0.0)
-
-  # 4. cell profiler
-  ImageNumber = models.IntegerField(default=0)
-  ObjectNumber = models.IntegerField(default=0)
-  AreaShape_Area = models.IntegerField(default=0)
-  AreaShape_Center_X = models.FloatField(default=0.0)
-  AreaShape_Center_Y = models.FloatField(default=0.0)
-  AreaShape_Compactness = models.FloatField(default=0.0)
-  AreaShape_Eccentricity = models.FloatField(default=0.0)
-  AreaShape_EulerNumber = models.FloatField(default=0.0)
-  AreaShape_Extent = models.FloatField(default=0.0)
-  AreaShape_FormFactor = models.FloatField(default=0.0)
-  AreaShape_MajorAxisLength = models.FloatField(default=0.0)
-  AreaShape_MaximumRadius = models.FloatField(default=0.0)
-  AreaShape_MeanRadius = models.FloatField(default=0.0)
-  AreaShape_MedianRadius = models.FloatField(default=0.0)
-  AreaShape_MinorAxisLength = models.FloatField(default=0.0)
-  AreaShape_Orientation = models.FloatField(default=0.0)
-  AreaShape_Perimeter = models.FloatField(default=0.0)
-  AreaShape_Solidity = models.FloatField(default=0.0)
-  Location_Center_X = models.FloatField(default=0.0)
-  Location_Center_Y = models.FloatField(default=0.0)
 
   # methods
   def set_origin(self, r, c, z):

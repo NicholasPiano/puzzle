@@ -72,7 +72,7 @@ class Command(BaseCommand):
       batch_path = os.path.join(series_cp_path, batch_number)
 
       # pipeline path
-      pipeline = os.path.join(series.experiment.pipeline_path, 'bf_pmod_v0.4.cppipe')
+      pipeline = os.path.join(series.experiment.pipeline_path, 'bf_pmod_v0.5.cppipe')
 
       # run command
       cmd = '/Applications/CellProfiler.app/Contents/MacOS/CellProfiler -c -r -i {} -o {} -p {}'.format(batch_path, output_path, pipeline)
