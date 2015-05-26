@@ -93,6 +93,9 @@ class Gon(models.Model):
     # 2. for each plane, save plane based on root, template
     # 3. create path with url and add to gon
 
+    if not os.path.exists(root):
+      os.makedirs(root)
+
     file_name = template.rv.format(self.experiment.name, self.series.name, self.channel.name, self.t, '{}')
     url = os.path.join(root, file_name)
 

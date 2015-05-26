@@ -126,7 +126,7 @@ class Marker(models.Model):
   series = models.ForeignKey(Series, related_name='markers')
   track = models.ForeignKey(Track, related_name='markers')
   region = models.ForeignKey(Region, related_name='markers', null=True)
-  gon = models.OneToOneField(Gon, related_name='markers', null=True)
+  gon = models.OneToOneField(Gon, related_name='marker', null=True)
 
   # properties
   r = models.IntegerField(default=0)
@@ -143,7 +143,7 @@ class Mask(models.Model):
   # connections
   composite = models.ForeignKey(Composite, related_name='masks')
   channel = models.ForeignKey(Channel, related_name='masks')
-  gon = models.ForeignKey(Gon, related_name='mask')
+  gon = models.ForeignKey(Gon, related_name='masks')
 
   # properties
   mask_id = models.IntegerField(default=0)
