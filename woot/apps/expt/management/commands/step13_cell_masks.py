@@ -4,20 +4,12 @@
 from django.core.management.base import BaseCommand, CommandError
 
 # local
-from apps.expt.models import Series
-from apps.expt.util import *
-from apps.expt.data import *
-from apps.img.util import nonzero_mean, cut_to_black, create_bulk_from_image_set
+from apps.img.models import Composite
+from apps.expt.util import generate_id_token
 
 # util
 import os
-import numpy as np
 from optparse import make_option
-import matplotlib.pyplot as plt
-from scipy.misc import imsave
-from scipy.ndimage.measurements import center_of_mass as cm
-from scipy.ndimage.morphology import distance_transform_edt as dt
-from scipy.ndimage.morphology import binary_erosion as be
 
 ### Command
 class Command(BaseCommand):
@@ -72,4 +64,4 @@ class Command(BaseCommand):
     # 3. Run mod
     print('step13 | processing mod_step13_cell_masks...', end='\r')
     mod.run()
-    print('step13 | processing mod_step13_cell_masks... done.'
+    print('step13 | processing mod_step13_cell_masks... done.')

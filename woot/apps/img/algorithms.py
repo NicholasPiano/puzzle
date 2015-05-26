@@ -1,15 +1,18 @@
 # apps.img.algorithms
 
 # local
-from apps.img.util import cut_to_black
+from apps.img.util import cut_to_black, create_bulk_from_image_set, nonzero_mean, edge_image
 from apps.expt.util import generate_id_token
 
 # util
 import os
+from scipy.misc import imsave
 from scipy.ndimage.filters import gaussian_filter as gf
+from scipy.ndimage.measurements import center_of_mass as com
 from skimage import exposure
 import numpy as np
 from scipy.ndimage.measurements import label
+import matplotlib.pyplot as plt
 
 # methods
 ### STEP 2: Generate images for tracking
@@ -244,7 +247,7 @@ def mod_step09_regions(composite, mod_id, algorithm):
     region_array, n = label(region_array)
 
     region_gon.array = region_array.copy()
-    region_gon.save_array(composite.experiment.mask_path, template)
+    region_gon.save_array(os.path.join(composite.experiment.mask_path, composite.series.name), template)
 
     for unique_value in [u for u in np.unique(region_array) if u>0]:
       # 1. cut image to single value
@@ -315,11 +318,14 @@ def mod_step11_masks(composite, mod_id, algorithm):
 
 def mod_step13_cell_masks(composite, mod_id, algorithm):
   # paths
-  template = composite.templates.get(name='mask') # SOURCE TEMPLATE
+  template = composite.templates.get(name='mask') # MASK TEMPLATE
 
   # create batches
   batch = 0
   max_batch_size = 100
+
+  # channel
+  cell_mask_channel, cell_mask_channel_created = composite.channels.get_or_create(name='cellmask')
 
   # iterate over frames
   for t in range(composite.series.ts):
@@ -329,96 +335,119 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
     markers = composite.series.markers.filter(t=t)
 
     # 1. get masks
-    pmodreduced_gon_set = composite.gons.filter(channel__name__in=['pmodreduced'], t=t)
-    bfreduced_gon_set = composite.gons.filter(channel__name__in=['bfreduced'], t=t)
-
+    mask_gon_set = composite.gons.filter(channel__name__in=['pmodreduced','bfreduced'], t=t)
     bulk = create_bulk_from_image_set(mask_gon_set)
+    mask_mean_max = np.max([mask.mean for mask in composite.masks.all()])
 
     for marker in markers:
+      # marker parameters
+      r, c, z = marker.r, marker.c, marker.z
+      other_marker_posiitions = [(m.r,m.c) for m in markers.exclude(pk=marker.pk)]
+
       # get primary mask
-      print(marker.pk)
+      primary_mask = np.zeros(composite.series.shape(), dtype=float) # blank image
 
-      # get secondary mask
+      mask_uids = [(i, uid) for i,uid in enumerate(bulk.gon_stack[r,c,:]) if uid>0]
+      for i,uid in mask_uids:
+        gon_pk = bulk.rv[i]
+        mask = composite.masks.get(gon__pk=gon_pk, mask_id=uid)
+        mask_array = (bulk.slice(pk=mask.gon.pk)==mask.mask_id).astype(float)
 
+        # modify mask array based on parameters
+        mask_z, mask_max_z, mask_mean, mask_std = mask.z, mask.max_z, mask.mean, mask.std
 
-      # # check batch and make folders, set url
-      # if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))):
-      #   os.makedirs(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
-      #
-      # if len(os.listdir(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))))==max_batch_size:
-      #   batch += 1
-      #   if not os.path.exists(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch))):
-      #     os.makedirs(os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)))
-      #
-      # root = os.path.join(composite.experiment.cp_path, composite.series.name, str(batch)) # CP PATH
-      #
-      # # pmod
-      # if pmod_reduced_channel.paths.filter(t=t, z=sz).count()==0:
-      #   rpmod_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=pmod_reduced_channel, template=template)
-      #   rpmod_gon.set_origin(0, 0, sz, t)
-      #   rpmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
-      #
-      #   rpmod_gon.array = pmod_gon.gons.get(z=sz).load()
-      #
-      #   rpmod_gon.save_array(root, template)
-      #   rpmod_gon.save()
+        z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_z)) # suppress z levels at increasing distances from marker
+        max_z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_max_z)) # suppress z levels at increasing distances from marker
+        mean_term = mask_mean / mask_mean_max # raise mask according to mean
+        std_term = 1.0
 
-          # for t in range(1):
-          #   mask_gon_set = composite.gons.filter(channel__name__in=['bfreduced', 'pmodreduced'], t=t)
-          #
-          #   bulk = create_bulk_from_image_set(mask_gon_set)
-          #
-          #   # [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37, 40, 43, 46]
-          #
-          #   marker = series.markers.get(pk=1)
-          #   mask_uids = [(i, uid) for i,uid in enumerate(bulk.gon_stack[marker.r,marker.c,:]) if uid>0]
-          #   blank = np.zeros(series.shape(), dtype=int)
-          #
-          #   for i,uid in mask_uids:
-          #     gon_pk = bulk.rv[i]
-          #     mask = composite.masks.get(gon__pk=gon_pk, mask_id=uid)
-          #
-          #     mask_array = (bulk.slice(pk=mask.gon.pk)==mask.mask_id).astype(int)
-          #
-          #     blank += mask_array
-          #
-          #   plt.imshow(blank)
-          #   plt.show()
+        mask_array = mask_array * z_term * max_z_term * mean_term * std_term
 
-def mod_gfp_smooth_sum(composite, mod_id, algorithm):
+        # add to primary mask
+        primary_mask += mask_array
 
-  bf_set = composite.gons.filter(channel__name='1')
-  gfp_set = composite.gons.filter(channel__name='0')
+      # get secondary mask - get unique masks that touch the edge of the primary mask
+      secondary_mask = np.zeros(composite.series.shape(), dtype=float) # blank image
 
-  # template
-  template = composite.templates.get(name='source') # SOURCE TEMPLATE
+      secondary_mask_uids = []
+      edges = np.where(edge_image(primary_mask>0))
+      for r, c in zip(*edges):
+        for i,uid in enumerate(bulk.gon_stack[r,c,:]):
+          if (i,uid) not in secondary_mask_uids and (i,uid) not in mask_uids and uid>0:
+            secondary_mask_uids.append((i,uid))
 
-  # channel
-  tracking_channel, tracking_channel_created = composite.channels.get_or_create(name='-trackingimg')
+      for i,uid in secondary_mask_uids:
+        gon_pk = bulk.rv[i]
+        mask = composite.masks.get(gon__pk=gon_pk, mask_id=uid)
+        mask_array = (bulk.slice(pk=mask.gon.pk)==mask.mask_id).astype(float)
 
-  # iterate over frames
-  for t in range(composite.series.ts):
+        # modify mask array based on parameters
+        mask_z, mask_max_z, mask_mean, mask_std = mask.z, mask.max_z, mask.mean, mask.std
 
-    tracking_gon, tracking_gon_created = composite.gons.get_or_create(experiment=composite.experiment, series=composite.series, channel=tracking_channel, template=template, t=t)
-    tracking_gon.set_origin(0, 0, 0, t)
-    tracking_gon.set_extent(composite.series.rs, composite.series.cs, 1)
+        z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_z)) # suppress z levels at increasing distances from marker
+        max_z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_max_z)) # suppress z levels at increasing distances from marker
+        mean_term = mask_mean / mask_mean_max # raise mask according to mean
+        std_term = 1.0
 
-    # 2. get components
-    bf_gon = bf_set.get(t=t)
-    bf_gon = bf_gon.gons.get(z=int(bf_gon.zs/2.0))
-    bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
+        foreign_marker_condition = 1.0 # if the mask contains a different marker
+        foreign_marker_match = False
+        foreign_marker_counter = 0
+        while not foreign_marker_match and foreign_marker_counter!=len(other_marker_posiitions)-1:
+          r, c = other_marker_posiitions[foreign_marker_counter]
+          foreign_marker_match = (mask_array>0)[r,c]
+          if foreign_marker_match:
+            foreign_marker_condition = 0.0
+          foreign_marker_counter += 1
 
-    gfp_gon = gfp_set.get(t=t)
-    gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+        mask_array = mask_array * z_term * max_z_term * mean_term * std_term * foreign_marker_condition
 
-    # 3. calculations
-    gfp_smooth = gf(gfp, sigma=2)
-    gfp_smooth = np.sum(gfp_smooth, axis=2) / 14.0 # completely arbitrary factor
+        # add to primary mask
+        secondary_mask += mask_array
 
-    product = bf + gfp_smooth # superimposes the (slightly) smoothed gfp onto the bright field.
+      cell_mask = primary_mask + secondary_mask
 
-    # 4. save array
-    tracking_gon.array = product
+      # finally, mean threshold mask
+      cell_mask[cell_mask<nonzero_mean(cell_mask)] = 0
+      cell_mask[cell_mask<nonzero_mean(cell_mask)] = 0
 
-    tracking_gon.save_array(composite.experiment.tracking_path, template)
-    tracking_gon.save()
+      # cut to size
+      # I want every mask to be exactly the same size -> 128 pixels wide
+      # I want the centre of the mask to be in the centre of image
+      # Add black space around even past the borders of larger image
+      # 1. determine centre of mass
+      com_r, com_c = com(cell_mask)
+
+      # 2. cut to black and preserve boundaries
+      cut, (cr, cc, crs, ccs) = cut_to_black(cell_mask)
+
+      # 3. create new square image
+      mask_square = np.zeros((256,256), dtype=float)
+
+      # 4. place cut inside square image using the centre of mass and the cut boundaries to hit the centre
+      dr, dc = 128 + cr - com_r, 128 + cc - com_c
+
+      # 5. preserve coordinates of square to position gon
+      mask_square[dr:dr+crs,dc:dc+ccs] = cut
+
+      # check batch and make folders, set url
+      if not os.path.exists(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))):
+        os.makedirs(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch)))
+
+      if len(os.listdir(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))))==max_batch_size:
+        batch += 1
+        if not os.path.exists(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))):
+          os.makedirs(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch)))
+
+      root = os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch)) # CP PATH
+
+      # cell mask gon
+      cell_mask_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=cell_mask_channel, template=template)
+      cell_mask_gon.set_origin(cr-dr, cc-dc, z, t)
+      cell_mask_gon.set_extent(crs, ccs, 1)
+
+      file_name = template.rv.format(generate_id_token('img','Gon'))
+      url = os.path.join(root, file_name)
+
+      imsave(url, mask_square.copy())
+      cell_mask_gon.paths.create(composite=composite, channel=cell_mask_channel, template=template, url=url, file_name=file_name, t=t, z=z)
+      cell_mask_gon.save()

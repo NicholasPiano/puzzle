@@ -47,6 +47,7 @@ class CellInstance(models.Model):
   series = models.ForeignKey(Series, related_name='cell_instances')
   cell = models.ForeignKey(Cell, related_name='cell_instances')
   region = models.ForeignKey(Region, related_name='cell_instances', null=True)
+  gon = models.OneToOneField(Gon, related_name='cell_instance', null=True)
 
   # properties
   r = models.IntegerField(default=0)
@@ -54,18 +55,12 @@ class CellInstance(models.Model):
   z = models.IntegerField(default=0)
   t = models.IntegerField(default=0)
 
-  a = models.IntegerField(default=0)
-
   vr = models.IntegerField(default=0)
   vc = models.IntegerField(default=0)
   vz = models.IntegerField(default=0)
 
   # 4. cell profiler
-  ImageNumber = models.IntegerField(default=0)
-  ObjectNumber = models.IntegerField(default=0)
   AreaShape_Area = models.IntegerField(default=0)
-  AreaShape_Center_X = models.FloatField(default=0.0)
-  AreaShape_Center_Y = models.FloatField(default=0.0)
   AreaShape_Compactness = models.FloatField(default=0.0)
   AreaShape_Eccentricity = models.FloatField(default=0.0)
   AreaShape_EulerNumber = models.FloatField(default=0.0)
@@ -131,6 +126,7 @@ class Marker(models.Model):
   series = models.ForeignKey(Series, related_name='markers')
   track = models.ForeignKey(Track, related_name='markers')
   region = models.ForeignKey(Region, related_name='markers', null=True)
+  gon = models.OneToOneField(Gon, related_name='markers', null=True)
 
   # properties
   r = models.IntegerField(default=0)

@@ -61,7 +61,7 @@ class Command(BaseCommand):
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
 
     # output
-    output_path = os.path.join(series.experiment.mask_path, series.name)
+    output_path = os.path.join(series.experiment.output_path, series.name)
 
     if not os.path.exists(output_path):
       os.mkdir(output_path)

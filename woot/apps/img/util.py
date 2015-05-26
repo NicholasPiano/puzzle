@@ -7,6 +7,7 @@
 # util
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.ndimage.morphology import binary_erosion as erode
 
 def cut_to_black(array):
   # coordinates of non-black
@@ -17,6 +18,9 @@ def cut_to_black(array):
 
   # return cut
   return array[r0:r1,c0:c1], (r0,c0,(r1-r0),(c1-c0))
+
+def edge_image(array): # assumed to be binary
+  return array - erode(array)
 
 # tests
 def box_overlaps_marker(mask, marker):
@@ -58,7 +62,6 @@ def nonzero_mean(img):
   mask = img<0
   masked = np.ma.array(img, mask=mask)
   return masked.mean()
-
 
 def nonzero_mean_thresholded_binary(img):
   nzm = nonzero_mean(img)
