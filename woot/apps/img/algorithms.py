@@ -450,4 +450,10 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
 
       imsave(url, mask_square.copy())
       cell_mask_gon.paths.create(composite=composite, channel=cell_mask_channel, template=template, url=url, file_name=file_name, t=t, z=z)
+
+      # associate with marker
+      marker.gon = cell_mask_gon
+      cell_mask_gon.marker = marker
+      marker.save()
+
       cell_mask_gon.save()

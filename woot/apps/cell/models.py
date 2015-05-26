@@ -143,7 +143,7 @@ class Mask(models.Model):
   # connections
   composite = models.ForeignKey(Composite, related_name='masks')
   channel = models.ForeignKey(Channel, related_name='masks')
-  gon = models.ForeignKey(Gon, related_name='masks')
+  gon = models.ForeignKey(Gon, related_name='mask')
 
   # properties
   mask_id = models.IntegerField(default=0)
