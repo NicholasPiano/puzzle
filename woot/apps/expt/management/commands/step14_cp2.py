@@ -60,16 +60,16 @@ class Command(BaseCommand):
     # 1. get path and batches
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
 
-    # output
-    output_path = os.path.join(series.experiment.output_path, series.name)
-
-    if not os.path.exists(output_path):
-      os.mkdir(output_path)
-
     series_cp_path = os.path.join(series.experiment.cp2_path, series.name)
     for batch_number in os.listdir(series_cp_path):
       # cell profiler input path
       batch_path = os.path.join(series_cp_path, batch_number)
+
+      # output
+      output_path = os.path.join(series.experiment.output_path, series.name, batch_number)
+
+      if not os.path.exists(output_path):
+        os.mkdir(output_path)
 
       # pipeline path
       pipeline = os.path.join(series.experiment.pipeline_path, 'cell_mask_v0.1.cppipe')
