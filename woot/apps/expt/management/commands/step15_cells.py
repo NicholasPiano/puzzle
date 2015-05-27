@@ -62,8 +62,6 @@ class Command(BaseCommand):
     # 1. get path and batches
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
 
-    track_id_dictionary = {}
-
     # 2. open spreadsheet
     for batch_number in [f for f in os.listdir(os.path.join(series.experiment.output_path, series.name)) if '.DS' not in f]:
       with open(os.path.join(series.experiment.output_path, series.name, batch_number, 'Nuclei.csv')) as spreadsheet:
@@ -82,67 +80,58 @@ class Command(BaseCommand):
 
           marker = gon.marker
           track_id = gon.marker.track.track_id
+          track_index = gon.marker.track.index
 
-          if track_id in track_id_dictionary:
-            track_id_dictionary[track_id] += 1
+          # create cell
+          cell, cell_created = series.experiment.cells.get_or_create(series=series, cell_id=track_id, cell_index=track_index)
+
+          # create cell instance
+          if CellInstance.objects.filter(gon=gon).count()==0:
+            cell_instance, cell_instance_created = cell.cell_instances.get_or_create(experiment=cell.experiment, series=cell.series, region=marker.region)
+            if cell_instance_created:
+              cell_instance.gon = gon
+              gon.cell_instance = cell_instance
+              gon.save()
+
+              # populate fields
+              cell_instance.z, cell_instance.t = marker.z, marker.t
+
+              cell_instance.AreaShape_Area = float(d[titles.index('AreaShape_Area')])
+              cell_instance.r = float(d[titles.index('AreaShape_Center_X')])
+              cell_instance.c = float(d[titles.index('AreaShape_Center_Y')])
+              cell_instance.AreaShape_Compactness = float(d[titles.index('AreaShape_Compactness')])
+              cell_instance.AreaShape_Eccentricity = float(d[titles.index('AreaShape_Eccentricity')])
+              cell_instance.AreaShape_EulerNumber = float(d[titles.index('AreaShape_EulerNumber')])
+              cell_instance.AreaShape_Extent = float(d[titles.index('AreaShape_Extent')])
+              cell_instance.AreaShape_FormFactor = float(d[titles.index('AreaShape_FormFactor')])
+              cell_instance.AreaShape_MajorAxisLength = float(d[titles.index('AreaShape_MajorAxisLength')])
+              cell_instance.AreaShape_MaximumRadius = float(d[titles.index('AreaShape_MaximumRadius')])
+              cell_instance.AreaShape_MeanRadius = float(d[titles.index('AreaShape_MeanRadius')])
+              cell_instance.AreaShape_MedianRadius = float(d[titles.index('AreaShape_MedianRadius')])
+              cell_instance.AreaShape_MinorAxisLength = float(d[titles.index('AreaShape_MinorAxisLength')])
+              cell_instance.AreaShape_Orientation = float(d[titles.index('AreaShape_Orientation')])
+              cell_instance.AreaShape_Perimeter = float(d[titles.index('AreaShape_Perimeter')])
+              cell_instance.AreaShape_Solidity = float(d[titles.index('AreaShape_Solidity')])
+              cell_instance.Location_Center_X = float(d[titles.index('Location_Center_X')])
+              cell_instance.Location_Center_Y = float(d[titles.index('Location_Center_Y')])
+
+            # save
+            cell_instance.save()
+          cell.save()
+
+      # 3. calculate cell velocities
+      for cell in series.cells.all():
+        previous_cell_instance = None
+        for cell_instance in cell.cell_instances.order_by('t'):
+          if previous_cell_instance is not None:
+            cell_instance.vr = cell_instance.r - previous_cell_instance.r
+            cell_instance.vc = cell_instance.c - previous_cell_instance.c
+            cell_instance.vz = cell_instance.z - previous_cell_instance.z
           else:
-            track_id_dictionary[track_id] = 1
+            cell_instance.vr = 0
+            cell_instance.vc = 0
+            cell_instance.vz = 0
 
-    for i,c in track_id_dictionary.items():
-      print(i,c)
+          previous_cell_instance = cell_instance
 
-      #
-      #     # create cell
-      #     cell, cell_created = series.experiment.cells.get_or_create(series=series, cell_id=track_id, cell_index=series.experiment.cells.filter(cell_id=track_id).count())
-      #
-      #     # create cell instance
-      #
-      #     if CellInstance.objects.filter(gon=gon).count()==0:
-      #       cell_instance, cell_instance_created = cell.cell_instances.get_or_create(experiment=cell.experiment, series=cell.series, region=marker.region)
-      #       if cell_instance_created:
-      #         cell_instance.gon = gon
-      #         gon.cell_instance = cell_instance
-      #         gon.save()
-      #
-      #         # populate fields
-      #         cell_instance.z, cell_instance.t = marker.z, marker.t
-      #
-      #         cell_instance.AreaShape_Area = float(d[titles.index('AreaShape_Area')])
-      #         cell_instance.r = float(d[titles.index('AreaShape_Center_X')])
-      #         cell_instance.c = float(d[titles.index('AreaShape_Center_Y')])
-      #         cell_instance.AreaShape_Compactness = float(d[titles.index('AreaShape_Compactness')])
-      #         cell_instance.AreaShape_Eccentricity = float(d[titles.index('AreaShape_Eccentricity')])
-      #         cell_instance.AreaShape_EulerNumber = float(d[titles.index('AreaShape_EulerNumber')])
-      #         cell_instance.AreaShape_Extent = float(d[titles.index('AreaShape_Extent')])
-      #         cell_instance.AreaShape_FormFactor = float(d[titles.index('AreaShape_FormFactor')])
-      #         cell_instance.AreaShape_MajorAxisLength = float(d[titles.index('AreaShape_MajorAxisLength')])
-      #         cell_instance.AreaShape_MaximumRadius = float(d[titles.index('AreaShape_MaximumRadius')])
-      #         cell_instance.AreaShape_MeanRadius = float(d[titles.index('AreaShape_MeanRadius')])
-      #         cell_instance.AreaShape_MedianRadius = float(d[titles.index('AreaShape_MedianRadius')])
-      #         cell_instance.AreaShape_MinorAxisLength = float(d[titles.index('AreaShape_MinorAxisLength')])
-      #         cell_instance.AreaShape_Orientation = float(d[titles.index('AreaShape_Orientation')])
-      #         cell_instance.AreaShape_Perimeter = float(d[titles.index('AreaShape_Perimeter')])
-      #         cell_instance.AreaShape_Solidity = float(d[titles.index('AreaShape_Solidity')])
-      #         cell_instance.Location_Center_X = float(d[titles.index('Location_Center_X')])
-      #         cell_instance.Location_Center_Y = float(d[titles.index('Location_Center_Y')])
-      #
-      #       # save
-      #       cell_instance.save()
-      #     cell.save()
-      #
-      # # 3. calculate cell velocities
-      # for cell in series.cells.all():
-      #   previous_cell_instance = None
-      #   for cell_instance in cell.cell_instances.order_by('t'):
-      #     if previous_cell_instance is not None:
-      #       cell_instance.vr = cell_instance.r - previous_cell_instance.r
-      #       cell_instance.vc = cell_instance.c - previous_cell_instance.c
-      #       cell_instance.vz = cell_instance.z - previous_cell_instance.z
-      #     else:
-      #       cell_instance.vr = 0
-      #       cell_instance.vc = 0
-      #       cell_instance.vz = 0
-      #
-      #     previous_cell_instance = cell_instance
-      #
-      #     cell_instance.save()
+          cell_instance.save()
