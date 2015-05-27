@@ -62,7 +62,7 @@ class Command(BaseCommand):
     # 1. get path and batches
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
 
-    id_token_dictionary = {}
+    track_id_dictionary = {}
 
     # 2. open spreadsheet
     for batch_number in [f for f in os.listdir(os.path.join(series.experiment.output_path, series.name)) if '.DS' not in f]:
@@ -78,20 +78,19 @@ class Command(BaseCommand):
           # some data: d[titles.index('title')]
 
           # get gon for marker -> marker_id, track_id
-          # gon = Gon.objects.get(id_token=d[titles.index('Metadata_id_token')])
+          gon = Gon.objects.get(id_token=d[titles.index('Metadata_id_token')])
 
-          id_token = d[titles.index('Metadata_id_token')]
-          if id_token in id_token_dictionary:
-            id_token_dictionary[id_token] += 1
+          marker = gon.marker
+          track_id = gon.marker.track.track_id
+
+          if track_id in track_id_dictionary:
+            track_id_dictionary[track_id] += 1
           else:
-            id_token_dictionary[id_token] = 1
+            track_id_dictionary[track_id] = 1
 
-    for it, count in id_token_dictionary.items():
-      if count>1:
-        print(it, count)
+    for i,c in track_id_dictionary.items():
+      print(i,c)
 
-      #     marker = gon.marker
-      #     track_id = gon.marker.track.track_id
       #
       #     # create cell
       #     cell, cell_created = series.experiment.cells.get_or_create(series=series, cell_id=track_id, cell_index=series.experiment.cells.filter(cell_id=track_id).count())
