@@ -327,6 +327,9 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
   # channel
   cell_mask_channel, cell_mask_channel_created = composite.channels.get_or_create(name='cellmask')
 
+  # mean
+  mask_mean_max = np.max([mask.mean for mask in composite.masks.all()])
+
   # iterate over frames
   for t in range(composite.series.ts):
     print('step13 | processing mod_step13_cell_masks t{}...                                         '.format(t), end='\r')
@@ -337,7 +340,6 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
     # 1. get masks
     mask_gon_set = composite.gons.filter(channel__name__in=['pmodreduced','bfreduced'], t=t)
     bulk = create_bulk_from_image_set(mask_gon_set)
-    mask_mean_max = np.max([mask.mean for mask in composite.masks.all()])
 
     for m,marker in enumerate(markers):
       print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}...                                         '.format(t, m, len(markers)), end='\r')
