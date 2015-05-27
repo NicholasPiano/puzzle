@@ -62,7 +62,7 @@ class Command(BaseCommand):
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
 
     # 2. open spreadsheet
-    for batch_number in os.listdir(os.path.join(series.experiment.output_path, series.name)):
+    for batch_number in [f for f in os.listdir(os.path.join(series.experiment.output_path, series.name)) if '.DS' not in f]:
       with open(os.path.join(series.experiment.output_path, series.name, batch_number, 'Nuclei.csv')) as spreadsheet:
         # get data
         lines = spreadsheet.readlines()
