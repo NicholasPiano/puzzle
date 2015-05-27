@@ -408,10 +408,12 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
 
       print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}, saving square mask...                                         '.format(t, m, len(markers)), end='\n' if t==composite.series.ts-1 else '\r')
       cell_mask = primary_mask + secondary_mask
+      s1 = cell_mask.sum()
 
       # finally, mean threshold mask
       cell_mask[cell_mask<nonzero_mean(cell_mask)] = 0
       cell_mask[cell_mask<nonzero_mean(cell_mask)] = 0
+      s2 = cell_mask.sum()
 
       # cut to size
       # I want every mask to be exactly the same size -> 128 pixels wide
@@ -427,11 +429,11 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
       mask_square = np.zeros((256,256), dtype=float)
 
       # 4. place cut inside square image using the centre of mass and the cut boundaries to hit the centre
-      dr, dc = int(128 + cr - com_r), int(128 + cc - com_c)
+      dr, dc = int(128 + cr - com_r if not np.isnan(com_r) else int(cr+crs/2.0)), int(128 + cc - com_c if not np.isnan(com_c) else int(cc+ccs/2.0))
 
       # 5. preserve coordinates of square to position gon
       print('newline')
-      print(cr, com_r, cc, com_c, dr, dr+crs, dc, dc+ccs)
+      print(s1, s2, cr, com_r, cc, com_c, dr, dr+crs, dc, dc+ccs)
       mask_square[dr:dr+crs,dc:dc+ccs] = cut
 
       # check batch and make folders, set url
