@@ -83,29 +83,31 @@ class Command(BaseCommand):
           cell, cell_created = series.experiment.cells.get_or_create(series=series, cell_id=track_id, cell_index=series.experiment.cells.filter(cell_id=track_id).count())
 
           # create cell instance
-          cell_instance, cell_instance_created = cell.cell_instances.get_or_create(experiment=cell.experiment, series=cell.series, region=marker.region, gon=gon)
+          cell_instance, cell_instance_created = cell.cell_instances.get_or_create(experiment=cell.experiment, series=cell.series, region=marker.region)
+          if cell_instance_created:
+            cell_instance.gon = gon
 
-          # populate fields
-          cell_instance.z, cell_instance.t = marker.z, marker.t
+            # populate fields
+            cell_instance.z, cell_instance.t = marker.z, marker.t
 
-          cell_instance.AreaShape_Area = float(d[titles.index('AreaShape_Area')])
-          cell_instance.r = float(d[titles.index('AreaShape_Center_X')])
-          cell_instance.c = float(d[titles.index('AreaShape_Center_Y')])
-          cell_instance.AreaShape_Compactness = float(d[titles.index('AreaShape_Compactness')])
-          cell_instance.AreaShape_Eccentricity = float(d[titles.index('AreaShape_Eccentricity')])
-          cell_instance.AreaShape_EulerNumber = float(d[titles.index('AreaShape_EulerNumber')])
-          cell_instance.AreaShape_Extent = float(d[titles.index('AreaShape_Extent')])
-          cell_instance.AreaShape_FormFactor = float(d[titles.index('AreaShape_FormFactor')])
-          cell_instance.AreaShape_MajorAxisLength = float(d[titles.index('AreaShape_MajorAxisLength')])
-          cell_instance.AreaShape_MaximumRadius = float(d[titles.index('AreaShape_MaximumRadius')])
-          cell_instance.AreaShape_MeanRadius = float(d[titles.index('AreaShape_MeanRadius')])
-          cell_instance.AreaShape_MedianRadius = float(d[titles.index('AreaShape_MedianRadius')])
-          cell_instance.AreaShape_MinorAxisLength = float(d[titles.index('AreaShape_MinorAxisLength')])
-          cell_instance.AreaShape_Orientation = float(d[titles.index('AreaShape_Orientation')])
-          cell_instance.AreaShape_Perimeter = float(d[titles.index('AreaShape_Perimeter')])
-          cell_instance.AreaShape_Solidity = float(d[titles.index('AreaShape_Solidity')])
-          cell_instance.Location_Center_X = float(d[titles.index('Location_Center_X')])
-          cell_instance.Location_Center_Y = float(d[titles.index('Location_Center_Y')])
+            cell_instance.AreaShape_Area = float(d[titles.index('AreaShape_Area')])
+            cell_instance.r = float(d[titles.index('AreaShape_Center_X')])
+            cell_instance.c = float(d[titles.index('AreaShape_Center_Y')])
+            cell_instance.AreaShape_Compactness = float(d[titles.index('AreaShape_Compactness')])
+            cell_instance.AreaShape_Eccentricity = float(d[titles.index('AreaShape_Eccentricity')])
+            cell_instance.AreaShape_EulerNumber = float(d[titles.index('AreaShape_EulerNumber')])
+            cell_instance.AreaShape_Extent = float(d[titles.index('AreaShape_Extent')])
+            cell_instance.AreaShape_FormFactor = float(d[titles.index('AreaShape_FormFactor')])
+            cell_instance.AreaShape_MajorAxisLength = float(d[titles.index('AreaShape_MajorAxisLength')])
+            cell_instance.AreaShape_MaximumRadius = float(d[titles.index('AreaShape_MaximumRadius')])
+            cell_instance.AreaShape_MeanRadius = float(d[titles.index('AreaShape_MeanRadius')])
+            cell_instance.AreaShape_MedianRadius = float(d[titles.index('AreaShape_MedianRadius')])
+            cell_instance.AreaShape_MinorAxisLength = float(d[titles.index('AreaShape_MinorAxisLength')])
+            cell_instance.AreaShape_Orientation = float(d[titles.index('AreaShape_Orientation')])
+            cell_instance.AreaShape_Perimeter = float(d[titles.index('AreaShape_Perimeter')])
+            cell_instance.AreaShape_Solidity = float(d[titles.index('AreaShape_Solidity')])
+            cell_instance.Location_Center_X = float(d[titles.index('Location_Center_X')])
+            cell_instance.Location_Center_Y = float(d[titles.index('Location_Center_Y')])
 
           # save
           cell_instance.save()
