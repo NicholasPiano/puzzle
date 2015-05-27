@@ -87,6 +87,8 @@ class Command(BaseCommand):
             cell_instance, cell_instance_created = cell.cell_instances.get_or_create(experiment=cell.experiment, series=cell.series, region=marker.region)
             if cell_instance_created:
               cell_instance.gon = gon
+              gon.cell_instance = cell_instance
+              gon.save()
 
               # populate fields
               cell_instance.z, cell_instance.t = marker.z, marker.t
