@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 # local
 from apps.expt.models import Series
 from apps.img.models import Gon
+from apps.cell.models import CellInstance
 from apps.expt.util import *
 from apps.expt.data import allowed_img_extensions
 
@@ -83,7 +84,8 @@ class Command(BaseCommand):
           cell, cell_created = series.experiment.cells.get_or_create(series=series, cell_id=track_id, cell_index=series.experiment.cells.filter(cell_id=track_id).count())
 
           # create cell instance
-          if not gon.cell_instance:
+
+          if CellInstance.objects.filter(gon=gon).count()==0:
             cell_instance, cell_instance_created = cell.cell_instances.get_or_create(experiment=cell.experiment, series=cell.series, region=marker.region)
             if cell_instance_created:
               cell_instance.gon = gon
