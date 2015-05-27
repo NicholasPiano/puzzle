@@ -5,6 +5,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 # local
 from apps.expt.models import Series
+from apps.img.models import Gon
 from apps.expt.util import *
 from apps.expt.data import allowed_img_extensions
 
@@ -65,14 +66,16 @@ class Command(BaseCommand):
       # get data
       lines = spreadsheet.readlines()
       titles = lines[0].split(',')
-      data = [line.split(',') for line in lines[0:]]
+      data = [line.split(',') for line in lines[1:]]
 
       # for each line, create a cell and fill in the details
-      for d in data:
+      for i,d in enumerate(data):
+        print('step15 | processing line {}/{}...'.format(i,len(data)))
         # some data: d[titles.index('title')]
 
         # get gon for marker -> marker_id, track_id
-        gon = series.gons.get(id_token=d[titles.index('Metadata_id_token')])
+        gon = Gon.objects.get(id_token=d[titles.index('Metadata_id_token')])
+        marker = gon.marker
         track_id = gon.marker.track.track_id
 
         # create cell
@@ -105,6 +108,7 @@ class Command(BaseCommand):
 
         # save
         cell_instance.save()
+        cell.save()
 
     # 3. calculate cell velocities
     for cell in series.cells.all():
@@ -118,5 +122,7 @@ class Command(BaseCommand):
           cell_instance.vr = 0
           cell_instance.vc = 0
           cell_instance.vz = 0
+
+        previous_cell_instance = cell_instance
 
         cell_instance.save()

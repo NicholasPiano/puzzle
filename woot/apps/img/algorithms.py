@@ -445,7 +445,10 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
       cell_mask_gon.set_origin(cr-dr, cc-dc, z, t)
       cell_mask_gon.set_extent(crs, ccs, 1)
 
-      file_name = template.rv.format(generate_id_token('img','Gon'))
+      id_token = generate_id_token('img','Gon')
+      cell_mask_gon.id_token = id_token
+
+      file_name = template.rv.format(id_token)
       url = os.path.join(root, file_name)
 
       imsave(url, mask_square.copy())
