@@ -418,7 +418,7 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
       # I want the centre of the mask to be in the centre of image
       # Add black space around even past the borders of larger image
       # 1. determine centre of mass
-      com_r, com_c = com(cell_mask)
+      com_r, com_c = com(cell_mask>0)
       mask_square = np.zeros((256,256), dtype=float)
 
       if not np.isnan(com_r):
