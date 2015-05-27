@@ -431,7 +431,7 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
 
       # 5. preserve coordinates of square to position gon
       print('newline')
-      print(dr, dr+crs, dc, dc+ccs)
+      print(cr, com_r, cc, com_c, dr, dr+crs, dc, dc+ccs)
       mask_square[dr:dr+crs,dc:dc+ccs] = cut
 
       # check batch and make folders, set url
