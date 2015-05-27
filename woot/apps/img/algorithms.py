@@ -341,9 +341,10 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
 
     for m,marker in enumerate(markers):
       print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}...                                         '.format(t, m, len(markers)), end='\r')
+      print('newline {} {}'.format(r,c))
       # marker parameters
       r, c, z = marker.r, marker.c, marker.z
-      other_marker_posiitions = [(m.r,m.c) for m in markers.exclude(pk=marker.pk)]
+      other_marker_positions = [(m.r,m.c) for m in markers.exclude(pk=marker.pk)]
 
       # get primary mask
       primary_mask = np.zeros(composite.series.shape(), dtype=float) # blank image
@@ -396,8 +397,8 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
         foreign_marker_condition = 1.0 # if the mask contains a different marker
         foreign_marker_match = False
         foreign_marker_counter = 0
-        while not foreign_marker_match and foreign_marker_counter!=len(other_marker_posiitions)-1:
-          r, c = other_marker_posiitions[foreign_marker_counter]
+        while not foreign_marker_match and foreign_marker_counter!=len(other_marker_positions)-1:
+          r, c = other_marker_positions[foreign_marker_counter]
           foreign_marker_match = (mask_array>0)[r,c]
           if foreign_marker_match:
             foreign_marker_condition = 0.0
