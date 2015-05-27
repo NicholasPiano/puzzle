@@ -63,7 +63,8 @@ class Command(BaseCommand):
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
 
     # 2. open spreadsheet
-    for batch_number in [f for f in os.listdir(os.path.join(series.experiment.output_path, series.name)) if '.DS' not in f]:
+    batches = [f for f in os.listdir(os.path.join(series.experiment.output_path, series.name)) if '.DS' not in f]
+    for batch_number in batches:
       with open(os.path.join(series.experiment.output_path, series.name, batch_number, 'Nuclei.csv')) as spreadsheet:
         # get data
         lines = spreadsheet.readlines()
@@ -72,7 +73,7 @@ class Command(BaseCommand):
 
         # for each line, create a cell and fill in the details
         for i,d in enumerate(data):
-          print('step15 | processing line {}/{}...'.format(i,len(data)))
+          print('step15 | processing batch {}/{}, line {}/{}...'.format(int(batch_number)+1, len(batches), i+1, len(data)), end='\n' if int(batch_number)+1==len(batches) else '\r')
           # some data: d[titles.index('title')]
 
           # get gon for marker -> marker_id, track_id
