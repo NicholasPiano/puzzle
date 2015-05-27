@@ -341,9 +341,9 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
 
     for m,marker in enumerate(markers):
       print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}...                                         '.format(t, m, len(markers)), end='\r')
-      print('newline {} {}'.format(r,c))
       # marker parameters
       r, c, z = marker.r, marker.c, marker.z
+      print('newline {} {}'.format(r,c))
       other_marker_positions = [(m.r,m.c) for m in markers.exclude(pk=marker.pk)]
 
       # get primary mask
