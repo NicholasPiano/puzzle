@@ -87,14 +87,15 @@ class Command(BaseCommand):
 
           # create cell instance
           if CellInstance.objects.filter(gon=gon).count()==0:
-            cell_instance, cell_instance_created = cell.cell_instances.get_or_create(experiment=cell.experiment, series=cell.series, region=marker.region)
+            cell_instance, cell_instance_created = cell.cell_instances.get_or_create(experiment=cell.experiment, series=cell.series, t=marker.t)
             if cell_instance_created:
               cell_instance.gon = gon
               gon.cell_instance = cell_instance
               gon.save()
 
               # populate fields
-              cell_instance.z, cell_instance.t = marker.z, marker.t
+              cell_instance.region=marker.region
+              cell_instance.z = marker.z
 
               cell_instance.AreaShape_Area = float(d[titles.index('AreaShape_Area')])
               cell_instance.r = float(d[titles.index('AreaShape_Center_X')])
