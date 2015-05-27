@@ -427,9 +427,11 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
       mask_square = np.zeros((256,256), dtype=float)
 
       # 4. place cut inside square image using the centre of mass and the cut boundaries to hit the centre
-      dr, dc = 128 + cr - com_r, 128 + cc - com_c
+      dr, dc = int(128 + cr - com_r), int(128 + cc - com_c)
 
       # 5. preserve coordinates of square to position gon
+      print('newline')
+      print(dr, dr+crs, dc, dc+ccs)
       mask_square[dr:dr+crs,dc:dc+ccs] = cut
 
       # check batch and make folders, set url
