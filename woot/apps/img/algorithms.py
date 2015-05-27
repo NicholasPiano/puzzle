@@ -426,7 +426,7 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
         cut, (cr, cc, crs, ccs) = cut_to_black(cell_mask)
 
         # 3. place cut inside square image using the centre of mass and the cut boundaries to hit the centre
-        dr, dc = int(128 + cr - com_r, int(128 + cc - com_c)
+        dr, dc = int(128 + cr - com_r), int(128 + cc - com_c)
 
         # 4. preserve coordinates of square to position gon
         mask_square[dr:dr+crs,dc:dc+ccs] = cut
