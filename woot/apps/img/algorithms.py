@@ -366,6 +366,8 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
 
         # add to primary mask
         primary_mask += mask_array
+        print('newline')
+        print(i, z_term, max_z_term, mean_term, std_term, mask_array.sum())
 
       # get secondary mask - get unique masks that touch the edge of the primary mask
       secondary_mask = np.zeros(composite.series.shape(), dtype=float) # blank image
