@@ -329,7 +329,7 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
 
   # iterate over frames
   for t in range(composite.series.ts):
-    print('step13 | processing mod_step13_cell_masks t{}...'.format(t), end='\n' if t==composite.series.ts-1 else '\r')
+    print('step13 | processing mod_step13_cell_masks t{}...                                         '.format(t), end='\r')
 
     # one mask for each marker
     markers = composite.series.markers.filter(t=t)
@@ -339,7 +339,8 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
     bulk = create_bulk_from_image_set(mask_gon_set)
     mask_mean_max = np.max([mask.mean for mask in composite.masks.all()])
 
-    for marker in markers:
+    for m,marker in enumerate(markers):
+      print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}...                                         '.format(t, m, len(markers)), end='\r')
       # marker parameters
       r, c, z = marker.r, marker.c, marker.z
       other_marker_posiitions = [(m.r,m.c) for m in markers.exclude(pk=marker.pk)]
@@ -377,6 +378,7 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
             secondary_mask_uids.append((i,uid))
 
       for i,uid in secondary_mask_uids:
+        print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}, secondary {}/{}...                                         '.format(t, m, len(markers), i, len(secondary_mask_uids)), end='\r')
         gon_pk = bulk.rv[i]
         mask = composite.masks.get(gon__pk=gon_pk, mask_id=uid)
         mask_array = (bulk.slice(pk=mask.gon.pk)==mask.mask_id).astype(float)
@@ -404,6 +406,7 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
         # add to primary mask
         secondary_mask += mask_array
 
+      print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}, saving square mask...                                         '.format(t, m, len(markers)), end='\n' if t==composite.series.ts-1 else '\r')
       cell_mask = primary_mask + secondary_mask
 
       # finally, mean threshold mask
