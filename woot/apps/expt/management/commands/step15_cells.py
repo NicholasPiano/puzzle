@@ -83,7 +83,7 @@ class Command(BaseCommand):
           cell, cell_created = series.experiment.cells.get_or_create(series=series, cell_id=track_id, cell_index=series.experiment.cells.filter(cell_id=track_id).count())
 
           # create cell instance
-          if cell.cell_instances.filter(gon=gon).count()==0:
+          if not gon.cell_instance:
             cell_instance, cell_instance_created = cell.cell_instances.get_or_create(experiment=cell.experiment, series=cell.series, region=marker.region)
             if cell_instance_created:
               cell_instance.gon = gon
