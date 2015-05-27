@@ -343,7 +343,6 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
       print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}...                                         '.format(t, m, len(markers)), end='\r')
       # marker parameters
       r, c, z = marker.r, marker.c, marker.z
-      print('newline {} {}'.format(r,c))
       other_marker_positions = [(m.r,m.c) for m in markers.exclude(pk=marker.pk)]
 
       # get primary mask
@@ -367,8 +366,6 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
 
         # add to primary mask
         primary_mask += mask_array
-        print('newline')
-        print(i, z_term, max_z_term, mean_term, std_term, mask_array.sum())
 
       # get secondary mask - get unique masks that touch the edge of the primary mask
       secondary_mask = np.zeros(composite.series.shape(), dtype=float) # blank image
@@ -411,12 +408,10 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
 
       print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}, saving square mask...                                         '.format(t, m, len(markers)), end='\n' if t==composite.series.ts-1 else '\r')
       cell_mask = primary_mask + secondary_mask
-      s1 = cell_mask.sum()
 
       # finally, mean threshold mask
       cell_mask[cell_mask<nonzero_mean(cell_mask)] = 0
       cell_mask[cell_mask<nonzero_mean(cell_mask)] = 0
-      s2 = cell_mask.sum()
 
       # cut to size
       # I want every mask to be exactly the same size -> 128 pixels wide
@@ -424,20 +419,17 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
       # Add black space around even past the borders of larger image
       # 1. determine centre of mass
       com_r, com_c = com(cell_mask)
-
-      # 2. cut to black and preserve boundaries
-      cut, (cr, cc, crs, ccs) = cut_to_black(cell_mask)
-
-      # 3. create new square image
       mask_square = np.zeros((256,256), dtype=float)
 
-      # 4. place cut inside square image using the centre of mass and the cut boundaries to hit the centre
-      dr, dc = int(128 + cr - com_r if not np.isnan(com_r) else int(cr+crs/2.0)), int(128 + cc - com_c if not np.isnan(com_c) else int(cc+ccs/2.0))
+      if not np.isnan(com_r):
+        # 2. cut to black and preserve boundaries
+        cut, (cr, cc, crs, ccs) = cut_to_black(cell_mask)
 
-      # 5. preserve coordinates of square to position gon
-      print('newline')
-      print(s1, s2, cr, com_r, cc, com_c, dr, dr+crs, dc, dc+ccs)
-      mask_square[dr:dr+crs,dc:dc+ccs] = cut
+        # 3. place cut inside square image using the centre of mass and the cut boundaries to hit the centre
+        dr, dc = int(128 + cr - com_r, int(128 + cc - com_c)
+
+        # 4. preserve coordinates of square to position gon
+        mask_square[dr:dr+crs,dc:dc+ccs] = cut
 
       # check batch and make folders, set url
       if not os.path.exists(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))):
