@@ -433,7 +433,7 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
 
           # 4. preserve coordinates of square to position gon
           small_r, small_c = mask_square[dr:dr+crs,dc:dc+ccs].shape
-          mask_square[dr:dr+crs,dc:dc+ccs] = cut[:small_r+1,:small_c+1]
+          mask_square[dr:dr+crs,dc:dc+ccs] = cut[:small_r,:small_c]
 
         # check batch and make folders, set url
         if not os.path.exists(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))):
