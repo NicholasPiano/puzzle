@@ -341,7 +341,7 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
     mask_gon_set = composite.gons.filter(channel__name__in=['pmodreduced','bfreduced'], t=t)
     bulk = create_bulk_from_image_set(mask_gon_set)
 
-    for m,marker in enumerate(markers):
+    for m, marker in enumerate(markers):
       print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}...                                         '.format(t, m, len(markers)), end='\r')
       # marker parameters
       r, c, z = marker.r, marker.c, marker.z
@@ -431,7 +431,8 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
         dr, dc = int(128 + cr - com_r), int(128 + cc - com_c)
 
         # 4. preserve coordinates of square to position gon
-        mask_square[dr:dr+crs,dc:dc+ccs] = cut
+        small_r, small_c = mask_square[dr:dr+crs,dc:dc+ccs].shape
+        mask_square[dr:dr+crs,dc:dc+ccs] = cut[:small_r+1,:small_c+1]
 
       # check batch and make folders, set url
       if not os.path.exists(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))):
