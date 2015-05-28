@@ -439,7 +439,7 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
         if not os.path.exists(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))):
           os.makedirs(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch)))
 
-        if len(os.listdir(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))))==max_batch_size:
+        if len(os.listdir(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))))>=max_batch_size:
           batch += 1
           if not os.path.exists(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))):
             os.makedirs(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch)))
