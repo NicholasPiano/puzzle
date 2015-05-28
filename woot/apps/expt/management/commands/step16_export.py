@@ -57,15 +57,12 @@ class Command(BaseCommand):
 
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
 
-    # calculate velocities
-    for cell in series.cells.all():
-      cell.calculate_velocities()
-
     # output
     output_file = os.path.join(series.experiment.data_path, 'output_{}_s{}.csv'.format(series.experiment.name, series.name))
 
     with open(output_file, 'w+') as f:
-      f.write('exp,series,cell,region,t,r,c,z,vr,vc,vz,a\n')
-      for cell in series.cells.all():
-        for cell_instance in cell.cell_instances.all():
-          f.write(cell_instance.line())
+      print('experiment, series, cell id, ')
+      for cell in series.cells.order_by('pk'):
+        for cell_instance in cell.cell_instances.order_by('t'):
+          print(cell_instance.line(), end='')
+          # f.write(cell_instance.line())
