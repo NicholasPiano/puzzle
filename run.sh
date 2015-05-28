@@ -1,5 +1,5 @@
 time python manage.py step01_input --expt=$1 --series=$2;
-# time python manage.py step03_pmod --expt=$1 --series=$2;
+time python manage.py step03_pmod --expt=$1 --series=$2;
 time python manage.py step07_tracks --expt=$1 --series=$2;
 time python manage.py step08_reduced --expt=$1 --series=$2;
 time python manage.py step09_regions --expt=$1 --series=$2;
@@ -8,3 +8,4 @@ time python manage.py step11_masks --expt=$1 --series=$2;
 time python manage.py step13_cell_masks --expt=$1 --series=$2;
 time python manage.py step14_cp2 --expt=$1 --series=$2;
 time python manage.py step15_cells --expt=$1 --series=$2;
+time python manage.py step16_export --expt=$1 --series=$2;
