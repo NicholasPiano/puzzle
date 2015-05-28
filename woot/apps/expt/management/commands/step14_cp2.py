@@ -69,7 +69,7 @@ class Command(BaseCommand):
       output_path = os.path.join(series.experiment.output_path, series.name, batch_number)
 
       if not os.path.exists(output_path):
-        os.mkdir(output_path)
+        os.makedirs(output_path)
 
       # pipeline path
       pipeline = os.path.join(series.experiment.pipeline_path, 'cell_mask_v0.1.cppipe')
