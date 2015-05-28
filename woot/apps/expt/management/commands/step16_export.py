@@ -61,8 +61,7 @@ class Command(BaseCommand):
     output_file = os.path.join(series.experiment.data_path, 'output_{}_s{}.csv'.format(series.experiment.name, series.name))
 
     with open(output_file, 'w+') as f:
-      print('experiment, series, cell id, ')
+      f.write('experiment, series, cell id, row, column, Z, frame, T, vr, vc, vz, Area, Compactness, Eccentricity, EulerNumber, Extent, FormFactor, MajorAxisLength, MaximumRadius, MeanRadius, MedianRadius, MinorAxisLength, Orientation, Perimeter, Solidity, Location_Center_R, Location_Center_C\n')
       for cell in series.cells.order_by('pk'):
         for cell_instance in cell.cell_instances.order_by('t'):
-          print(cell_instance.line(), end='')
-          # f.write(cell_instance.line())
+          f.write(cell_instance.line())
