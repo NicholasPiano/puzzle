@@ -343,125 +343,126 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
 
     for m, marker in enumerate(markers):
       print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}...                                         '.format(t, m, len(markers)), end='\r')
-      # marker parameters
-      r, c, z = marker.r, marker.c, marker.z
-      other_marker_positions = [(m.r,m.c) for m in markers.exclude(pk=marker.pk)]
+      if composite.gons.filter(marker=marker).count()==0:
+        # marker parameters
+        r, c, z = marker.r, marker.c, marker.z
+        other_marker_positions = [(m.r,m.c) for m in markers.exclude(pk=marker.pk)]
 
-      # get primary mask
-      primary_mask = np.zeros(composite.series.shape(), dtype=float) # blank image
+        # get primary mask
+        primary_mask = np.zeros(composite.series.shape(), dtype=float) # blank image
 
-      mask_uids = [(i, uid) for i,uid in enumerate(bulk.gon_stack[r,c,:]) if uid>0]
-      for i,uid in mask_uids:
-        gon_pk = bulk.rv[i]
-        mask = composite.masks.get(gon__pk=gon_pk, mask_id=uid)
-        mask_array = (bulk.slice(pk=mask.gon.pk)==mask.mask_id).astype(float)
+        mask_uids = [(i, uid) for i,uid in enumerate(bulk.gon_stack[r,c,:]) if uid>0]
+        for i,uid in mask_uids:
+          gon_pk = bulk.rv[i]
+          mask = composite.masks.get(gon__pk=gon_pk, mask_id=uid)
+          mask_array = (bulk.slice(pk=mask.gon.pk)==mask.mask_id).astype(float)
 
-        # modify mask array based on parameters
-        mask_z, mask_max_z, mask_mean, mask_std = mask.z, mask.max_z, mask.mean, mask.std
+          # modify mask array based on parameters
+          mask_z, mask_max_z, mask_mean, mask_std = mask.z, mask.max_z, mask.mean, mask.std
 
-        z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_z)) # suppress z levels at increasing distances from marker
-        max_z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_max_z)) # suppress z levels at increasing distances from marker
-        mean_term = mask_mean / mask_mean_max # raise mask according to mean
-        std_term = 1.0
+          z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_z)) # suppress z levels at increasing distances from marker
+          max_z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_max_z)) # suppress z levels at increasing distances from marker
+          mean_term = mask_mean / mask_mean_max # raise mask according to mean
+          std_term = 1.0
 
-        mask_array = mask_array * z_term * max_z_term * mean_term * std_term
+          mask_array = mask_array * z_term * max_z_term * mean_term * std_term
 
-        # add to primary mask
-        primary_mask += mask_array
+          # add to primary mask
+          primary_mask += mask_array
 
-      # get secondary mask - get unique masks that touch the edge of the primary mask
-      secondary_mask = np.zeros(composite.series.shape(), dtype=float) # blank image
+        # get secondary mask - get unique masks that touch the edge of the primary mask
+        secondary_mask = np.zeros(composite.series.shape(), dtype=float) # blank image
 
-      secondary_mask_uids = []
-      edges = np.where(edge_image(primary_mask>0))
-      for r, c in zip(*edges):
-        for i,uid in enumerate(bulk.gon_stack[r,c,:]):
-          if (i,uid) not in secondary_mask_uids and (i,uid) not in mask_uids and uid>0:
-            secondary_mask_uids.append((i,uid))
+        secondary_mask_uids = []
+        edges = np.where(edge_image(primary_mask>0))
+        for r, c in zip(*edges):
+          for i,uid in enumerate(bulk.gon_stack[r,c,:]):
+            if (i,uid) not in secondary_mask_uids and (i,uid) not in mask_uids and uid>0:
+              secondary_mask_uids.append((i,uid))
 
-      for i,uid in secondary_mask_uids:
-        print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}, secondary {}/{}...                                         '.format(t, m, len(markers), i, len(secondary_mask_uids)), end='\r')
-        gon_pk = bulk.rv[i]
-        mask = composite.masks.get(gon__pk=gon_pk, mask_id=uid)
-        mask_array = (bulk.slice(pk=mask.gon.pk)==mask.mask_id).astype(float)
+        for i,uid in secondary_mask_uids:
+          print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}, secondary {}/{}...                                         '.format(t, m, len(markers), i, len(secondary_mask_uids)), end='\r')
+          gon_pk = bulk.rv[i]
+          mask = composite.masks.get(gon__pk=gon_pk, mask_id=uid)
+          mask_array = (bulk.slice(pk=mask.gon.pk)==mask.mask_id).astype(float)
 
-        # modify mask array based on parameters
-        mask_z, mask_max_z, mask_mean, mask_std = mask.z, mask.max_z, mask.mean, mask.std
+          # modify mask array based on parameters
+          mask_z, mask_max_z, mask_mean, mask_std = mask.z, mask.max_z, mask.mean, mask.std
 
-        z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_z)) # suppress z levels at increasing distances from marker
-        max_z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_max_z)) # suppress z levels at increasing distances from marker
-        mean_term = mask_mean / mask_mean_max # raise mask according to mean
-        std_term = 1.0
+          z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_z)) # suppress z levels at increasing distances from marker
+          max_z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_max_z)) # suppress z levels at increasing distances from marker
+          mean_term = mask_mean / mask_mean_max # raise mask according to mean
+          std_term = 1.0
 
-        foreign_marker_condition = 1.0 # if the mask contains a different marker
-        foreign_marker_match = False
-        foreign_marker_counter = 0
-        while not foreign_marker_match and foreign_marker_counter!=len(other_marker_positions)-1:
-          r, c = other_marker_positions[foreign_marker_counter]
-          foreign_marker_match = (mask_array>0)[r,c]
-          if foreign_marker_match:
-            foreign_marker_condition = 0.0
-          foreign_marker_counter += 1
+          foreign_marker_condition = 1.0 # if the mask contains a different marker
+          foreign_marker_match = False
+          foreign_marker_counter = 0
+          while not foreign_marker_match and foreign_marker_counter!=len(other_marker_positions)-1:
+            r, c = other_marker_positions[foreign_marker_counter]
+            foreign_marker_match = (mask_array>0)[r,c]
+            if foreign_marker_match:
+              foreign_marker_condition = 0.0
+            foreign_marker_counter += 1
 
-        mask_array = mask_array * z_term * max_z_term * mean_term * std_term * foreign_marker_condition
+          mask_array = mask_array * z_term * max_z_term * mean_term * std_term * foreign_marker_condition
 
-        # add to primary mask
-        secondary_mask += mask_array
+          # add to primary mask
+          secondary_mask += mask_array
 
-      print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}, saving square mask...                                         '.format(t, m, len(markers)), end='\n' if t==composite.series.ts-1 else '\r')
-      cell_mask = primary_mask + secondary_mask
+        print('step13 | processing mod_step13_cell_masks t{}, marker {}/{}, saving square mask...                                         '.format(t, m, len(markers)), end='\n' if t==composite.series.ts-1 else '\r')
+        cell_mask = primary_mask + secondary_mask
 
-      # finally, mean threshold mask
-      cell_mask[cell_mask<nonzero_mean(cell_mask)] = 0
-      cell_mask[cell_mask<nonzero_mean(cell_mask)] = 0
+        # finally, mean threshold mask
+        cell_mask[cell_mask<nonzero_mean(cell_mask)] = 0
+        cell_mask[cell_mask<nonzero_mean(cell_mask)] = 0
 
-      # cut to size
-      # I want every mask to be exactly the same size -> 128 pixels wide
-      # I want the centre of the mask to be in the centre of image
-      # Add black space around even past the borders of larger image
-      # 1. determine centre of mass
-      com_r, com_c = com(cell_mask>0)
-      mask_square = np.zeros((256,256), dtype=float)
+        # cut to size
+        # I want every mask to be exactly the same size -> 128 pixels wide
+        # I want the centre of the mask to be in the centre of image
+        # Add black space around even past the borders of larger image
+        # 1. determine centre of mass
+        com_r, com_c = com(cell_mask>0)
+        mask_square = np.zeros((256,256), dtype=float)
 
-      if not np.isnan(com_r):
-        # 2. cut to black and preserve boundaries
-        cut, (cr, cc, crs, ccs) = cut_to_black(cell_mask)
+        if not np.isnan(com_r):
+          # 2. cut to black and preserve boundaries
+          cut, (cr, cc, crs, ccs) = cut_to_black(cell_mask)
 
-        # 3. place cut inside square image using the centre of mass and the cut boundaries to hit the centre
-        dr, dc = int(128 + cr - com_r), int(128 + cc - com_c)
+          # 3. place cut inside square image using the centre of mass and the cut boundaries to hit the centre
+          dr, dc = int(128 + cr - com_r), int(128 + cc - com_c)
 
-        # 4. preserve coordinates of square to position gon
-        small_r, small_c = mask_square[dr:dr+crs,dc:dc+ccs].shape
-        mask_square[dr:dr+crs,dc:dc+ccs] = cut[:small_r+1,:small_c+1]
+          # 4. preserve coordinates of square to position gon
+          small_r, small_c = mask_square[dr:dr+crs,dc:dc+ccs].shape
+          mask_square[dr:dr+crs,dc:dc+ccs] = cut[:small_r+1,:small_c+1]
 
-      # check batch and make folders, set url
-      if not os.path.exists(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))):
-        os.makedirs(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch)))
-
-      if len(os.listdir(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))))==max_batch_size:
-        batch += 1
+        # check batch and make folders, set url
         if not os.path.exists(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))):
           os.makedirs(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch)))
 
-      root = os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch)) # CP PATH
+        if len(os.listdir(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))))==max_batch_size:
+          batch += 1
+          if not os.path.exists(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch))):
+            os.makedirs(os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch)))
 
-      # cell mask gon
-      cell_mask_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=cell_mask_channel, template=template)
-      cell_mask_gon.set_origin(cr-dr, cc-dc, z, t)
-      cell_mask_gon.set_extent(crs, ccs, 1)
+        root = os.path.join(composite.experiment.cp2_path, composite.series.name, str(batch)) # CP PATH
 
-      id_token = generate_id_token('img','Gon')
-      cell_mask_gon.id_token = id_token
+        # cell mask gon
+        cell_mask_gon = composite.gons.create(experiment=composite.experiment, series=composite.series, channel=cell_mask_channel, template=template)
+        cell_mask_gon.set_origin(cr-dr, cc-dc, z, t)
+        cell_mask_gon.set_extent(crs, ccs, 1)
 
-      file_name = template.rv.format(id_token)
-      url = os.path.join(root, file_name)
+        id_token = generate_id_token('img','Gon')
+        cell_mask_gon.id_token = id_token
 
-      imsave(url, mask_square.copy())
-      cell_mask_gon.paths.create(composite=composite, channel=cell_mask_channel, template=template, url=url, file_name=file_name, t=t, z=z)
+        file_name = template.rv.format(id_token)
+        url = os.path.join(root, file_name)
 
-      # associate with marker
-      marker.gon = cell_mask_gon
-      cell_mask_gon.marker = marker
-      marker.save()
+        imsave(url, mask_square.copy())
+        cell_mask_gon.paths.create(composite=composite, channel=cell_mask_channel, template=template, url=url, file_name=file_name, t=t, z=z)
 
-      cell_mask_gon.save()
+        # associate with marker
+        marker.gon = cell_mask_gon
+        cell_mask_gon.marker = marker
+        marker.save()
+
+        cell_mask_gon.save()
