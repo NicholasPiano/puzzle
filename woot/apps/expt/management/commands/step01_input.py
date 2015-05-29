@@ -1,32 +1,33 @@
-#django
+# expt.command: step01_input
+
+# django
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
-#local
-from apps.expt.models import Experiment, Series
+# local
+from apps.expt.models import Experiment
 from apps.expt.data import *
 
-#util
+# util
 import os
-import re
 from optparse import make_option
 
 ### Command
 class Command(BaseCommand):
   option_list = BaseCommand.option_list + (
 
-    make_option('--name', # path of images unique to this experiment.
-      action='store',
-      dest='name',
-      default='050714-test',
-      help='Path to scan for images'
+    make_option('--expt', # option that will appear in cmd
+      action='store', # no idea
+      dest='expt', # refer to this in options variable
+      default='050714-test', # some default
+      help='Name of the experiment to import' # who cares
     ),
 
-    make_option('--base', # defines base search path. All images are in a subdirectory of this directory.
-      action='store',
-      dest='base',
-      default=settings.DATA_ROOT,
-      help='Base path on filesystem'
+    make_option('--series', # option that will appear in cmd
+      action='store', # no idea
+      dest='series', # refer to this in options variable
+      default='13', # some default
+      help='Name of the series' # who cares
     ),
 
   )
@@ -35,52 +36,101 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    # get path
-    experiment_name = options['name']
-    base_path = os.path.join(options['base'], experiment_name)
+    '''
+    1. What does this script do?
+    > Converts image file names into searchable pixel space composite
 
-    # check if experiment exists
-    experiment, exp_created = Experiment.objects.get_or_create(name=experiment_name)
-    if exp_created:
-      experiment.make_paths(base_path)
-      experiment.get_metadata()
+    2. What data structures are input?
+    > strings
 
-    # list directory filtered by allow extension
-    for root in [experiment.img_path, experiment.composite_path]:
-      file_list = [file_name for file_name in os.listdir(root) if os.path.splitext(file_name)[1] in allowed_img_extensions]
+    3. What data structures are output?
+    > Experiment, Series, Path, Channel, Composite
 
-      # make paths and series
-      for i, file_name in enumerate(file_list):
+    4. Is this stage repeated/one-time?
+    > Repeated
 
-        # get template
-        template = experiment.templates.get(name='source')
-        path, created = template.get_or_create_path(root, file_name)
+    Steps:
 
-        print('%s... %s' % (path, 'created.' if created else 'already exists.'))
+    1. check if experiment name is in the base folder
+    2. create a new experiment
+    3. create a new series
+    4. for each path in experiment folder, make a path object.
+      - if path object matches the series, keep it, else delete
+    5. make composite from series
 
-    # make composites and masks
-    # set extent for each series
-    for series in experiment.series.all():
-      if experiment.allowed_series(series.name):
-        if series.rs==-1:
-          # rows and columns from image
-          (rs,cs) = series.paths.get(channel=series.experiment.channels.all()[0], t=0, z=0).load().shape
-          series.rs = rs
-          series.cs = cs
+    '''
 
-          # z and t from counts
-          series.zs = series.paths.filter(channel=series.experiment.channels.all()[0], t=0).count()
-          series.ts = series.paths.filter(channel=series.experiment.channels.all()[0], z=0).count()
+    # vars
+    experiment_name = options['expt']
+    series_name = options['series']
+    base_path = settings.DATA_ROOT
 
-          series.save()
+    if os.path.exists(os.path.join(base_path, experiment_name)):
+      # 1. create experiment
+      print('step01 | experiment path exists, experiment {}... '.format(experiment_name), end='')
+      experiment, experiment_created = Experiment.objects.get_or_create(name=experiment_name)
+      if experiment_created:
+        # set metadata
+        experiment.make_paths(os.path.join(base_path, experiment.name))
+        experiment.get_metadata()
+        print('created.')
+      else:
+        print('already exists.')
 
-        if series.composites.count()==0:
-          series.compose()
+      # 2. create series
+      if experiment.is_allowed_series(series_name):
+        print('step01 | series {}... '.format(series_name), end='')
+        series, series_created = experiment.series.get_or_create(name=series_name)
+        if series_created:
+          print('created.')
+        else:
+          print('already exists.')
 
-        for region_prototype in list(filter(lambda x: x.experiment==experiment.name and x.series==series.name, regions)):
+        # 3. for each path in the experiment folder, create new path if the series matches.
+        for root in experiment.img_roots():
+
+          img_files = [f for f in os.listdir(root) if (os.path.splitext(f)[1] in allowed_img_extensions and experiment.path_matches_series(f, series_name))]
+          num_img_files = len(img_files)
+
+          if num_img_files>0:
+            for i, file_name in enumerate(img_files):
+              path, path_created, path_message = experiment.get_or_create_path(series, root, file_name)
+              print('step01 | adding image files in {}: ({}/{}) {} ...path {}                    '.format(root, i+1, num_img_files, file_name, path_message), end=('\n' if i==num_img_files-1 else '\r'))
+
+          else:
+            print('step01 | no files found in {}'.format(root))
+
+        # 4. measurements
+        print('step01 | setting measurements for {} series {}'.format(experiment_name, series_name))
+
+        # rows and columns from image
+        (rs,cs) = series.paths.get(channel__name='0', t=0, z=0).load().shape
+        series.rs = rs
+        series.cs = cs
+
+        # z and t from counts
+        series.zs = series.paths.filter(channel__name='0', t=0).count()
+        series.ts = series.paths.filter(channel__name='0', z=0).count()
+
+        series.save()
+
+        # 5. create composite
+        series.compose()
+
+        # 6. create regions
+        print('step01 | creating regions for {} series {}...                        '.format(experiment_name, series_name), end='\r')
+        for region_prototype in list(filter(lambda rp: rp.experiment==experiment_name and rp.series==series_name, regions)):
           region, region_created = series.regions.get_or_create(experiment=experiment, name=region_prototype.name)
           if region_created:
             region.description = region_prototype.description
             region.index = region_prototype.index
             region.vertical_sort_index = region_prototype.vertical_sort_index
             region.save()
+
+        print('step01 | creating regions for {} series {}... done.                    '.format(experiment_name, series_name), end='\n')
+
+      else:
+        print('step01 | {}/{} not a valid series.'.format(experiment_name, series_name))
+
+    else:
+      print('step01 | experiment path {} not found in {}'.format(experiment_name, base_path))

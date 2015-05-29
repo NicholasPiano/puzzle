@@ -1,40 +1,20 @@
-#django
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
+# expt.command: step12_system_check
 
-#local
-from apps.expt.util import *
-from apps.img import algorithms
-from apps.img.models import Composite
+# django
 
-#util
-import os
-from optparse import make_option
+# local
+
+# util
 
 ### Command
 class Command(BaseCommand):
-
   option_list = BaseCommand.option_list + (
 
-    make_option('--expt', # path of images unique to this experiment.
-      action='store',
-      dest='expt',
-      default='050714-test',
-      help='Name of experiment to modify'
-    ),
-
-    make_option('--series', # defines base search path. All images are in a subdirectory of this directory.
-      action='store',
-      dest='series',
-      default='13',
-      help='Name of series to modify'
-    ),
-
-    make_option('--composite', # path of images unique to this experiment.
-      action='store',
-      dest='composite',
-      default='0',
-      help='Composite to add to'
+    make_option('--name', # option that will appear in cmd
+      action='store', # no idea
+      dest='name', # refer to this in options variable
+      default='050714-test', # some default
+      help='Path to scan for images' # who cares
     ),
 
   )
@@ -43,9 +23,14 @@ class Command(BaseCommand):
   help = ''
 
   def handle(self, *args, **options):
-    # 1. get composite
-    composite = Composite.objects.get(experiment__name=options['expt'], series__name=options['series'])
+    '''
+    1. What does this script do?
+    2. What data structures are input?
+    3. What data structures are output?
+    4. Is this stage repeated/one-time?
 
-    # 2. Create mod
-    mod = composite.mods.create(id_token=generate_id_token('img', 'Mod'), algorithm='mod_system_check')
-    mod.run()
+    Steps:
+
+    1.
+
+    '''

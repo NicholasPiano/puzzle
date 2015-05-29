@@ -7,6 +7,7 @@
 # util
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.ndimage.morphology import binary_erosion as erode
 
 def cut_to_black(array):
   # coordinates of non-black
@@ -17,6 +18,9 @@ def cut_to_black(array):
 
   # return cut
   return array[r0:r1,c0:c1], (r0,c0,(r1-r0),(c1-c0))
+
+def edge_image(array): # assumed to be binary
+  return array - erode(array)
 
 # tests
 def box_overlaps_marker(mask, marker):
@@ -58,6 +62,44 @@ def nonzero_mean(img):
   mask = img<0
   masked = np.ma.array(img, mask=mask)
   return masked.mean()
+
+def nonzero_mean_thresholded_binary(img):
+  nzm = nonzero_mean(img)
+  return (img>nzm).copy()
+
+def nonzero_mean_thresholded_preserve(img):
+  nzm = nonzero_mean(img)
+  img[img<nzm] = 0
+  return img.copy()
+
+class _Bulk():
+  def __init__(self, gon_set, gon_stack, accessor_dict):
+    self.gon_set = gon_set
+    self.gon_stack = gon_stack
+    self.accessor_dict = accessor_dict
+    self.rv = {value:key for key, value in accessor_dict.items()}
+
+  def slice(self, z=None, pk=None):
+    if z is None:
+      return self.gon_stack[:,:,self.accessor_dict[pk]]
+    else:
+      return self.gon_stack[:,:,self.accessor_dict[self.gon_set.get(z=z).pk]]
+
+def create_bulk_from_image_set(img_set):
+
+  # load entire set of mask gons as 3D box with accessor dictionary
+  gon_stack = None
+  accessor_dict = {}
+
+  for i, gon in enumerate(img_set):
+    m = gon.load()
+    accessor_dict[gon.pk] = i
+    if gon_stack is None:
+      gon_stack = m
+    else:
+      gon_stack = np.dstack([gon_stack, m])
+
+  return _Bulk(img_set, gon_stack, accessor_dict)
 
 # for point, distance in spiral(centre=marker.centre(), direction='+r', gap=1, steps=10):
 

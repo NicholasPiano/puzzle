@@ -25,7 +25,7 @@ class Composite(models.Model):
 
   # methods
   def __str__(self):
-    return '%s, %s > %s' % (self.experiment.name, self.series.name, self.id_token)
+    return '{}, {} > {}'.format(self.experiment.name, self.series.name, self.id_token)
 
 class Gon(models.Model):
   # connections
@@ -34,6 +34,7 @@ class Gon(models.Model):
   composite = models.ForeignKey(Composite, related_name='gons', null=True)
   channel = models.ForeignKey('Channel', related_name='gons')
   gon = models.ForeignKey('self', related_name='gons', null=True)
+  template = models.ForeignKey('Template', related_name='gons', null=True)
 
   # properties
   id_token = models.CharField(max_length=8, default='')
@@ -54,9 +55,6 @@ class Gon(models.Model):
   array = None
 
   # methods
-  def __str__(self):
-    return '%s > (%s, %d, %d, %d, %d),(%d, %d, %d)' % (self.composite.id_token, self.channel.name, self.r, self.c ,self.z, self.t, self.rs, self.cs, self.zs)
-
   def set_origin(self, r, c, z, t):
     self.r = r
     self.c = c
@@ -90,45 +88,47 @@ class Gon(models.Model):
     self.array = np.dstack(self.array).squeeze() # remove unnecessary dimensions
     return self.array
 
-  def save_paths(self, url, template):
-    if self.array is not None and len(self.array.shape)==3:
-      for z in range(self.zs):
-        # array
-        array = self.array[:,:,z]
+  def save_array(self, root, template):
+    # 1. iterate through planes in bulk
+    # 2. for each plane, save plane based on root, template
+    # 3. create path with url and add to gon
 
-        # path
-        path_url = url % (self.experiment.name, self.series.name, self.channel.name, self.t_str(), self.z_str(z))
-        file_name = template.rv % (self.experiment.name, self.series.name, self.channel.name, self.t_str(), self.z_str(z))
-        self.paths.create(composite=self.composite, channel=self.channel, template=template, url=path_url, file_name=file_name, t=self.t, z=z)
+    if not os.path.exists(root):
+      os.makedirs(root)
 
-        # save
-        imsave(path_url, array)
+    file_name = template.rv.format(self.experiment.name, self.series.name, self.channel.name, self.t, '{}')
+    url = os.path.join(root, file_name)
 
-  def save_single(self, url, template, z):
-    if self.array is not None:
+    if len(self.array.shape)==2:
+      imsave(url.format(self.z), self.array)
+      self.paths.create(composite=self.composite if self.composite is not None else self.gon.composite, channel=self.channel, template=template, url=url.format(self.z), file_name=file_name.format(self.z), t=self.t, z=self.z)
 
-      # path
-      path_url = url % (self.experiment.name, self.series.name, self.channel.name, self.t_str(), self.z_str(z))
-      file_name = template.rv % (self.experiment.name, self.series.name, self.channel.name, self.t_str(), self.z_str(z))
-      self.paths.create(composite=self.composite, channel=self.channel, template=template, url=path_url, file_name=file_name, t=self.t, z=z)
+    else:
+      for z in range(self.array.shape[2]):
+        plane = self.array[:,:,z].copy()
 
-      # save
-      imsave(path_url, self.array)
+        imsave(url.format(z+self.z), plane) # z level is offset by that of original gon.
+        self.paths.create(composite=self.composite, channel=self.channel, template=template, url=url.format(self.z), file_name=file_name.format(self.z), t=self.t, z=z+self.z)
 
-  def split(self):
-    ''' If the gon is 3D, make 2D slices into gons. '''
-
-    if self.zs>1 and self.gons.count()==0:
-      for path in self.paths.all():
-        # gon
-        gon = self.gons.create(experiment=self.experiment, series=self.series, channel=self.channel)
-        gon.set_origin(0,0,path.z,path.t)
+        # create gons
+        gon = self.gons.create(experiment=self.composite.experiment, series=self.composite.series, channel=self.channel, template=template)
+        gon.set_origin(self.r, self.c, z, self.t)
         gon.set_extent(self.rs, self.cs, 1)
-        gon.paths.create(composite=path.composite, channel=path.channel, template=path.template, url=path.url, file_name=path.file_name, t=path.t, z=path.z)
 
-  def duplicate(self):
-    ''' If the gon is 2D, make a 3D gon with paths along with 2D slices. '''
+        gon.array = plane.copy().squeeze()
+
+        gon.save_array(self.experiment.composite_path, template)
+        gon.save()
+
+  def load_mask(self):
     pass
+
+  def save_mask(self, root):
+    template = self.gon.composite.templates.get(name='mask')
+    file_name = template.rv.format(self.id_token)
+    url = os.path.join(root, file_name)
+    imsave(url, self.array)
+    self.paths.create(composite=self.gon.composite, channel=self.channel, template=template, url=url, file_name=file_name, t=self.t, z=self.z)
 
 class Channel(models.Model):
   # connections
@@ -139,35 +139,7 @@ class Channel(models.Model):
 
   # methods
   def __str__(self):
-    return '%s > %s' % (self.composite.id_token, self.name)
-
-  def masks_overlap_with_marker(self, marker):
-    box_overlap = []
-    for mask in self.masks.filter(gon__t=marker.t):
-      if mask.box_overlaps_marker(marker):
-        box_overlap.append(mask)
-
-    mask_overlap = []
-    for mask in box_overlap:
-      if mask.self_overlaps_marker(marker):
-        mask_overlap.append(mask)
-
-    return mask_overlap
-
-  def masks_overlap_with_mask(self, query_mask):
-    box_overlap = []
-    for mask in self.masks.filter(gon__t=query_mask.gon.t):
-      if mask.box_overlaps_box(query_mask):
-        box_overlap.append(mask)
-
-    mask_overlap = []
-    for mask in box_overlap:
-      if mask.self_overlaps_mask(query_mask):
-        mask_overlap.append(mask)
-
-    # print('channel: %s - boxes: %d/%d, masks: %d/%d' % (str(self), len(box_overlap), self.masks.filter(gon__t=query_mask.gon.t).count(), len(mask_overlap), len(box_overlap)))
-
-    return mask_overlap
+    return '{} > {}'.format(self.composite.id_token, self.name)
 
 class Template(models.Model):
   # connections
@@ -180,7 +152,7 @@ class Template(models.Model):
 
   # methods
   def __str__(self):
-    return '%s: %s' % (self.name, self.rx)
+    return '{}: {}'.format(self.name, self.rx)
 
   def match(self, string):
     return re.match(self.rx, string)
@@ -203,7 +175,7 @@ class Path(models.Model):
 
   # methods
   def __str__(self):
-    return '%s: %s' % (self.composite.id_token, self.file_name)
+    return '{}: {}'.format(self.composite.id_token, self.file_name)
 
   def load(self):
     return imread(self.url)

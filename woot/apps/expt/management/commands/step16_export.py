@@ -1,16 +1,14 @@
-# expt.command: step10_cp
+# expt.command: step11_reduced
 
 # django
 from django.core.management.base import BaseCommand, CommandError
 
 # local
 from apps.expt.models import Series
-from apps.expt.util import *
-from apps.expt.data import allowed_img_extensions
 
 # util
 import os
-import subprocess
+import numpy as np
 from optparse import make_option
 
 ### Command
@@ -39,41 +37,31 @@ class Command(BaseCommand):
   def handle(self, *args, **options):
     '''
     1. What does this script do?
-    > Remotely run CellProfiler using a command line. I want to pretend that I am simply modding the images and creating a new channel.
+    > Use masks to build up larger masks surrounding markers
 
     2. What data structures are input?
-    > CP Pipeline file, Channel
+    > Mask, Gon
 
     3. What data structures are output?
-    > Nothing
+    > Channel, Gon, Mask
 
     4. Is this stage repeated/one-time?
-    > One-time per pipeline
+    > Repeated
 
     Steps:
 
-    1. Search in pathfor batches
-    2. For each batch, run command
+    1. load mask gons
+    2. stack vertically in single array
 
     '''
 
-    # 1. get path and batches
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
 
     # output
-    output_path = os.path.join(series.experiment.mask_path, series.name)
+    output_file = os.path.join(series.experiment.data_path, 'output_{}_s{}.csv'.format(series.experiment.name, series.name))
 
-    if not os.path.exists(output_path):
-      os.mkdir(output_path)
-
-    series_cp_path = os.path.join(series.experiment.cp_path, series.name)
-    for batch_number in os.listdir(series_cp_path):
-      # cell profiler input path
-      batch_path = os.path.join(series_cp_path, batch_number)
-
-      # pipeline path
-      pipeline = os.path.join(series.experiment.pipeline_path, 'bf_pmod_v0.5.cppipe')
-
-      # run command
-      cmd = '/Applications/CellProfiler.app/Contents/MacOS/CellProfiler -c -r -i {} -o {} -p {}'.format(batch_path, output_path, pipeline)
-      subprocess.call(cmd, shell=True)
+    with open(output_file, 'w+') as f:
+      f.write('experiment, series, cell id, row, column, Z, frame, T, vr, vc, vz, Area, Compactness, Eccentricity, EulerNumber, Extent, FormFactor, MajorAxisLength, MaximumRadius, MeanRadius, MedianRadius, MinorAxisLength, Orientation, Perimeter, Solidity, Location_Center_R, Location_Center_C\n')
+      for cell in series.cells.order_by('pk'):
+        for cell_instance in cell.cell_instances.order_by('t'):
+          f.write(cell_instance.line())
