@@ -99,8 +99,8 @@ class Command(BaseCommand):
               cell_instance.z = marker.z
 
               cell_instance.AreaShape_Area = float(d[titles.index('AreaShape_Area')])
-              cell_instance.r = float(d[titles.index('AreaShape_Center_X')])
-              cell_instance.c = float(d[titles.index('AreaShape_Center_Y')])
+              cell_instance.r = float(d[titles.index('AreaShape_Center_Y')])
+              cell_instance.c = float(d[titles.index('AreaShape_Center_X')])
               cell_instance.AreaShape_Compactness = float(d[titles.index('AreaShape_Compactness')])
               cell_instance.AreaShape_Eccentricity = float(d[titles.index('AreaShape_Eccentricity')])
               cell_instance.AreaShape_EulerNumber = float(d[titles.index('AreaShape_EulerNumber')])
