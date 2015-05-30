@@ -12,10 +12,13 @@ from apps.img.util import *
 import os
 from optparse import make_option
 import matplotlib.pyplot as plt
+from scipy.misc import imread, imsave
 from scipy.ndimage.filters import gaussian_filter as gf
 from skimage import exposure
 import numpy as np
 from skimage import filter as ft
+from random import randint as rand
+from scipy.ndimage.filters import laplace
 
 ### Command
 class Command(BaseCommand):
@@ -65,6 +68,28 @@ class Command(BaseCommand):
 
       return column_1D
 
+    def make_track(img, r, c):
+      current_r, current_c = r,c
+      track = [(current_r, current_c)]
+
+      greater_exists = True
+      while greater_exists:
+
+        # scan neighbours
+        nrl, nru = current_r-1 if current_r>0 else 0, current_r+2 if current_r+2<=mask.shape[0] else mask.shape[0]
+        ncl, ncu = current_c-1 if current_c>0 else 0, current_c+2 if current_c+2<=mask.shape[1] else mask.shape[1]
+        neighbours = mask[nrl:nru,ncl:ncu].copy()
+
+        max_r, max_c = np.unravel_index(np.argmin(neighbours), neighbours.shape)
+
+        if (nrl+max_r, ncl+max_c) == (current_r, current_c):
+          greater_exists = False
+        else:
+          current_r, current_c = nrl+max_r, ncl+max_c
+          track.append((current_r, current_c))
+
+      return track
+
     # select composite
     composite = Composite.objects.get(experiment__name=options['expt'], series__name=options['series'])
     ### SETUP
@@ -75,53 +100,46 @@ class Command(BaseCommand):
     path = os.path.join(base_output_path, 'mask-projection2')
     create_path(path)
 
-    for t in range(1):
-    # for t in range(composite.series.ts):
+    # t=0
+    #
+    # mask = np.zeros(composite.series.shape(), dtype=float)
+    # gfp_gon = composite.gons.get(channel__name='0', t=t)
+    # gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+    # gfp = gf(gfp, sigma=2)
+    #
+    # for r in range(0,composite.series.rs,1):
+    #   for c in range(0,composite.series.cs,1):
+    #     column = scan_point(gfp, r, c)
+    #     print(t,r,c)
+    #
+    #     # normalise or pick plot type
+    #     omega = np.array(column) / np.max(column)
+    #     m = np.mean(omega)
+    #
+    #     mask[r,c] = (1.0 - m)
 
-      mask = np.zeros(composite.series.shape(), dtype=float)
-      gfp_gon = composite.gons.get(channel__name='0', t=t)
-      gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
-      gfp = gf(gfp, sigma=2)
+    # imsave('/Volumes/TRANSPORT/demo/test/mask-projection2/mask.png', mask)
+    mask = imread('/Volumes/TRANSPORT/demo/test/mask-projection2/mask.png')
+    edge = imread('/Volumes/TRANSPORT/demo/test/mask-projection2/mask_edge.png') < 0
 
-      for r in range(0,composite.series.rs,8):
-        for c in range(0,composite.series.cs,8):
-          column = scan_point(gfp, r, c)
-          print(t,r,c)
+    # trace tracks on the image from low to high
+    tracks = []
+    track_image = np.zeros(mask.shape)
 
-          # normalise or pick plot type
-          omega = np.array(column) / np.max(column)
+    # for pixel_value in reversed(list(range(240,256))):
+    #   wr, wc = np.where(mask==pixel_value)
+    #   for r,c in zip(list(wr),list(wc)):
+    #     track = make_track(mask, r, c)
+    #
+    #     tracks.append(track)
+    #
+    # for track in tracks:
+    #   for r,c in track:
+    #     track_image[r,c] = 1
 
-          m = np.mean(omega)
+    imsave('/Volumes/TRANSPORT/demo/test/mask-projection2/threshold.png', mask>230)
 
-          omega2 = np.ma.array(omega, mask=omega>m)
-          m_hat = np.mean(omega2)
-
-          omega1 = np.ma.array(omega, mask=omega<m)
-
-          omega1_diff = np.abs(omega1 - m_hat)
-          v_hat = np.sum(omega1_diff)
-          v_hat /= np.sum(omega1>0)
-
-          # mask[r,c] = (1.0 - m_hat)
-          # plt.scatter(m, np.std(omega))
-          plt.scatter(m_hat, v_hat)
-
-      # plot
-      # plt.imshow(mask, cmap='jet')
-      plt.ylim([0,1])
-      plt.savefig(os.path.join(path, 'mask_t{}.png'.format(t)))
-      plt.clf()
-
-      # further analysis
-      # gradient
-      # dx, dy = tuple(np.gradient(mask))
-      # plt.imshow(dx, cmap='jet')
-      # plt.savefig(os.path.join(path, 'mask_t{}_dx.png'.format(t)))
-      # plt.clf()
-      #
-      # plt.imshow(dy, cmap='jet')
-      # plt.savefig(os.path.join(path, 'mask_t{}_dy.png'.format(t)))
-      # plt.clf()
+    imsave('/Volumes/TRANSPORT/demo/test/mask-projection2/track_image.png', track_image)
 
     ''
 

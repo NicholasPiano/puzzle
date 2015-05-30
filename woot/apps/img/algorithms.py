@@ -328,7 +328,7 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
   cell_mask_channel, cell_mask_channel_created = composite.channels.get_or_create(name='cellmask')
 
   # mean
-  mask_mean_max = np.max([mask.mean for mask in composite.masks.all()])
+  # mask_mean_max = np.max([mask.mean for mask in composite.masks.all()])
 
   # iterate over frames
   for t in range(composite.series.ts):
@@ -362,10 +362,10 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
 
           z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_z)) # suppress z levels at increasing distances from marker
           max_z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_max_z)) # suppress z levels at increasing distances from marker
-          mean_term = mask_mean / mask_mean_max # raise mask according to mean
+          # mean_term = mask_mean / mask_mean_max # raise mask according to mean
           std_term = 1.0
 
-          mask_array = mask_array * z_term * max_z_term * mean_term * std_term
+          mask_array = mask_array * z_term * max_z_term * std_term
 
           # add to primary mask
           primary_mask += mask_array
