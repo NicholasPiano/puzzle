@@ -391,7 +391,7 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
 
           z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_z)) # suppress z levels at increasing distances from marker
           max_z_term = 1.0 / (1.0 + 0.1*np.abs(z - mask_max_z)) # suppress z levels at increasing distances from marker
-          mean_term = mask_mean / mask_mean_max # raise mask according to mean
+          # mean_term = mask_mean / mask_mean_max # raise mask according to mean
           std_term = 1.0
 
           foreign_marker_condition = 1.0 # if the mask contains a different marker
@@ -404,7 +404,7 @@ def mod_step13_cell_masks(composite, mod_id, algorithm):
               foreign_marker_condition = 0.0
             foreign_marker_counter += 1
 
-          mask_array = mask_array * z_term * max_z_term * mean_term * std_term * foreign_marker_condition
+          mask_array = mask_array * z_term * max_z_term * std_term * foreign_marker_condition
 
           # add to primary mask
           secondary_mask += mask_array
