@@ -17,6 +17,7 @@ from scipy.ndimage.filters import gaussian_filter as gf
 from skimage import exposure
 import numpy as np
 from skimage import filter as ft
+import random
 from random import randint as rand
 from scipy.ndimage.filters import laplace
 
@@ -90,6 +91,61 @@ class Command(BaseCommand):
 
       return track
 
+    def stubborn_track(img, r, c):
+      circle = [(1,-1),(1,0),(1,1),(0,1),(-1,1),(-1,0),(-1,-1),(0,-1)]
+
+      current_r, current_c = r,c
+      track = [(current_r, current_c)]
+
+      # choose random combination from circle
+      dr, dc = random.choice(circle)
+
+      circle_index = circle.index((dr,dc))
+
+      cont = True
+      while cont:
+        new_r, new_c = current_r+dr, current_c+dc
+
+        # A fork in the road
+        # 1. the pixel ahead in the same direction is beyond the edge of the image
+        # 2. the pixel ahead has a value higher than the current pixel
+        # 3. else
+
+        # upon moving to another pixel, check if:
+        # 1. the pixel ahead is beyond the edge of the image
+        # 2. the pixel ahead has a value greater than the current pixel
+
+        # in either case, try the neighbouring pixels and move to them instead
+        # could be left, right, double left, or double right
+
+        # array to try is always: [ahead, (random ordering of L, R), (random ordering of LL, RR)]
+        # for example: [0, 2, 1, 3, 4]
+
+        # lr = bool(rand(0,1))
+        # llrr = bool(rand(0,1))
+        # queue = [0, -1 if lr else 1, -1 if not lr else 1]# + [-2 if llrr else 2, -2 if not llrr else 2]
+        queue = [0,1,-1]
+        random.shuffle(queue)
+
+        chosen = False
+        choice_index = 0
+        while not chosen and choice_index<len(queue):
+          option = queue[choice_index]
+          option_r, option_c = circle[circle_index + option if circle_index + option < len(circle) else option - 1]
+          new_r, new_c = current_r + option_r, current_c + option_c
+
+          if 0 <= new_r < img.shape[0] and 0 <= new_c < img.shape[1] and img[new_r, new_c] <= img[current_r, current_c] and (new_r, new_c) not in track:
+            current_r, current_c = new_r, new_c
+            dr, dc = option_r, option_c
+            track.append((current_r, current_c))
+            chosen = True
+          else:
+            choice_index += 1
+
+        cont = chosen
+
+      return track
+
     # select composite
     composite = Composite.objects.get(experiment__name=options['expt'], series__name=options['series'])
     ### SETUP
@@ -100,46 +156,32 @@ class Command(BaseCommand):
     path = os.path.join(base_output_path, 'mask-projection2')
     create_path(path)
 
-    # t=0
-    #
-    # mask = np.zeros(composite.series.shape(), dtype=float)
-    # gfp_gon = composite.gons.get(channel__name='0', t=t)
-    # gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
-    # gfp = gf(gfp, sigma=2)
-    #
-    # for r in range(0,composite.series.rs,1):
-    #   for c in range(0,composite.series.cs,1):
-    #     column = scan_point(gfp, r, c)
-    #     print(t,r,c)
-    #
-    #     # normalise or pick plot type
-    #     omega = np.array(column) / np.max(column)
-    #     m = np.mean(omega)
-    #
-    #     mask[r,c] = (1.0 - m)
-
     # imsave('/Volumes/TRANSPORT/demo/test/mask-projection2/mask.png', mask)
     mask = imread('/Volumes/TRANSPORT/demo/test/mask-projection2/mask.png')
-    edge = imread('/Volumes/TRANSPORT/demo/test/mask-projection2/mask_edge.png') < 0
+    bf_gon = composite.gons.get(channel__name='1', t=0)
+    bf = bf_gon.load()[:,:,37]
 
-    # trace tracks on the image from low to high
+    plt.imshow(bf, cmap='Greys_r')
+
     tracks = []
-    track_image = np.zeros(mask.shape)
+    # R, C = 356, 452
+    w = np.where(mask>mask.max()-3)
+    for R, C in zip(list(w[0]), list(w[1])):
+      for i in range(8):
+        track = stubborn_track(mask, R, C)
+        tracks.append(track)
 
-    # for pixel_value in reversed(list(range(240,256))):
-    #   wr, wc = np.where(mask==pixel_value)
-    #   for r,c in zip(list(wr),list(wc)):
-    #     track = make_track(mask, r, c)
-    #
-    #     tracks.append(track)
-    #
-    # for track in tracks:
-    #   for r,c in track:
-    #     track_image[r,c] = 1
+    for track in tracks:
+      # r0, c0 = track[0]
+      # distance = [np.sqrt((r-r0)**2 + (c-c0)**2) for r,c in track]
+      # bf_list = [bf[r,c] for r,c in track]
+      # plt.plot(distance, bf_list)
+      plt.scatter([r for r,c in track], [c for r,c in track], c=[int(255*float(mask[r,c]/mask.max())) for r,c in track], cmap='jet')
 
-    imsave('/Volumes/TRANSPORT/demo/test/mask-projection2/threshold.png', mask>230)
-
-    imsave('/Volumes/TRANSPORT/demo/test/mask-projection2/track_image.png', track_image)
+    plt.colorbar()
+    # plt.ylabel('brightfield relative intensity')
+    # plt.xlabel('distance from centre')
+    plt.show()
 
     ''
 
