@@ -76,6 +76,8 @@ class Command(BaseCommand):
       c0, c1 = c-5 if c-5>=0 else 0, c+6 if c+5<=series.cs else series.cs
 
       mask = g[r0:r1,c0:c1]
+      print(g.shape, mask.shape)
+
       region_index_scaled = np.max(mask)
 
       # 5. find index from array
