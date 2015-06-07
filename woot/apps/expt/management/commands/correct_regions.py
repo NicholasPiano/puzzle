@@ -86,4 +86,4 @@ class Command(BaseCommand):
 
       # 7. fetch region object
       region = series.regions.get(index=true_region_index)
-      print(cell_instance.pk, r, c, region.description)
+      print(g.shape, mask.shape, cell_instance.pk, r, c, region.description)
