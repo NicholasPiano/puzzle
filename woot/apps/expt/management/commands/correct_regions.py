@@ -60,7 +60,7 @@ class Command(BaseCommand):
     cell_instances = series.cell_instances.all()
 
     for i, cell_instance in enumerate(cell_instances):
-      print(i, len(cell_instances), cell_instance.series.name)
+      print(i, len(cell_instances), cell_instance.experiment.name, cell_instance.series.name)
       # 1. get r,c
       r, c = cell_instance.r, cell_instance.c
 
