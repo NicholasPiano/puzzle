@@ -57,11 +57,33 @@ class Command(BaseCommand):
 
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
 
-    # output
-    output_file = os.path.join(series.experiment.data_path, 'output_{}_s{}.csv'.format(series.experiment.name, series.name))
+    cell_instances = series.cell_instances.all()
 
-    with open(output_file, 'w+') as f:
-      f.write('experiment, series, cell id, row, column, Z, frame, T, vr, vc, vz, region, Area, Compactness, Eccentricity, EulerNumber, Extent, FormFactor, MajorAxisLength, MaximumRadius, MeanRadius, MedianRadius, MinorAxisLength, Orientation, Perimeter, Solidity\n')
-      for cell in series.cells.order_by('pk'):
-        for cell_instance in cell.cell_instances.order_by('t'):
-          f.write(cell_instance.line())
+    for i, cell_instance in enumerate(cell_instances):
+      print(i, len(cell_instances))
+      # 1. get r,c
+      r, c = cell_instance.r, cell_instance.c
+
+      # 2. get region image
+      region_gon = cell_instance.experiment.composites.get().gons.get(channel__name='-regions', t=cell_instance.t, id_token='')
+      g = region_gon.load()
+
+      # 3. get unique values
+      u = list(np.unique(g))
+
+      # 4. get mask value of mask around cell instance
+      r0, r1 = r-5 if r-5>=0 else 0, r+6 if r+5<=series.rs else series.rs
+      c0, c1 = c-5 if c-5>=0 else 0, c+6 if c+5<=series.cs else series.cs
+
+      mask = g[r0:r1,c0:c1]
+      region_index_scaled = np.max(mask)
+
+      # 5. find index from array
+      region_index = u.index(region_index_scaled)
+
+      # 6. find true index from series data
+      true_region_index = series.vertical_sort_for_region_index(region_index)
+
+      # 7. fetch region object
+      region = series.regions.get(index=true_region_index)
+      print(cell_instance.pk, r, c, region.description)

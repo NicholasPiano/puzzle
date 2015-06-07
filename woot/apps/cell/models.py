@@ -103,7 +103,7 @@ class CellInstance(models.Model):
     return self.AreaShape_Area*self.experiment.rmop*self.experiment.cmop
 
   def raw_line(self):
-    return '{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(self.experiment.name,
+    return '{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(self.experiment.name,
                                                                                                     self.series.name,
                                                                                                     self.cell.pk,
                                                                                                     self.r,
@@ -113,6 +113,7 @@ class CellInstance(models.Model):
                                                                                                     self.vr,
                                                                                                     self.vc,
                                                                                                     self.vz,
+                                                                                                    self.region.index if self.region is not None else 1,
                                                                                                     self.AreaShape_Area,
                                                                                                     self.AreaShape_Compactness,
                                                                                                     self.AreaShape_Eccentricity,
@@ -126,11 +127,9 @@ class CellInstance(models.Model):
                                                                                                     self.AreaShape_MinorAxisLength,
                                                                                                     self.AreaShape_Orientation,
                                                                                                     self.AreaShape_Perimeter,
-                                                                                                    self.AreaShape_Solidity,
-                                                                                                    self.Location_Center_X,
-                                                                                                    self.Location_Center_Y)
+                                                                                                    self.AreaShape_Solidity)
   def line(self):
-    return '{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(self.experiment.name,
+    return '{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(self.experiment.name,
                                                                                                        self.series.name,
                                                                                                        self.cell.pk,
                                                                                                        self.R(),
@@ -141,6 +140,7 @@ class CellInstance(models.Model):
                                                                                                        self.VR(),
                                                                                                        self.VC(),
                                                                                                        self.VZ(),
+                                                                                                       self.region.index if self.region is not None else 1,
                                                                                                        self.A(),
                                                                                                        self.AreaShape_Compactness,
                                                                                                        self.AreaShape_Eccentricity,
@@ -154,9 +154,7 @@ class CellInstance(models.Model):
                                                                                                        self.AreaShape_MinorAxisLength,
                                                                                                        self.AreaShape_Orientation,
                                                                                                        self.AreaShape_Perimeter,
-                                                                                                       self.AreaShape_Solidity,
-                                                                                                       self.Location_Center_X,
-                                                                                                       self.Location_Center_Y)
+                                                                                                       self.AreaShape_Solidity)
 
 ### MARKERS
 class Track(models.Model):

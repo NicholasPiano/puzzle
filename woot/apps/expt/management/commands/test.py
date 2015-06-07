@@ -58,11 +58,11 @@ class Command(BaseCommand):
     create_path(base_output_path)
 
     # scan point
-    def scan_point(gfp, r, c, size=3):
+    def scan_point(gfp, rs, cs, r, c, size=3):
       r0 = r - size if r - size >= 0 else 0
-      r1 = r + size if r + size <= gfp_gon.rs else gfp_gon.rs
+      r1 = r + size if r + size <= rs else rs
       c0 = c - size if c - size >= 0 else 0
-      c1 = c + size if c + size <= gfp_gon.cs else gfp_gon.cs
+      c1 = c + size if c + size <= cs else cs
 
       column = gfp[r0:r1,c0:c1,:]
       column_1D = np.sum(np.sum(column, axis=0), axis=0)
@@ -146,13 +146,20 @@ class Command(BaseCommand):
 
       return track
 
+    def square_difference(standard, distribution):
+      diff = 0
+      for s,d in zip(list(standard), list(distribution)):
+        diff += (s-d)**2 / len(standard)
+
+      return diff
+
     # select composite
     composite = Composite.objects.get(experiment__name=options['expt'], series__name=options['series'])
     ### SETUP
 
 
     ### 1. Each point in 'mask' is the mean or standard deviation of that point vertically in the GFP
-    ''
+    '''
     path = os.path.join(base_output_path, 'mask-projection2')
     create_path(path)
 
@@ -183,37 +190,107 @@ class Command(BaseCommand):
     # plt.xlabel('distance from centre')
     plt.show()
 
-    ''
+    '''
 
     ### 2. Same as (1), but for each level
-    '''
+    ''
     path = os.path.join(base_output_path, 'mask-z')
     create_path(path)
 
     for t in range(1):
     # for t in range(composite.series.ts):
 
-      mask = np.zeros(composite.series.shape(d=3), dtype=float)
+      # mask = np.zeros(composite.series.shape(), dtype=float)
+      # levels = np.zeros(composite.series.shape(), dtype=float)
       gfp_gon = composite.gons.get(channel__name='0', t=t)
       gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
       gfp = gf(gfp, sigma=2)
 
-      for r in range(0,composite.series.rs,1):
-        for c in range(0,composite.series.cs,1):
-          column = scan_point(gfp, r, c)
+      # bf_gon = composite.gons.get(channel__name='1', t=t)
+      # bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
+      # bf = gf(bf, sigma=2)
+
+      # edges = ft.canny(np.sum(bf, axis=2))
+      distributions = []
+      marker_positions = [(marker.r, marker.c) for marker in composite.series.markers.filter(t=t)]
+
+      step = 4
+
+      for r in range(0,gfp.shape[0],step):
+        for c in range(0,gfp.shape[1],step):
+          print(r,c)
+          # bf_column = scan_point(bf, bf.shape[0], bf.shape[1], r, c)
+          gfp_column = scan_point(gfp, gfp.shape[0], gfp.shape[1], r, c)
 
           # normalise or pick plot type
-          distribution = np.array(column) / np.max(column)
-          z = np.argmax(distribution)
+          # bf_distribution = np.array(bf_column) / np.max(bf_column)
+          gfp_distribution = np.array(gfp_column) / np.max(gfp_column)
+          # final = bf_distribution * gfp_distribution
+          # if np.mean(final[80:])<0.4:
+            # plt.plot(final, color='b' if bool(edges[r,c]) else 'r')
+          z = np.argmax(gfp_distribution)
 
-          mask[r,c,z] = (1.0 - np.mean(distribution))
+          distributions.append({'z':np.arange(gfp_distribution.shape[0])-z,
+                                'd':list(gfp_distribution),
+                                'mean':np.mean(gfp_distribution),
+                                'marker':bool(np.sum([np.sqrt((r-R)**2 + (c-C)**2)<=step for R,C in marker_positions])),
+                                'R2':0,})
 
-      for z in range(mask.shape[2]):
-        plt.imshow(mask[:,:,z], cmap='jet')
-        plt.savefig(os.path.join(path, 'mask_t{}_z{}.png'.format(t, z)))
-        plt.clf()
+          # mask[r,c] = (1.0 - np.mean(gfp_distribution))
+          # levels[r,c] = z
 
-    '''
+      min_z = 1000
+      max_z = 0
+      mean = 0
+
+      for distribution in distributions:
+        if min_z > min(distribution['z']):
+          min_z = min(distribution['z'])
+
+        if max_z < max(distribution['z']):
+          max_z = max(distribution['z'])
+
+        mean += np.mean(distribution['d']) / len(distributions)
+
+      full_array_length = max_z-min_z # min-min to max-max
+      mean_marker_distribution = np.zeros((full_array_length)) # blank
+      subscribers = np.zeros((full_array_length)) # number of distributions that contribute to a z position
+      marker_distributions = list(filter(lambda d: d['marker'], distributions)) # filtered list
+
+      for distribution in distributions:
+        offset = abs(min(distribution['z']) - min_z) # offset: absolute distance from beginning of full array to beginning of distribution
+        mean_marker_distribution[offset:offset+len(distribution['d'])] += np.array(distribution['d'])
+        subscribers[offset:offset+len(distribution['d'])] += np.ones(len(distribution['d']))
+
+      # cut to max subscribers, keep max at zero
+      cut_lower = np.argmax(subscribers==subscribers.max()) # throwaway
+      cut_upper = len(subscribers) - np.argmax((subscribers==subscribers.max())[::-1]) # throwaway
+      z_lower = min_z + cut_lower # minimum z with all distributions included
+      z_upper = max_z - len(subscribers) + cut_upper
+      cut_z = np.arange(z_lower, z_upper)
+
+      for distribution in marker_distributions:
+        offset_lower = z_lower - min(distribution['z']) if z_lower > min(distribution['z']) else 0
+        offset_upper = abs(min(distribution['z']) - z_upper)
+        cut_distribution = np.array(distribution['d'])[offset_lower:offset_upper]
+        dist_cut_z = np.array(distribution['z'])[offset_lower:offset_upper]
+        # plt.plot(dist_cut_z, cut_distribution, color='red')
+
+      cut_mean_marker_distribution = mean_marker_distribution[cut_lower:cut_upper] / subscribers[cut_lower:cut_upper]
+
+      for distribution in distributions:
+        offset_lower = z_lower - min(distribution['z']) if z_lower > min(distribution['z']) else 0
+        offset_upper = abs(min(distribution['z']) - z_upper)
+        cut_distribution = np.array(distribution['d'])[offset_lower:offset_upper]
+
+        # find R2 value
+        print(square_difference(cut_mean_marker_distribution, cut_distribution))
+
+
+
+      plt.show()
+
+    ''
 
     ### 2. Same as (1), but for each level
 
