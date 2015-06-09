@@ -128,53 +128,56 @@ class Command(BaseCommand):
         count += 1
 
         print(r,c)
+        mask[r,c] = 1.0 - mean_value
 
         # create object with details
-        distributions.append(Distribution(r=r,
-                                          c=c,
-                                          data=data,
-                                          max_value=max_value,
-                                          mean_value=mean_value,
-                                          min_value=min_value,
-                                          z=z,
-                                          is_marker=is_marker))
+        # distributions.append(Distribution(r=r,
+        #                                   c=c,
+        #                                   data=data,
+        #                                   max_value=max_value,
+        #                                   mean_value=mean_value,
+        #                                   min_value=min_value,
+        #                                   z=z,
+        #                                   is_marker=is_marker))
+
+    imsave(os.path.join(path, 'mask.tiff'), mask)
 
 
-    # set extrema
-    mean = mean / count
-    max_z = 0
-    min_z = 1000
-
-    mean_threshold_distributions = list(filter(lambda d: d.mean_value>mean, distributions))
-
-    for distribution in mean_threshold_distributions:
-      max_z = distribution.z if distribution.z>max_z else max_z
-      min_z = distribution.z if distribution.z<min_z else min_z
-
-    print(max_z,min_z)
-
-    # build comparator
-    # max is the distance between the top and the highest maximum
-    # min is the distance between the bottom and the lowest minimum
-    comparator_max = gfp_gon.zs - max_z
-    comparator_min = -min_z
-
-    # translate comparator bounds into distribution coordinates
-    def cut(data, d_z):
-      upper = d_z + comparator_max
-      lower = d_z + comparator_min
-      return data[lower:upper]
-
-    for distribution in mean_threshold_distributions:
-      # print(distribution.is_marker)
-      #
-      # if sample is None and distribution.is_marker:
-      #   sample = distribution
-      #   cut_sample = cut(sample.data, sample.z)
-      #
-      cut_distribution = cut(distribution.data, distribution.z)
-
-      plt.plot(np.arange(comparator_min, comparator_max), cut_distribution)
-      # plt.plot(np.convolve(cut_sample, cut_distribution))
-
-    plt.show()
+    # # set extrema
+    # mean = mean / count
+    # max_z = 0
+    # min_z = 1000
+    #
+    # mean_threshold_distributions = list(filter(lambda d: d.mean_value>mean, distributions))
+    #
+    # for distribution in mean_threshold_distributions:
+    #   max_z = distribution.z if distribution.z>max_z else max_z
+    #   min_z = distribution.z if distribution.z<min_z else min_z
+    #
+    # print(max_z,min_z)
+    #
+    # # build comparator
+    # # max is the distance between the top and the highest maximum
+    # # min is the distance between the bottom and the lowest minimum
+    # comparator_max = gfp_gon.zs - max_z
+    # comparator_min = -min_z
+    #
+    # # translate comparator bounds into distribution coordinates
+    # def cut(data, d_z):
+    #   upper = d_z + comparator_max
+    #   lower = d_z + comparator_min
+    #   return data[lower:upper]
+    #
+    # for distribution in mean_threshold_distributions:
+    #   # print(distribution.is_marker)
+    #   #
+    #   # if sample is None and distribution.is_marker:
+    #   #   sample = distribution
+    #   #   cut_sample = cut(sample.data, sample.z)
+    #   #
+    #   cut_distribution = cut(distribution.data, distribution.z)
+    #
+    #   plt.plot(np.arange(comparator_min, comparator_max), cut_distribution)
+    #   # plt.plot(np.convolve(cut_sample, cut_distribution))
+    #
+    # plt.show()

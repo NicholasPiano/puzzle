@@ -90,6 +90,9 @@ class CellInstance(models.Model):
   def T(self):
     return self.t*self.experiment.tpf
 
+  def V(self):
+    return np.sqrt(self.VR()**2 + self.VC()**2)
+
   def VR(self):
     return self.vr*self.experiment.rmop / self.experiment.tpf
 
@@ -103,18 +106,45 @@ class CellInstance(models.Model):
     return self.AreaShape_Area*self.experiment.rmop*self.experiment.cmop
 
   def raw_line(self):
-    return '{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(self.experiment.name,
+    return '{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{} \n'.format(self.experiment.name,
+                                                                                                  self.series.name,
+                                                                                                  self.cell.pk,
+                                                                                                  self.r,
+                                                                                                  self.c,
+                                                                                                  self.z,
+                                                                                                  self.t,
+                                                                                                  self.vr,
+                                                                                                  self.vc,
+                                                                                                  self.vz,
+                                                                                                  self.region.index,
+                                                                                                  self.AreaShape_Area,
+                                                                                                  self.AreaShape_Compactness,
+                                                                                                  self.AreaShape_Eccentricity,
+                                                                                                  self.AreaShape_EulerNumber,
+                                                                                                  self.AreaShape_Extent,
+                                                                                                  self.AreaShape_FormFactor,
+                                                                                                  self.AreaShape_MajorAxisLength,
+                                                                                                  self.AreaShape_MaximumRadius,
+                                                                                                  self.AreaShape_MeanRadius,
+                                                                                                  self.AreaShape_MedianRadius,
+                                                                                                  self.AreaShape_MinorAxisLength,
+                                                                                                  self.AreaShape_Orientation,
+                                                                                                  self.AreaShape_Perimeter,
+                                                                                                  self.AreaShape_Solidity)
+  def line(self):
+    return '{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(self.experiment.name,
                                                                                                     self.series.name,
                                                                                                     self.cell.pk,
-                                                                                                    self.r,
-                                                                                                    self.c,
-                                                                                                    self.z,
+                                                                                                    self.R(),
+                                                                                                    self.C(),
+                                                                                                    self.Z(),
                                                                                                     self.t,
-                                                                                                    self.vr,
-                                                                                                    self.vc,
-                                                                                                    self.vz,
-                                                                                                    self.region.index if self.region is not None else 1,
-                                                                                                    self.AreaShape_Area,
+                                                                                                    self.T(),
+                                                                                                    self.VR(),
+                                                                                                    self.VC(),
+                                                                                                    self.VZ(),
+                                                                                                    self.region.index,
+                                                                                                    self.A(),
                                                                                                     self.AreaShape_Compactness,
                                                                                                     self.AreaShape_Eccentricity,
                                                                                                     self.AreaShape_EulerNumber,
@@ -128,33 +158,6 @@ class CellInstance(models.Model):
                                                                                                     self.AreaShape_Orientation,
                                                                                                     self.AreaShape_Perimeter,
                                                                                                     self.AreaShape_Solidity)
-  def line(self):
-    return '{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(self.experiment.name,
-                                                                                                       self.series.name,
-                                                                                                       self.cell.pk,
-                                                                                                       self.R(),
-                                                                                                       self.C(),
-                                                                                                       self.Z(),
-                                                                                                       self.t,
-                                                                                                       self.T(),
-                                                                                                       self.VR(),
-                                                                                                       self.VC(),
-                                                                                                       self.VZ(),
-                                                                                                       self.region.index if self.region is not None else 1,
-                                                                                                       self.A(),
-                                                                                                       self.AreaShape_Compactness,
-                                                                                                       self.AreaShape_Eccentricity,
-                                                                                                       self.AreaShape_EulerNumber,
-                                                                                                       self.AreaShape_Extent,
-                                                                                                       self.AreaShape_FormFactor,
-                                                                                                       self.AreaShape_MajorAxisLength,
-                                                                                                       self.AreaShape_MaximumRadius,
-                                                                                                       self.AreaShape_MeanRadius,
-                                                                                                       self.AreaShape_MedianRadius,
-                                                                                                       self.AreaShape_MinorAxisLength,
-                                                                                                       self.AreaShape_Orientation,
-                                                                                                       self.AreaShape_Perimeter,
-                                                                                                       self.AreaShape_Solidity)
 
 ### MARKERS
 class Track(models.Model):

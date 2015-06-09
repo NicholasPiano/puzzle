@@ -129,7 +129,7 @@ class Command(BaseCommand):
 
         n = np.argmin(z_neighbours) if len(z_neighbours)>0 else -1
         if n>-1:
-          if z_neighbours[n] <= 3 and mean_neighbours[n] <= 0.1:
+          if z_neighbours[n] <= 2:
             regions[r,c] = region_neighbours[n]
           else:
             regions[r,c] = regions.max()+1 # new region
@@ -144,8 +144,10 @@ class Command(BaseCommand):
 
     # display = np.zeros(composite.series.shape(), dtype=int)
     # display[population>population.mean()] = 1
+    imsave(os.path.join(path, 'regions.png'), regions)
+    imsave(os.path.join(path, 'population.png'), population)
 
-    plt.imshow(regions)
-    plt.show()
+    # plt.imshow(regions)
+    # plt.show()
 
     # match distributions based on continuity
