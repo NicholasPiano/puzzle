@@ -11,6 +11,8 @@ import os
 import numpy as np
 from optparse import make_option
 from scipy.ndimage.filters import gaussian_filter as gf
+from scipy.ndimage.filters import laplace
+from scipy.ndimage import map_coordinates
 import matplotlib.pyplot as plt
 from scipy.misc import imread, imsave
 from skimage import exposure
@@ -81,39 +83,29 @@ class Command(BaseCommand):
     t = 0
 
     # 1. load gfp and brightfield gons at timestep
-    gfp_gon = composite.gons.get(t=t, channel__name='0')
-    gfp = gfp_gon.load()
+    # gfp_gon = composite.gons.get(t=t, channel__name='0')
+    # gfp = gfp_gon.load()
     # gfp = exposure.rescale_intensity(gfp * 1.0)
-    gfp = gf(gfp, sigma=2)
+    # gfp = gf(gfp, sigma=3)
+    #
+    # bf_gon = composite.gons.get(t=t, channel__name='0').gons.get(z=37)
+    # bf = bf_gon.load()
+    Z = imread(os.path.join(base_output_path, 'z_smooth2.png'))
 
-    # 2. get z-profile image,
-    z_img = np.zeros(series.shape(), dtype=float)
-    # normal_mean_img = np.zeros(series.shape(), dtype=float)
-    # absolute_mean_img = np.zeros(series.shape(), dtype=float)
-    step = 1
-    for r in range(0,gfp.shape[0],step):
-      for c in range(0,gfp.shape[1],step):
-        # get column and normalise
-        gfp_column = scan_point(gfp, gfp.shape[0], gfp.shape[1], r, c)
-        data = np.array(gfp_column) / np.max(gfp_column)
+    # print z values for each cell
+    for cell_instance in series.cell_instances.filter(t=t):
+      # r,c
+      r, c = cell_instance.r, cell_instance.c
 
-        # get details about each point
-        z = np.argmax(data)
-        # normal_mean = np.mean(data)
-        # absolute_mean = np.mean(gfp_column)
+      # z
+      z = Z[r,c]
 
-        # set image pixels
-        z_img[r,c] = float(z)
-        # normal_mean_img[r,c] = normal_mean
-        # absolute_mean_img[r,c] = absolute_mean
+      # select all locations in the image with corresponding z
+      z_img = np.zeros(Z.shape)
+      z_img[Z==z-1] = 1
+      z_img[Z==z] = 1
+      z_img[Z==z+1] = 1
 
-        # print
-        print(r, c, z)
-
-    random_img = np.zeros(series.shape(), dtype=float)
-    for u in np.unique(z_img):
-      random_img[z_img==u] = random()
-
-    imsave(os.path.join(base_output_path, 'random.png'), random_img)
-    # imsave(os.path.join(base_output_path, 'normal_mean.png'), normal_mean_img)
-    # imsave(os.path.join(base_output_path, 'absolute_mean.png'), absolute_mean_img)
+      plt.imshow(z_img)
+      plt.show()
+      plt.cla()

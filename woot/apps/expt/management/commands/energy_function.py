@@ -11,6 +11,8 @@ import os
 import numpy as np
 from optparse import make_option
 from scipy.ndimage.filters import gaussian_filter as gf
+from scipy.ndimage.filters import laplace
+from scipy.ndimage import map_coordinates
 import matplotlib.pyplot as plt
 from scipy.misc import imread, imsave
 from skimage import exposure
@@ -79,41 +81,59 @@ class Command(BaseCommand):
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
     composite = series.composites.get()
     t = 0
+    mean = [0,0]
+    cov = [[100,0],[0,100]]
 
     # 1. load gfp and brightfield gons at timestep
+    print('loading gfp...')
     gfp_gon = composite.gons.get(t=t, channel__name='0')
     gfp = gfp_gon.load()
-    # gfp = exposure.rescale_intensity(gfp * 1.0)
-    gfp = gf(gfp, sigma=2)
+    gfp = exposure.rescale_intensity(gfp * 1.0)
+    gfp = gf(gfp, sigma=3)
 
-    # 2. get z-profile image,
-    z_img = np.zeros(series.shape(), dtype=float)
-    # normal_mean_img = np.zeros(series.shape(), dtype=float)
-    # absolute_mean_img = np.zeros(series.shape(), dtype=float)
-    step = 1
-    for r in range(0,gfp.shape[0],step):
-      for c in range(0,gfp.shape[1],step):
-        # get column and normalise
-        gfp_column = scan_point(gfp, gfp.shape[0], gfp.shape[1], r, c)
-        data = np.array(gfp_column) / np.max(gfp_column)
+    print('loading bf...')
+    bf_gon = composite.gons.get(t=t, channel__name='1')
+    bf = bf_gon.load()
+    bf = exposure.rescale_intensity(bf * 1.0)
+    print(bf.max())
 
-        # get details about each point
-        z = np.argmax(data)
-        # normal_mean = np.mean(data)
-        # absolute_mean = np.mean(gfp_column)
+    print('loading Z...')
+    Z = imread(os.path.join(base_output_path, 'z_smooth2.png'))
+    label_img = np.zeros(Z.shape)
 
-        # set image pixels
-        z_img[r,c] = float(z)
-        # normal_mean_img[r,c] = normal_mean
-        # absolute_mean_img[r,c] = absolute_mean
+    # define energy function based on distance from random point and z difference
+    # 1. z difference (not profile joining points)
+    # 2. gfp profile joining points
+    # 3. bf profile joining points
+    # 4. gfp strength profile joining points
 
-        # print
-        print(r, c, z)
+    # 1. pick random point, set label value and update label array
+    # define point for now
+    ci1 = series.cell_instances.get(pk=5059)
+    r, c = ci1.r, ci1.c
+    z_value = Z[r,c]
+    z = series.zs * int(z_value / 255.0)
 
-    random_img = np.zeros(series.shape(), dtype=float)
-    for u in np.unique(z_img):
-      random_img[z_img==u] = random()
+    # img_size = 100
+    # plt.scatter(img_size,img_size, c='r')
 
-    imsave(os.path.join(base_output_path, 'random.png'), random_img)
-    # imsave(os.path.join(base_output_path, 'normal_mean.png'), normal_mean_img)
-    # imsave(os.path.join(base_output_path, 'absolute_mean.png'), absolute_mean_img)
+    for i in range(10):
+      # 2. pick second point with gaussian probability in distance
+      point = np.random.multivariate_normal(mean, cov, 1).astype(int)
+      r1, c1 = point[0,0] + r, point[0,1] + c
+      d = int(np.sqrt((r-r1)**2 + (c-c1)**2))
+      z1_value = Z[r1,c1]
+      z1 = series.zs * int(z1_value / 255.0)
+      r_line, c_line = np.linspace(r, r1, 100), np.linspace(c, c1, 100)
+      line = np.vstack((r_line, c_line))
+
+      # 3. get distributions of bf, gfp, and z between points, classify (same label or new)
+      bf_distribution = map_coordinates(bf[:,:,z], line)
+      gfp_distribution = map_coordinates(gfp[:,:,z], line)
+      z_distribution = map_coordinates(Z, line)
+
+      # plt.scatter(img_size + r1 - r, img_size + c1 - c, c='b')
+
+    # img = Z[r-img_size:r+img_size,c-img_size:c+img_size]
+    # plt.imshow(img, cmap='Greys_r')
+    # plt.show()
