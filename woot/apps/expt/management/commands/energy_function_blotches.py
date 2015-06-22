@@ -18,6 +18,7 @@ from scipy.misc import imread, imsave
 from skimage import exposure
 from skimage import filter as ft
 from random import random, randint
+from scipy.stats.mstats import mode
 
 ### data structures
 class Distribution():
@@ -100,57 +101,71 @@ class Command(BaseCommand):
 
     print('loading Z...')
     Z = imread(os.path.join(base_output_path, 'z_smooth2.png'))
-    Z = exposure.rescale_intensity(Z * 1.0)
+    # Z = exposure.rescale_intensity(Z * 1.0)
 
     print('loading mean...')
     M = imread(os.path.join(base_output_path, 'mean.png'))
     M = exposure.rescale_intensity(M * 1.0)
-
-    label_img = np.zeros((Z.shape[0], Z.shape[1], 10))
 
     # define energy function based on distance from random point and z difference
     # 1. z difference (not profile joining points)
     # 2. gfp profile joining points
     # 3. bf profile joining points
     # 4. gfp strength profile joining points
+    start_r, end_r, start_c, end_c = 395, 506, 305, 415
+    size_r, size_c = end_r - start_r, end_c - start_c
+    gfp = gfp[start_r:end_r,start_c:end_c,:]
+    bf = bf[start_r:end_r,start_c:end_c,:]
+    Z = Z[start_r:end_r,start_c:end_c]
+    M = M[start_r:end_r,start_c:end_c]
 
-    while (label_img[:,:,0]==0).sum() > 0:
+    labels = np.zeros((Z.shape[0], Z.shape[1], 3))
+    label_img = np.zeros(Z.shape)
 
-      # 1. pick random point, set label value and update label array
-      r, c = randint(0, series.rs-1), randint(0, series.cs-1)
-      z = int(series.zs * Z[r,c] / 255.0)
+    while (labels[:,:,0]==0).sum() > 0: # while there are more points to pick
 
-      # next label
-      label = label_img.max() + 1 if label_img[r,c,:].sum()==0 else label_img[r,c,0]
-      secondary_label = label_img.max() + 1 if label_img[r,c,:].sum()==0 else label + 1
+      # 1. pick random point
+      r0, c0 = randint(0, size_r-1), randint(0, size_c-1)
+      z = int(series.zs * Z[r0,c0] / 255.0 - 1)
+      label = labels[r0,c0,0] if labels[r0,c0,0] != 0 else labels.max() + 1 # new label if not already in place
 
-      # 2. pick second point with gaussian probability in distance
-      point = np.random.multivariate_normal(mean, cov, 1).astype(int)
-      r1, c1 = point[0,0] + r, point[0,1] + c
-      r1 = (r1 if r1 < series.rs else series.rs - 1) if r1 >= 0 else 0
-      c1 = (c1 if c1 < series.cs else series.cs - 1) if c1 >= 0 else 0
+      # 2. loop to pick other points around it with a gaussian probability. While in same label as first point, keep picking more secondary points.
+      is_same_label = True
+      while is_same_label:
 
-      while (label_img[r1,c1,:]==0).sum()==0: # no slots left
+        # pick new point
         point = np.random.multivariate_normal(mean, cov, 1).astype(int)
-        r1, c1 = point[0,0] + r, point[0,1] + c
-        r1 = (r1 if r1 < series.rs else series.rs - 1) if r1 >= 0 else 0
-        c1 = (c1 if c1 < series.cs else series.cs - 1) if c1 >= 0 else 0
+        r1, c1 = point[0,0] + r0, point[0,1] + c0
+        r1 = (r1 if r1 < size_r else size_r - 1) if r1 >= 0 else 0
+        c1 = (c1 if c1 < size_c else size_c - 1) if c1 >= 0 else 0
 
-      # draw line
-      d = int(np.sqrt((r-r1)**2 + (c-c1)**2))
-      r_line, c_line = np.linspace(r, r1, d), np.linspace(c, c1, d)
-      line = np.vstack((r_line, c_line))
+        while (labels[r1,c1,:]==0).sum()==0: # no slots left
+          point = np.random.multivariate_normal(mean, cov, 1).astype(int)
+          r1, c1 = point[0,0] + r0, point[0,1] + c0
+          r1 = (r1 if r1 < size_r else size_r - 1) if r1 >= 0 else 0
+          c1 = (c1 if c1 < size_c else size_c - 1) if c1 >= 0 else 0
 
-      # 3. get distributions of bf, gfp, and z between points, classify (same label or new)
-      bf_distribution = map_coordinates(bf[:,:,z], line)
-      gfp_distribution = map_coordinates(gfp[:,:,z], line)
-      z_distribution = map_coordinates(Z, line)
-      m_distribution = map_coordinates(M, line)
+        # draw line
+        d = int(np.sqrt((r0-r1)**2 + (c0-c1)**2))
+        r_line, c_line = np.linspace(r0, r1, d), np.linspace(c0, c1, d)
+        line = np.vstack((r_line, c_line))
 
-      # 4. make decision and assign labels
-      is_same_region = True
+        # 3. get distributions of bf, gfp, and z between points, classify (same label or new)
+        bf_distribution = map_coordinates(bf[:,:,z], line)
+        gfp_distribution = map_coordinates(gfp[:,:,z], line)
+        z_distribution = map_coordinates(Z, line)
+        m_distribution = map_coordinates(M, line)
 
-      slot = np.argmax(label_img[r1,c1,:])
-      label_img[r1,c1,slot] = label if is_same_region else secondary_label
+        # 4. make decision and assign labels
+        is_same_label = np.std(z_distribution)<3
 
-      print((label_img[:,:,0]==0).sum())
+        slot = np.argmin(labels[r1,c1,:])
+        labels[r1,c1,slot] = label if is_same_label else labels[r1,c1,slot]
+
+      print('{}\t{}'.format(label, (labels[:,:,0]==0).sum()))
+
+    # 5. print final image with mode of each column
+    label_img = mode(labels, axis=2)
+
+    plt.imshow(label_img, cmap=Greys_r)
+    plt.show()
