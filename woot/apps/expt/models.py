@@ -219,7 +219,7 @@ class Series(models.Model):
 
         else: # disfuse gon structure (reduced, regions)
           for path in path_set:
-            print('step01 | composing {} series {}... channel {} t{} z{}'.format(self.experiment.name, self.name, channel.name, t, path.z), end='\r')
+            print('step01 | composing diffuse {} series {}... channel {} t{} z{}'.format(self.experiment.name, self.name, channel.name, t, path.z), end='\r')
 
             template = composite.templates.get(name=path.template.name)
             gon, gon_created = self.gons.get_or_create(experiment=self.experiment, composite=composite, channel=composite_channel, template=template, t=t, z=path.z)
