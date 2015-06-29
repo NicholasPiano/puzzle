@@ -84,7 +84,7 @@ def mod_zmod(composite, mod_id, algorithm):
 
     # images to channel gons
     zmod_gon, zmod_gon_created = composite.gons.get_or_create(experiment=composite.experiment, series=composite.series, channel=zmod_channel, t=t)
-    if zmod_gon_created:
+    if True:
       zmod_gon.set_origin(0,0,0,t)
       zmod_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
@@ -93,7 +93,7 @@ def mod_zmod(composite, mod_id, algorithm):
       zmod_gon.save()
 
     zmean_gon, zmean_gon_created = composite.gons.get_or_create(experiment=composite.experiment, series=composite.series, channel=zmean_channel, t=t)
-    if zmean_gon_created:
+    if True:
       zmean_gon.set_origin(0,0,0,t)
       zmean_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
@@ -102,7 +102,7 @@ def mod_zmod(composite, mod_id, algorithm):
       zmean_gon.save()
 
     zbf_gon, zbf_gon_created = composite.gons.get_or_create(experiment=composite.experiment, series=composite.series, channel=zbf_channel, t=t)
-    if zbf_gon_created:
+    if True:
       zbf_gon.set_origin(0,0,0,t)
       zbf_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
@@ -111,7 +111,7 @@ def mod_zmod(composite, mod_id, algorithm):
       zbf_gon.save()
 
     zcomp_gon, zcomp_gon_created = composite.gons.get_or_create(experiment=composite.experiment, series=composite.series, channel=zcomp_channel, t=t)
-    if zcomp_gon_created:
+    if True:
       zcomp_gon.set_origin(0,0,0,t)
       zcomp_gon.set_extent(composite.series.rs, composite.series.cs, 1)
 
