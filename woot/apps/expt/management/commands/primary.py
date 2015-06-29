@@ -89,4 +89,4 @@ class Command(BaseCommand):
 
         black[r0:r1,c0:c1] = 255
 
-      imsave(os.path.join(series.experiment.composite_path, 'primary_t{}.tiff'.format(t)))
+      imsave(os.path.join(series.experiment.composite_path, 'primary_t{}.tiff'.format(t)), black)
