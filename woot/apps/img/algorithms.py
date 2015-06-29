@@ -39,8 +39,8 @@ def mod_zmod(composite, mod_id, algorithm):
 
   # constants
   delta_z = -8
-  size = 3
-  sigma = 2
+  size = 5
+  sigma = 5
   template = composite.templates.get(name='source')
 
   # iterate over frames
@@ -71,10 +71,14 @@ def mod_zmod(composite, mod_id, algorithm):
 
         # data
         z = int(np.argmax(normalised_data))
-        Z[r,c] = z + delta_z
-        Zmean[r,c] = np.mean(normalised_data)
-        Zbf[r,c] = bf[r,c,z+delta_z]
-        Zcomp[r,c] = Zbf[r,c] * (1.0 - Zmean[r,c])
+        cz = z + delta_z #corrected z
+        mean = 1.0 - np.mean(normalised_data) # 1 - mean
+        bfz = bf[r,c,cz]
+
+        Z[r,c] = cz
+        Zmean[r,c] = mean
+        Zbf[r,c] = bfz
+        Zcomp[r,c] = bfz * mean
 
       print(t,r)
 
