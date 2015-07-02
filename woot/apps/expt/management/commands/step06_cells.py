@@ -106,7 +106,6 @@ class Command(BaseCommand):
 
     # open as normal
     markers = []
-
     with open(path, 'rb') as track_file:
       lines = track_file.read().decode('mac-roman').split('\n')[1:-1]
       for line in lines:
@@ -145,4 +144,5 @@ class Command(BaseCommand):
       frame_markers = list(filter(lambda m: m.frame==frame, markers))
       frame_cell_instances = list(filter(lambda c: c.frame==frame, cell_instances))
 
-      print(frame, len(frame_markers)-len(frame_cell_instances))
+      mask_img = imread(os.path.join(data_path, 'primary_t{}.tiff'.format(str(frame) if frame>=10 else ('0' + str(frame)))))
+      print(np.unique(mask_img))
