@@ -159,4 +159,4 @@ class Command(BaseCommand):
           cell_instance.marker = marker.i
 
     for cell_instance in cell_instances:
-      print(cell_instance.object_number, cell_instance.track())
+      print(cell_instance.object_number, cell_instance.track(markers))
