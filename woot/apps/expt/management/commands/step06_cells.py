@@ -182,4 +182,4 @@ class Command(BaseCommand):
         v.append(cell_instance.velocity(rmop, cmop, tpf))
         a.append(cell_instance.A(rmop, cmop))
 
-      print(v)
+      print(a)
