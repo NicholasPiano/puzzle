@@ -188,7 +188,7 @@ class Command(BaseCommand):
         v.append(cell_instance.velocity(rmop, cmop, tpf))
         a.append(cell_instance.A(rmop, cmop))
 
-      ax_v.plot(time, v)
-      ax_a.plot(time, a)
+      ax_v.scatter(time, v)
+      ax_a.scatter(time, a)
 
     plt.show()
