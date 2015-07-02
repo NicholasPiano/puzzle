@@ -33,8 +33,8 @@ class CellInstance():
     self.r = r
     self.c = c
     self.area = area
-    self.vr = -1000
-    self.vc = -1000
+    self.vr = 0
+    self.vc = 0
 
   def coords(self, rmop, cmop):
     return [self.r * rmop, self.c * cmop]
@@ -51,6 +51,9 @@ class CellInstance():
 
   def get_marker(self, markers):
     return list(filter(lambda m: m.i==self.marker, markers))[0]
+
+  def velocity(self, rmop, cmop, tpf):
+    return np.sqrt((self.vr * rmop)**2 + (self.cr * cmop)**2) / tpf
 
   def __str__(self):
     return '{} {} {} {} {}'.format(self.object_number, self.frame, self.r, self.c, self.area)
@@ -103,9 +106,9 @@ class Command(BaseCommand):
     path = '/Volumes/transport/data/puzzle/050714/track/050714_s13_n1.xls'
     data_path = '/Volumes/transport/data/puzzle/050714/img/out_auto'
     out = '/Volumes/transport/data/puzzle/050714/track/'
-    tpf = 0
-    rmop = 0
-    cmop = 0
+    tpf = 10.7003
+    rmop = 0.5369
+    cmop = 0.5369
 
     # open as normal
     markers = []
@@ -162,5 +165,21 @@ class Command(BaseCommand):
     for track in tracks:
       track_cell_instances = list(filter(lambda c: c.track(markers)==track, cell_instances))
 
+      previous_cell_instance = None
+      time = []
+      v = []
+      a = []
       for i, cell_instance in enumerate(sorted(track_cell_instances, key=lambda c: c.frame)):
-        print(i, cell_instance.frame)
+        if previous_cell_instance is None:
+          cell_instance.vr = 0
+          cell_instance.vc = 0
+        else:
+          cell_instance.vr = int((cell_instance.r - previous_cell_instance.r) / (cell_instance.frame - previous_cell_instance.frame))
+          cell_instance.vc = int((cell_instance.c - previous_cell_instance.c) / (cell_instance.frame - previous_cell_instance.frame))
+
+        previous_cell_instance = cell_instance
+        time.append(cell_instance.time(tpf))
+        v.append(cell_instance.velocity(rmop, cmop))
+        a.append(cell_instance.A(rmop, cmop))
+
+      print(v)
