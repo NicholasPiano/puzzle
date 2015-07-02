@@ -53,7 +53,7 @@ class CellInstance():
     return list(filter(lambda m: m.i==self.marker, markers))[0]
 
   def velocity(self, rmop, cmop, tpf):
-    return np.sqrt((self.vr * rmop)**2 + (self.cr * cmop)**2) / tpf
+    return np.sqrt((self.vr * rmop)**2 + (self.vc * cmop)**2) / tpf
 
   def __str__(self):
     return '{} {} {} {} {}'.format(self.object_number, self.frame, self.r, self.c, self.area)
