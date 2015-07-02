@@ -26,15 +26,31 @@ class Marker():
     self.c = c
 
 class CellInstance():
-  def __init__(self, track, frame, r, c, area, vr, vc):
+  def __init__(self, frame, object_number, r, c, area):
     self.marker = -1
-    self.track = track
     self.frame = frame
+    self.object_number = object_number
     self.r = r
     self.c = c
     self.area = area
-    self.vr = vr
-    self.vc = vc
+    self.vr = -1000
+    self.vc = -1000
+
+  def coords(self, rmop, cmop):
+    return [self.r * rmop, self.c * cmop]
+
+  def time(self, tpf):
+    return self.frame * tpf
+
+  def A(self, rmop, cmop):
+    return self.area * rmop * cmop
+
+  def track(self, markers):
+    marker = list(filter(lambda m:m.i==self.marker, markers))[0]
+    return marker.track
+
+  def __str__(self):
+    return '{}'
 
 ### Command
 class Command(BaseCommand):
@@ -115,6 +131,15 @@ class Command(BaseCommand):
       lines = list(cell_file.readlines())[1:]
       for line in lines:
         line = line.split(',')
-        print(line)
 
         # details
+        frame = int(float(line[0])) - 1
+        object_number = int(float(line[1]))
+        r = int(float(line[4]))
+        c = int(float(line[3]))
+        area = int(float(line[2]))
+
+        cell_instances.append(CellInstance(frame, object_number, r, c, area))
+
+    for cell_instance in cell_instances:
+      print(cell_instance)
