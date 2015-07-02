@@ -146,9 +146,11 @@ class Command(BaseCommand):
 
         cell_instances.append(CellInstance(frame, object_number, r, c, area))
 
+    cells = []
     for frame in range(89):
       frame_markers = list(filter(lambda m: m.frame==frame, markers))
       frame_cell_instances = list(filter(lambda c: c.frame==frame, cell_instances))
+      cells.append(len(frame_cell_instances))
 
       mask_img = imread(os.path.join(data_path, 'primary_t{}.tiff'.format(str(frame) if frame>=10 else ('0' + str(frame)))))
 
@@ -159,36 +161,39 @@ class Command(BaseCommand):
           cell_instance = list(filter(lambda c: c.object_number==ci, frame_cell_instances))[0]
           cell_instance.marker = marker.i
 
-    # make tracks
-    tracks = list(set([marker.track for marker in markers]))
-
-    fig = plt.figure()
-    ax_v = fig.add_subplot(121)
-    ax_v.set_title('velocity')
-    ax_a = fig.add_subplot(122)
-    ax_a.set_title('area')
-
-    for track in tracks:
-      track_cell_instances = list(filter(lambda c: c.track(markers)==track, cell_instances))
-
-      previous_cell_instance = None
-      time = []
-      v = []
-      a = []
-      for i, cell_instance in enumerate(sorted(track_cell_instances, key=lambda c: c.frame)):
-        if previous_cell_instance is None:
-          cell_instance.vr = 0
-          cell_instance.vc = 0
-        else:
-          cell_instance.vr = int((cell_instance.r - previous_cell_instance.r) / (cell_instance.frame - previous_cell_instance.frame))
-          cell_instance.vc = int((cell_instance.c - previous_cell_instance.c) / (cell_instance.frame - previous_cell_instance.frame))
-
-        previous_cell_instance = cell_instance
-        time.append(cell_instance.time(tpf))
-        v.append(cell_instance.velocity(rmop, cmop, tpf))
-        a.append(cell_instance.A(rmop, cmop))
-
-      ax_v.scatter(time, v)
-      ax_a.scatter(time, a)
-
+    plt.plot(cells)
     plt.show()
+
+    # make tracks
+    # tracks = list(set([marker.track for marker in markers]))
+    #
+    # fig = plt.figure()
+    # ax_v = fig.add_subplot(121)
+    # ax_v.set_title('velocity')
+    # ax_a = fig.add_subplot(122)
+    # ax_a.set_title('area')
+    #
+    # for track in tracks:
+    #   track_cell_instances = list(filter(lambda c: c.track(markers)==track, cell_instances))
+    #
+    #   previous_cell_instance = None
+    #   time = []
+    #   v = []
+    #   a = []
+    #   for i, cell_instance in enumerate(sorted(track_cell_instances, key=lambda c: c.frame)):
+    #     if previous_cell_instance is None:
+    #       cell_instance.vr = 0
+    #       cell_instance.vc = 0
+    #     else:
+    #       cell_instance.vr = int((cell_instance.r - previous_cell_instance.r) / (cell_instance.frame - previous_cell_instance.frame))
+    #       cell_instance.vc = int((cell_instance.c - previous_cell_instance.c) / (cell_instance.frame - previous_cell_instance.frame))
+    #
+    #     previous_cell_instance = cell_instance
+    #     time.append(cell_instance.time(tpf))
+    #     v.append(cell_instance.velocity(rmop, cmop, tpf))
+    #     a.append(cell_instance.A(rmop, cmop))
+    #
+    #   ax_v.scatter(time, v)
+    #   ax_a.scatter(time, a)
+    #
+    # plt.show()
