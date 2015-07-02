@@ -18,21 +18,10 @@ from scipy.misc import imsave, imread
 from scipy.optimize import curve_fit
 
 class Marker():
-  def __init__(self, track, frame, r, c):
-    self.track = track
+  def __init__(self, frame, r, c):
     self.frame = frame
     self.r = r
     self.c = c
-
-class CellInstance():
-  def __init__(self, track, frame, r, c, area, vr, vc):
-    self.track = track
-    self.frame = frame
-    self.r = r
-    self.c = c
-    self.area = area
-    self.vr = vr
-    self.vc = vc
 
 ### Command
 class Command(BaseCommand):
@@ -91,12 +80,18 @@ class Command(BaseCommand):
         line = line.split('\t')
 
         # details
-        track = int(float(line[1]))
-        frame = int(float(line[2])) - 1
         r = int(float(line[4]))
         c = int(float(line[3]))
+        frame = int(float(line[2])) - 1
 
-        markers.append(Marker(track, frame, r, c))
+        markers.append(Marker(frame, r, c))
 
-    # open measurements file and associate each marker to an area and true position
-    
+    # sort points by frame and print out a black image with white points.
+    for frame in range(89):
+
+      primary = np.zeros((512,512))
+
+      for marker in filter(lambda x: x.frame==frame, markers):
+        primary[marker.r-3:marker.r+2, marker.c-3:marker.c+2] = 255
+
+      imsave(os.path.join(out, 'primary_t{}.png'.format(frame)), primary)
