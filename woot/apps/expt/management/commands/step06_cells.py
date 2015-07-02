@@ -179,7 +179,7 @@ class Command(BaseCommand):
 
         previous_cell_instance = cell_instance
         time.append(cell_instance.time(tpf))
-        v.append(cell_instance.velocity(rmop, cmop))
+        v.append(cell_instance.velocity(rmop, cmop, tpf))
         a.append(cell_instance.A(rmop, cmop))
 
       print(v)
