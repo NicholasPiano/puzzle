@@ -50,7 +50,7 @@ class CellInstance():
     return marker.track
 
   def __str__(self):
-    return '{}'
+    return '{} {} {} {} {}'.format(self.object_number, self.frame, self.r, self.c, self.area)
 
 ### Command
 class Command(BaseCommand):
