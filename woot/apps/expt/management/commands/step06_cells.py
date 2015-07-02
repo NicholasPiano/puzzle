@@ -152,8 +152,11 @@ class Command(BaseCommand):
       ids = []
       for marker in frame_markers:
         ci = mask_img[marker.r, marker.c]
-        cell_instance = list(filter(lambda c: c.object_number==ci, frame_cell_instances))[0]
-        cell_instance.marker = marker.i
+        if len(list(filter(lambda c: c.object_number==ci, frame_cell_instances)))==0:
+          print(ci, marker.r, marker.c, frame)
+        else:
+          cell_instance = list(filter(lambda c: c.object_number==ci, frame_cell_instances))[0]
+          cell_instance.marker = marker.i
 
     for cell_instance in cell_instances:
       print(cell_instance.object_number, cell_instance.track())
