@@ -145,4 +145,4 @@ class Command(BaseCommand):
       frame_markers = list(filter(lambda m: m.frame==frame, markers))
       frame_cell_instances = list(filter(lambda c: c.frame==frame, cell_instances))
 
-      print(len(frame_markers), len(frame_cell_instances))
+      print(frame, len(frame_markers)-len(frame_cell_instances))
