@@ -143,6 +143,6 @@ class Command(BaseCommand):
 
     for frame in range(89):
       frame_markers = list(filter(lambda m: m.frame==frame, markers))
-      frame_cells = list(filter(lambda c: c.frame==frame, cells))
+      frame_cell_instances = list(filter(lambda c: c.frame==frame, cell_instances))
 
-      print(len(frame_markers), len(frame_cells))
+      print(len(frame_markers), len(frame_cell_instances))
