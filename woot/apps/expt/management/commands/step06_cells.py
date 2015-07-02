@@ -162,6 +162,12 @@ class Command(BaseCommand):
     # make tracks
     tracks = list(set([marker.track for marker in markers]))
 
+    fig = plt.figure()
+    ax_v = fig.add_subplot(121)
+    ax_v.set_title('velocity')
+    ax_a = fig.add_subplot(122)
+    ax_a.set_title('area')
+
     for track in tracks:
       track_cell_instances = list(filter(lambda c: c.track(markers)==track, cell_instances))
 
@@ -182,4 +188,7 @@ class Command(BaseCommand):
         v.append(cell_instance.velocity(rmop, cmop, tpf))
         a.append(cell_instance.A(rmop, cmop))
 
-      print(a)
+      ax_v.plot(time, v)
+      ax_a.plot(time, a)
+
+    plt.show()
