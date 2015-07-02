@@ -79,8 +79,8 @@ class Command(BaseCommand):
     '''
 
     # vars
-    path = '/Volumes/TRANSPORT/data/puzzle/050714/track/050714_s13_n1.xls'
-    out = '/Volumes/TRANSPORT/primary'
+    path = '/Volumes/transport/data/puzzle/050714/track/050714_s13_n1.xls'
+    out = '/Volumes/transport/primary'
 
     # open as normal
     markers = []
@@ -99,4 +99,3 @@ class Command(BaseCommand):
         markers.append(Marker(track, frame, r, c))
 
     # open measurements file and associate each marker to an area and true position
-    
