@@ -141,5 +141,8 @@ class Command(BaseCommand):
 
         cell_instances.append(CellInstance(frame, object_number, r, c, area))
 
-    for cell_instance in cell_instances:
-      print(cell_instance)
+    for frame in range(89):
+      frame_markers = list(filter(lambda m: m.frame==frame, markers))
+      frame_cells = list(filter(lambda c: c.frame==frame, cells))
+
+      print(len(frame_markers), len(frame_cells))
