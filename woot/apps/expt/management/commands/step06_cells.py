@@ -161,4 +161,4 @@ class Command(BaseCommand):
 
     for track in tracks:
       track_cell_instances = list(filter(lambda c: c.track(markers)==track, cell_instances))
-      print(len(cell_instances))
+      print(len(track_cell_instances))
