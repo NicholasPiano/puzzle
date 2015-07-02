@@ -145,4 +145,7 @@ class Command(BaseCommand):
       frame_cell_instances = list(filter(lambda c: c.frame==frame, cell_instances))
 
       mask_img = imread(os.path.join(data_path, 'primary_t{}.tiff'.format(str(frame) if frame>=10 else ('0' + str(frame)))))
-      print(np.unique(mask_img))
+
+      ids = []
+      for marker in frame_markers:
+        ids.append((mask_img[marker.r, marker.c], marker.i))
