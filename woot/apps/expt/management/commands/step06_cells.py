@@ -18,7 +18,8 @@ from scipy.misc import imsave, imread
 from scipy.optimize import curve_fit
 
 class Marker():
-  def __init__(self, track, frame, r, c):
+  def __init__(self, i, track, frame, r, c):
+    self.i = i
     self.track = track
     self.frame = frame
     self.r = r
@@ -26,6 +27,7 @@ class Marker():
 
 class CellInstance():
   def __init__(self, track, frame, r, c, area, vr, vc):
+    self.marker = -1
     self.track = track
     self.frame = frame
     self.r = r
@@ -80,7 +82,11 @@ class Command(BaseCommand):
 
     # vars
     path = '/Volumes/transport/data/puzzle/050714/track/050714_s13_n1.xls'
-    out = '/Volumes/transport/primary'
+    data_path = '/Volumes/transport/data/puzzle/050714/img/out_auto'
+    out = '/Volumes/transport/data/puzzle/050714/track/'
+    tpf = 0
+    rmop = 0
+    cmop = 0
 
     # open as normal
     markers = []
@@ -99,3 +105,10 @@ class Command(BaseCommand):
         markers.append(Marker(track, frame, r, c))
 
     # open measurements file and associate each marker to an area and true position
+    cell_instances = []
+    with open(os.path.join(data_path, 'Cells.csv')) as cell_file:
+      lines = list(cell_file.readlines())[1:]
+      for line in lines:
+        line = line.split(',')
+
+        # details
