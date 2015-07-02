@@ -25,39 +25,6 @@ class Marker():
     self.r = r
     self.c = c
 
-class CellInstance():
-  def __init__(self, frame, object_number, r, c, area):
-    self.marker = -1
-    self.frame = frame
-    self.object_number = object_number
-    self.r = r
-    self.c = c
-    self.area = area
-    self.vr = 0
-    self.vc = 0
-
-  def coords(self, rmop, cmop):
-    return [self.r * rmop, self.c * cmop]
-
-  def time(self, tpf):
-    return self.frame * tpf
-
-  def A(self, rmop, cmop):
-    return self.area * rmop * cmop
-
-  def track(self, markers):
-    marker = list(filter(lambda m:m.i==self.marker, markers))[0]
-    return marker.track
-
-  def get_marker(self, markers):
-    return list(filter(lambda m: m.i==self.marker, markers))[0]
-
-  def velocity(self, rmop, cmop, tpf):
-    return np.sqrt((self.vr * rmop)**2 + (self.vc * cmop)**2) / tpf
-
-  def __str__(self):
-    return '{} {} {} {} {}'.format(self.object_number, self.frame, self.r, self.c, self.area)
-
 ### Command
 class Command(BaseCommand):
   option_list = BaseCommand.option_list + (
@@ -130,30 +97,9 @@ class Command(BaseCommand):
           i = i_marker.i + 1
           markers.append(Marker(i, track, frame, r, c))
 
-    # open measurements file and associate each marker to an area and true position
-    cell_instances = []
-    with open(os.path.join(data_path, 'Cells.csv')) as cell_file:
-      lines = list(cell_file.readlines())[1:]
-      for line in lines:
-        line = line.split(',')
-
-        # details
-        frame = int(float(line[0])) - 1
-        object_number = int(float(line[1]))
-        r = int(float(line[4]))
-        c = int(float(line[3]))
-        area = int(float(line[2]))
-
-        cell_instances.append(CellInstance(frame, object_number, r, c, area))
-
     for frame in range(89):
       frame_markers = list(filter(lambda m: m.frame==frame, markers))
-      frame_cell_instances = list(filter(lambda c: c.frame==frame, cell_instances))
-
       mask_img = imread(os.path.join(data_path, 'primary_t{}.tiff'.format(str(frame) if frame>=10 else ('0' + str(frame)))))
 
       for marker in frame_markers:
         ci = mask_img[marker.r, marker.c]
-        if len(list(filter(lambda c: c.object_number==ci, frame_cell_instances)))!=0:
-          cell_instance = list(filter(lambda c: c.object_number==ci, frame_cell_instances))[0]
-          cell_instance.marker = marker.i
