@@ -102,7 +102,12 @@ class Command(BaseCommand):
         r = int(float(line[4]))
         c = int(float(line[3]))
 
-        markers.append(Marker(track, frame, r, c))
+        if len(markers)==0:
+          markers.append(Marker(0, track, frame, r, c))
+        else:
+          i_marker = max(markers, key=lambda m: m.i)
+          i = i_marker.i + 1
+          markers.append(Marker(i, track, frame, r, c))
 
     # open measurements file and associate each marker to an area and true position
     cell_instances = []
