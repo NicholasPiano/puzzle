@@ -152,8 +152,7 @@ class Command(BaseCommand):
       ids = []
       for marker in frame_markers:
         ci = mask_img[marker.r, marker.c]
-        if len(list(filter(lambda c: c.object_number==ci, frame_cell_instances)))==0:
-        else:
+        if len(list(filter(lambda c: c.object_number==ci, frame_cell_instances)))!=0:
           cell_instance = list(filter(lambda c: c.object_number==ci, frame_cell_instances))[0]
           cell_instance.marker = marker.i
 
