@@ -149,3 +149,4 @@ class Command(BaseCommand):
       ids = []
       for marker in frame_markers:
         ids.append((mask_img[marker.r, marker.c], marker.i))
+      print(ids)
