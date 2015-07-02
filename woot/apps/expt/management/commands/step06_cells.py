@@ -49,6 +49,9 @@ class CellInstance():
     marker = list(filter(lambda m:m.i==self.marker, markers))[0]
     return marker.track
 
+  def get_marker(self, markers):
+    return list(filter(lambda m: m.i==self.marker, markers))[0]
+
   def __str__(self):
     return '{} {} {} {} {}'.format(self.object_number, self.frame, self.r, self.c, self.area)
 
@@ -148,5 +151,9 @@ class Command(BaseCommand):
 
       ids = []
       for marker in frame_markers:
-        ids.append((mask_img[marker.r, marker.c], marker.i))
-      print(ids)
+        ci = mask_img[marker.r, marker.c]
+        cell_instance = list(filter(lambda c: c.object_number==ci))[0]
+        cell_instance.marker = marker.i
+
+    for cell_instance in cell_instances:
+      print(cell_instance.object_number, cell_instance.track())
