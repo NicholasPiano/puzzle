@@ -115,5 +115,6 @@ class Command(BaseCommand):
       lines = list(cell_file.readlines())[1:]
       for line in lines:
         line = line.split(',')
+        print(line)
 
         # details
