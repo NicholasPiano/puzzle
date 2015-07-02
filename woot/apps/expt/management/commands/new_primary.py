@@ -69,7 +69,7 @@ class Command(BaseCommand):
 
     # vars
     path = '/Volumes/transport/data/puzzle/050714/track/050714_s13_n1.xls'
-    out = '/Volumes/transport/primary'
+    out = '/Volumes/transport/data/puzzle/050714/img/primary'
 
     # open as normal
     markers = []
