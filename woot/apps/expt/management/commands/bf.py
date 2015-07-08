@@ -46,7 +46,7 @@ class Command(BaseCommand):
     series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
     composite = series.composites.get()
 
-    output_path = os.path.join(series.experiment.img_path, 'bf')
+    output_path = os.path.join(series.experiment.base_path, 'img', 'bf')
 
     for t in range(series.ts):
       bf_gon = composite.gons.get(channel__name='1', t=t)
