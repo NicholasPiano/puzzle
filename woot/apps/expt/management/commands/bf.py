@@ -50,4 +50,4 @@ class Command(BaseCommand):
     for t in range(series.ts):
       bf_gon = composite.gons.get(channel__name='1', t=t)
       slice = bf_gon.gons.get(z=37)
-      print(t, output_path, slice.paths.get().url)
+      print(t, os.path.join(output_path, slice.paths.get().file_name), slice.paths.get().url)
