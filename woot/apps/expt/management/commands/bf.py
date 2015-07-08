@@ -16,6 +16,7 @@ from scipy.ndimage import map_coordinates
 import matplotlib.pyplot as plt
 from scipy.misc import imread, imsave
 from skimage import exposure
+import shutil as sh
 
 ### Command
 class Command(BaseCommand):
@@ -50,4 +51,8 @@ class Command(BaseCommand):
     for t in range(series.ts):
       bf_gon = composite.gons.get(channel__name='1', t=t)
       slice = bf_gon.gons.get(z=37)
-      print(t, os.path.join(output_path, slice.paths.get().file_name), slice.paths.get().url)
+
+      from_path = slice.paths.get().url
+      to_path = os.path.join(output_path, slice.paths.get().file_name)
+      sh.copy2(from_path, to_path)
+      print(t)
