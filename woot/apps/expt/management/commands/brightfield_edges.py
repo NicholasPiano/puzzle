@@ -16,6 +16,7 @@ from skimage import exposure
 from skimage import filter as ft
 from scipy.misc import imsave, imread
 from scipy.optimize import curve_fit
+from scipy.ndimage.morphology import binary_dilation as dilate
 
 class Marker():
   def __init__(self, i, track, frame, r, c):
@@ -25,6 +26,17 @@ class Marker():
     self.r = r
     self.c = c
 
+def scan_point(img, rs, cs, r, c, size=0):
+  r0 = r - size if r - size >= 0 else 0
+  r1 = r + size + 1 if r + size + 1 <= rs else rs
+  c0 = c - size if c - size >= 0 else 0
+  c1 = c + size + 1 if c + size + 1 <= cs else cs
+
+  column = img[r0:r1,c0:c1,:]
+  column_1D = np.sum(np.sum(column, axis=0), axis=0)
+
+  return column_1D
+
 ### Command
 class Command(BaseCommand):
   option_list = BaseCommand.option_list + (
@@ -32,7 +44,7 @@ class Command(BaseCommand):
     make_option('--expt', # option that will appear in cmd
       action='store', # no idea
       dest='expt', # refer to this in options variable
-      default='050714', # some default
+      default='050714-test', # some default
       help='Name of the experiment to import' # who cares
     ),
 
@@ -70,6 +82,8 @@ class Command(BaseCommand):
     '''
 
     # vars
+    series = Series.objects.get(experiment__name=options['expt'], name=options['series'])
+    composite = series.composites.get()
     path = '/Volumes/transport/data/puzzle/050714/track/050714_s13_n1.xls'
     data_path = '/Volumes/transport/data/puzzle/050714/img/out_auto'
     out = '/Volumes/transport/data/puzzle/050714/track/'
@@ -97,9 +111,33 @@ class Command(BaseCommand):
           i = i_marker.i + 1
           markers.append(Marker(i, track, frame, r, c))
 
-    for frame in range(89):
+    # get distributions
+    for frame in range(1):
+
+      # load brightfield image
+      bf_gon = composite.gons.get(t=frame, channel__name='1')
+      bf = exposure.rescale_intensity(bf_gon.load() * 1.0)
+
+      # gfp_gon = composite.gons.get(t=frame, channel__name='0')
+      # gfp = exposure.rescale_intensity(gfp_gon.load() * 1.0)
+
+      # markers for frame
       frame_markers = list(filter(lambda m: m.frame==frame, markers))
       mask_img = imread(os.path.join(data_path, 'primary_t{}.tiff'.format(str(frame) if frame>=10 else ('0' + str(frame)))))
 
       for marker in frame_markers:
+        # make edge image
         ci = mask_img[marker.r, marker.c]
+        mask = np.zeros(mask_img.shape)
+        mask[mask_img==ci] = 255
+        edges = dilate(mask) * 255 - mask
+
+        # for each point, add the distribution to the plot
+        R, C = np.where(edges>0)
+        points = zip(R, C)
+        for point in points:
+          r, c = point
+          distribution = scan_point(bf, series.rs, series.cs, r, c, size=4)
+          plt.plot(distribution / distribution.max())
+
+      plt.show()
